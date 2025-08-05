@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Night Dork Ops</title>
+<style>
+  :root{
+    --bg:#05060a; --panel:#0c0f17; --ink:#e6f1ff; --muted:#7c8899;
+    --acc:#08f; --acc2:#0ff; --ok:#77ff99; --warn:#ffdb6e;
+    --grid: clamp(280px, 35vw, 450px);
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0; font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    background:radial-gradient(80% 110% at 100% 0%, #0b1020 0%, #05060a 55%) fixed;
+    color:var(--ink); font-size:13px;
+  }
+  header{
+    position:sticky; top:0; backdrop-filter: blur(12px);
+    background:linear-gradient(180deg, #05060af8, #05060a80);
+    z-index:100; padding:20px 16px 12px; border-bottom:1px solid #0e1526;
+  }
+  .brand{display:flex; gap:14px; align-items:center; margin-bottom:16px}
+  .brand h1{margin:0; font-size:20px; letter-spacing:1.2px; color:#cfe3ff; font-weight:600}
+  .sub{color:var(--muted); font-size:13px; margin-top:4px}
+  .controls{display:flex; gap:12px; align-items:center; margin-bottom:16px}
+  input[type=text]{
+    flex:1; min-width:300px; padding:14px 18px; border:1px solid #0e2344;
+    background:#050912; color:var(--ink); border-radius:8px; outline:none;
+    box-shadow:inset 0 1px 3px rgba(0,0,0,0.3); font-size:14px;
+    transition:border-color 0.2s ease;
+  }
+  input[type=text]:focus{border-color:#2a6ddf; box-shadow:inset 0 1px 3px rgba(0,0,0,0.3), 0 0 0 2px #07214a}
+  button{
+    background:linear-gradient(180deg, #0a1730, #091226);
+    border:1px solid #183a70; color:#ccedff; padding:12px 18px; cursor:pointer;
+    border-radius:8px; text-transform:uppercase; letter-spacing:.7px; font-weight:600;
+    transition:all 0.2s ease; font-size:12px;
+  }
+  button:hover{border-color:#2a6ddf; box-shadow:0 2px 8px rgba(42,109,223,0.2)}
+  button:active{transform:translateY(1px)}
+  
+  /* Category Navigation - Fixed Grid */
+  .category-nav{
+    display:grid; 
+    grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); 
+    gap:8px; 
+    margin-bottom:8px;
+  }
+  .cat-btn{
+    padding:10px 14px; border:1px solid #0e2344; background:#050912;
+    color:#9fb7ff; border-radius:6px; cursor:pointer; transition:all 0.2s ease;
+    text-align:center; font-size:11px; text-transform:uppercase; letter-spacing:0.5px;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  }
+  .cat-btn:hover{border-color:#2a6ddf; background:#081226}
+  .cat-btn.active{
+    border-color:#3ea1ff; color:#fff; background:#0a2d66;
+    box-shadow:0 2px 8px rgba(62,161,255,0.3);
+  }
+  
+  main{padding:16px; padding-bottom:80px}
+  .grid{display:grid; grid-template-columns:repeat(auto-fill, minmax(var(--grid),1fr)); gap:14px}
+  .card{
+    background:linear-gradient(180deg, #0a0f1b, #0a0e19); 
+    border:1px solid #0e1a33; border-radius:12px;
+    padding:16px; position:relative; overflow:hidden;
+    transition:all 0.2s ease;
+  }
+  .card:hover{border-color:#1c3868; transform:translateY(-2px); box-shadow:0 8px 24px rgba(0,0,0,0.4)}
+  .card h3{margin:0 0 8px 0; font-size:15px; color:#d8e9ff; font-weight:600}
+  .card p{margin:0 0 12px 0; color:var(--muted); font-size:12px; line-height:1.5}
+  .links{display:flex; flex-direction:column; gap:10px}
+  .link{
+    display:block; padding:12px 14px; border:1px solid #16335f; border-radius:8px;
+    text-decoration:none; color:#cfe3ff; transition:all 0.2s ease;
+    background:rgba(5,9,18,0.6);
+  }
+  .link:hover{
+    background:#081226; border-color:#2a6ddf; 
+    transform:translateY(-1px); box-shadow:0 4px 12px rgba(42,109,223,0.2);
+  }
+  .query-text{
+    font-family:inherit; font-size:11px; color:#9fb7ff; 
+    word-break:break-all; line-height:1.4; margin-top:6px;
+  }
+  .engine-tag{
+    display:inline-block; background:#0a2d66; color:#cfe3ff; 
+    padding:2px 8px; border-radius:4px; font-size:10px; 
+    text-transform:uppercase; letter-spacing:0.5px; margin-bottom:6px;
+  }
+  
+  .copy{
+    position:absolute; top:12px; right:12px; 
+    background:rgba(5,9,18,0.8); border:1px solid #16335f; 
+    color:#9fb7ff; padding:6px 10px; border-radius:6px; 
+    font-size:10px; cursor:pointer; transition:all 0.2s ease;
+  }
+  .copy:hover{border-color:#2a6ddf; color:#cfe3ff}
+  
+  footer{
+    position:fixed; bottom:0; left:0; right:0; padding:12px 16px; 
+    display:flex; gap:12px; align-items:center; justify-content:space-between;
+    background:linear-gradient(0deg, #05060af8, #05060a00); 
+    border-top:1px solid #0e1526; backdrop-filter:blur(8px);
+  }
+  .footer-left{display:flex; gap:12px; align-items:center}
+  .export-btn{
+    background:rgba(8,255,255,0.1); border:1px solid rgba(8,255,255,0.3);
+    color:#0ff; padding:8px 14px; border-radius:6px; font-size:11px;
+  }
+  .export-btn:hover{background:rgba(8,255,255,0.2); border-color:#0ff}
+  .hint{color:#7c8899; font-size:11px}
+  
+  /* Status indicator */
+  .status{
+    padding:6px 12px; background:rgba(119,255,153,0.1); 
+    border:1px solid rgba(119,255,153,0.3); color:#77ff99; 
+    border-radius:6px; font-size:11px;
+  }
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+      <path d="M2 12l6.5 6.5L22 5" stroke="#0ff" stroke-width="2.5" stroke-linecap="round"/>
+    </svg>
+    <div>
+      <h1>Night Dork Ops</h1>
+      <div class="sub">Advanced OSINT reconnaissance toolkit</div>
+    </div>
+  </div>
+  
+  <div class="controls">
+    <input id="target" type="text" placeholder="Enter target domain (e.g., example.com)" value="example.com" autocomplete="off"/>
+    <button id="normalize">Normalize</button>
+    <button id="openAll">Open Category</button>
+  </div>
+  
+  <div id="categoryNav" class="category-nav"></div>
+</header>
+
+<main>
+  <div id="grid" class="grid"></div>
+</main>
+
+<footer>
+  <div class="footer-left">
+    <button class="export-btn" onclick="exportQueries()">Export Results</button>
+    <div class="status">Scope: Passive Recon Only</div>
+  </div>
+  <div class="hint">Professional OSINT toolkit for authorized testing</div>
+</footer>
+
+<script>
+  // === Enhanced Data ===
+  const DATA = [
+    {
+      label: "Exposed Files",
+      description: "Configuration files, secrets, environment variables, and sensitive documents",
+      items: [
+        {name: "Environment & Config Files", engine:"g", q:'site:{t} (ext:env OR ext:yml OR ext:yaml OR ext:conf OR ext:ini OR ext:cfg) ("AWS_SECRET_ACCESS_KEY" OR "AWS_ACCESS_KEY_ID" OR "SECRET_KEY" OR "database_password" OR "api_key")'},
+        {name: "Application Logs", engine:"g", q:'site:{t} (ext:log OR ext:txt) ("Exception" OR "Stack trace" OR "password=" OR "error" OR "debug")'},
+        {name: "Backup Files", engine:"g", q:'site:{t} (ext:bak OR ext:old OR ext:backup OR ext:zip OR ext:tar.gz OR ext:7z OR ext:sql) -inurl:download'},
+        {name: "Git Repository Exposure", engine:"g", q:'site:{t} intext:"Index of /.git" OR inurl:"/.git/" OR filetype:git'},
+        {name: "PHP Info Pages", engine:"g", q:'site:{t} filetype:php intitle:"phpinfo" "published by the PHP Group"'},
+        {name: "Sensitive Documents", engine:"g", q:'site:{t} (ext:pdf OR ext:docx OR ext:xlsx OR ext:csv OR ext:sql) ("confidential" OR "internal use only" OR "restricted")'}
+      ]
+    },
+    {
+      label: "API & Debug",
+      description: "API documentation, debug interfaces, and development tools",
+      items: [
+        {name:"Swagger/OpenAPI UI", engine:"g", q:'site:{t} (intitle:"Swagger UI" OR inurl:"/swagger-ui/" OR inurl:"/api-docs" OR inurl:"/docs")'},
+        {name:"OpenAPI Specifications", engine:"g", q:'site:{t} (inurl:"/swagger.json" OR inurl:"/openapi.json" OR inurl:"/api/v1" OR inurl:"/api/v2")'},
+        {name:"GraphQL Endpoints", engine:"g", q:'site:{t} (intitle:"GraphQL Playground" OR intitle:"Altair GraphQL" OR inurl:"/graphql" OR inurl:"/graphiql")'},
+        {name:"Spring Boot Actuator", engine:"g", q:'site:{t} (inurl:"/actuator" OR inurl:"/manage" OR inurl:"/health" OR inurl:"/env" OR inurl:"/metrics")'},
+        {name:"Debug Interfaces", engine:"g", q:'site:{t} (inurl:"/_profiler" OR inurl:"/debug" OR intitle:"Django" "server error")'},
+        {name:"API Keys in URLs", engine:"g", q:'site:{t} (inurl:"api_key=" OR inurl:"apikey=" OR inurl:"key=" OR inurl:"token=")'}
+      ]
+    },
+    {
+      label: "Infrastructure",
+      description: "CI/CD systems, monitoring dashboards, and administrative interfaces",
+      items: [
+        {name:"Jenkins CI/CD", engine:"g", q:'site:{t} (intitle:"Dashboard [Jenkins]" OR inurl:"/jenkins" OR inurl:":8080")'},
+        {name:"Grafana Dashboards", engine:"g", q:'site:{t} (intitle:"Grafana" OR inurl:"/grafana" OR inurl:":3000")'},
+        {name:"Kibana Analytics", engine:"g", q:'site:{t} (intitle:"Kibana" OR inurl:"/kibana" OR inurl:":5601")'},
+        {name:"Docker Registry", engine:"g", q:'site:{t} (inurl:"/v2/" OR intitle:"Docker Registry" OR inurl:":5000")'},
+        {name:"Admin Panels", engine:"g", q:'site:{t} (inurl:"/admin" OR inurl:"/administrator" OR intitle:"Admin Panel")'}
+      ]
+    },
+    {
+      label: "Cloud Storage",
+      description: "Public cloud storage buckets and CDN endpoints",
+      items: [
+        {name:"Amazon S3 Buckets", engine:"g", q:'site:s3.amazonaws.com "{t}" OR site:*.s3.amazonaws.com "{t}"'},
+        {name:"Google Cloud Storage", engine:"g", q:'site:storage.googleapis.com "{t}" OR site:*.storage.googleapis.com'},
+        {name:"Azure Blob Storage", engine:"g", q:'site:*.blob.core.windows.net "{t}"'},
+        {name:"DigitalOcean Spaces", engine:"g", q:'site:*.digitaloceanspaces.com "{t}"'},
+        {name:"Cloudflare R2", engine:"g", q:'site:*.r2.dev "{t}" OR site:*.r2.cloudflarestorage.com "{t}"'},
+        {name:"CDN Endpoints", engine:"g", q:'site:*.amazonaws.com "{t}" OR site:*.cloudfront.net "{t}"'}
+      ]
+    },
+    {
+      label: "Code Repositories",
+      description: "Source code, configuration leaks, and development artifacts",
+      items: [
+        {name:"GitHub Code Search", engine:"gh", q:'"{t}" (password OR secret OR key OR token OR config) NOT test'},
+        {name:"GitHub Organization", engine:"gh", q:'org:{t_no_tld} fork:true'},
+        {name:"Public Gists", engine:"g", q:'site:gist.github.com "{t}"'},
+        {name:"GitLab Projects", engine:"g", q:'site:gitlab.com "{t}" OR site:*.gitlab.io "{t}"'},
+        {name:"Pastebin Content", engine:"g", q:'site:pastebin.com "{t}" OR site:paste.ee "{t}"'},
+        {name:"PublicWWW API Keys", engine:"pw", q:'"{t}" AND ("api" OR "key" OR "secret" OR "token")'}
+      ]
+    },
+    {
+      label: "Web Archive",
+      description: "Historical data and archived content analysis",
+      items: [
+        {name:"Wayback URLs", engine:"wa", q:'https://web.archive.org/cdx/search/cdx?url=*.{t}/*&output=text&fl=original&collapse=urlkey&limit=1000'},
+        {name:"Sensitive Archives", engine:"wa", q:'https://web.archive.org/cdx/search/cdx?url=*.{t}/*&output=text&fl=original&filter=original:.*\\.(sql|env|yml|log|bak|key|json|csv|xml)&limit=500'},
+        {name:"Parameter Discovery", engine:"wa", q:'https://web.archive.org/cdx/search/cdx?url=*.{t}/*&output=text&fl=original&filter=original:.*\\?.*=&collapse=urlkey'}
+      ]
+    },
+    {
+      label: "Attack Vectors",
+      description: "Potential security vulnerabilities and attack surfaces",
+      items: [
+        {name:"Open Redirect Parameters", engine:"g", q:'site:{t} (inurl:"redirect=" OR inurl:"url=" OR inurl:"return=" OR inurl:"next=" OR inurl:"continue=")'},
+        {name:"Authentication Endpoints", engine:"g", q:'site:{t} (inurl:"/login" OR inurl:"/signin" OR inurl:"/auth" OR inurl:"/oauth" OR inurl:"/sso")'},
+        {name:"File Upload Pages", engine:"g", q:'site:{t} (inurl:"/upload" OR intitle:"upload" OR "choose file" OR "select file")'},
+        {name:"SQL Injection Errors", engine:"g", q:'site:{t} ("sql syntax" OR "mysql_fetch" OR "ORA-" OR "PostgreSQL" OR "Microsoft OLE DB")'}
+      ]
+    },
+    {
+      label: "Reconnaissance",
+      description: "Basic enumeration and information gathering",
+      items: [
+        {name:"Directory Listings", engine:"g", q:'site:{t} intitle:"index of" OR intitle:"directory listing"'},
+        {name:"Subdomain Enumeration", engine:"g", q:'site:*.{t} -site:www.{t} -site:{t}'},
+        {name:"Email Addresses", engine:"g", q:'site:{t} "@{t}" (contact OR email OR mailto)'},
+        {name:"Certificate Transparency", engine:"crt", q:'{t}'},
+        {name:"Technology Stack", engine:"g", q:'site:{t} (powered by OR built with OR using OR technology)'}
+      ]
+    },
+    {
+      label: "Network Intel",
+      description: "Network infrastructure and exposed services",
+      items: [
+        {name:"Shodan Network Scan", engine:"sh", q:'hostname:{t}'},
+        {name:"IP Range Discovery", engine:"g", q:'"{t}" (netblock OR CIDR OR IP range OR subnet)'},
+        {name:"DNS Records", engine:"g", q:'site:{t} (TXT OR MX OR NS OR CNAME OR SPF)'}
+      ]
+    }
+  ];
+
+  // === Core Functions ===
+  const $categoryNav = document.getElementById('categoryNav');
+  const $grid = document.getElementById('grid');
+  const $target = document.getElementById('target');
+
+  function normHost(v){
+    v = (v||'').trim();
+    v = v.replace(/^https?:\/\//,'').replace(/\/.*$/,'').toLowerCase();
+    return v.replace(/^\*\.?/,'');
+  }
+
+  function hostOrg(v){
+    const p = v.split('.');
+    if(p.length>=2){ return p[p.length-2]; }
+    return v;
+  }
+
+  function buildUrl(engine, query, t){
+    const enc = s => encodeURIComponent(s);
+    const q = query.replaceAll('{t}', t).replaceAll('{t_no_tld}', hostOrg(t));
+    switch(engine){
+      case 'g':  return 'https://www.google.com/search?q='+enc(q);
+      case 'gh': return 'https://github.com/search?q='+enc(q)+'&type=code';
+      case 'pw': return 'https://publicwww.com/websites/'+enc(q)+'/';
+      case 'wa': return q;
+      case 'crt':return 'https://crt.sh/?q='+enc(q);
+      case 'sh': return 'https://www.shodan.io/search?query='+enc(q);
+      default:   return '#';
+    }
+  }
+
+  // === UI Rendering ===
+  let activeCategory = 0;
+
+  function renderCategories(){
+    $categoryNav.innerHTML = '';
+    DATA.forEach((cat, i) => {
+      const btn = document.createElement('div');
+      btn.className = 'cat-btn' + (i === activeCategory ? ' active' : '');
+      btn.textContent = cat.label;
+      btn.title = cat.description;
+      btn.onclick = () => { activeCategory = i; render(); };
+      $categoryNav.appendChild(btn);
+    });
+  }
+
+  function renderCards(){
+    const t = normHost($target.value);
+    $grid.innerHTML = '';
+    
+    DATA[activeCategory].items.forEach((item, idx) => {
+      const card = document.createElement('div');
+      card.className = 'card';
+      
+      const h3 = document.createElement('h3');
+      h3.textContent = item.name;
+      card.appendChild(h3);
+      
+      const p = document.createElement('p');
+      p.textContent = DATA[activeCategory].description;
+      card.appendChild(p);
+      
+      const links = document.createElement('div');
+      links.className = 'links';
+      
+      const url = buildUrl(item.engine, item.q, t);
+      const link = document.createElement('a');
+      link.className = 'link';
+      link.href = url;
+      link.target = '_blank';
+      
+      const engineTag = document.createElement('div');
+      engineTag.className = 'engine-tag';
+      engineTag.textContent = item.engine.toUpperCase();
+      link.appendChild(engineTag);
+      
+      const queryText = document.createElement('div');
+      queryText.className = 'query-text';
+      queryText.textContent = item.q.replaceAll('{t}', t).replaceAll('{t_no_tld}', hostOrg(t));
+      link.appendChild(queryText);
+      
+      links.appendChild(link);
+      card.appendChild(links);
+      
+      const copyBtn = document.createElement('button');
+      copyBtn.className = 'copy';
+      copyBtn.textContent = 'Copy';
+      copyBtn.onclick = (e) => {
+        e.preventDefault();
+        const query = item.q.replaceAll('{t}', t).replaceAll('{t_no_tld}', hostOrg(t));
+        navigator.clipboard.writeText(query);
+        copyBtn.textContent = '✓';
+        setTimeout(() => copyBtn.textContent = 'Copy', 1000);
+      };
+      card.appendChild(copyBtn);
+      
+      $grid.appendChild(card);
+    });
+  }
+
+  function render(){
+    renderCategories();
+    renderCards();
+  }
+
+  // === Event Handlers ===
+  document.getElementById('normalize').onclick = () => {
+    $target.value = normHost($target.value);
+    render();
+  };
+
+  document.getElementById('openAll').onclick = () => {
+    const t = normHost($target.value);
+    DATA[activeCategory].items.forEach(item => {
+      const url = buildUrl(item.engine, item.q, t);
+      window.open(url, '_blank');
+    });
+  };
+
+  function exportQueries(){
+    const t = normHost($target.value);
+    const results = DATA.map(category => ({
+      category: category.label,
+      description: category.description,
+      items: category.items.map(item => ({
+        name: item.name,
+        engine: item.engine,
+        query: item.q.replaceAll('{t}', t).replaceAll('{t_no_tld}', hostOrg(t)),
+        url: buildUrl(item.engine, item.q, t)
+      }))
+    }));
+    
+    const blob = new Blob([JSON.stringify(results, null, 2)], {type: 'application/json'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `osint-dorks-${t}-${new Date().toISOString().split('T')[0]}.json`;
+    a.click();
+  }
+
+  // === Initialize ===
+  $target.addEventListener('input', render);
+  render();
+</script>
+</body>
+</html>
