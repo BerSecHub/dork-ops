@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Night Dork Ops — Modern OSINT Dork & Recon Toolkit (Google · GitHub · Shodan · FOFA · Censys · Wayback)</title>
-<meta name="description" content="150+ curated OSINT dorks across 30+ engines: Google, raw.githubusercontent.com, GitHub, grep.app, Shodan, FOFA, ZoomEye, Censys, urlscan, LeakIX, crt.sh, Wayback. Modern secret formats (OpenAI / Anthropic / Stripe / Slack / GitHub PAT), DevOps leaks (tfstate, kubeconfig, helm, ArgoCD), SaaS leaks (Notion, Airtable, Postman, Confluence), AI/LLM and MCP attack surface. Single HTML file. Zero deps. Authorized testing only.">
+<meta name="description" content="230+ modern OSINT dorks across 35+ engines for passive recon and bug bounty: Google, raw.githubusercontent.com, GitHub, grep.app, Shodan, FOFA, ZoomEye, Censys, urlscan, LeakIX, crt.sh, Wayback. Modern secret prefixes (sk-ant-, sk_live_, ghp_), DevOps leaks (tfstate, kubeconfig, helm, ArgoCD), SaaS (Notion, Airtable, Postman, Confluence), MCP / AI agent leaks. Single HTML file, zero deps. Authorized testing only.">
 <meta name="keywords" content="osint, google dorks, github dorks, raw.githubusercontent.com, shodan, fofa, censys, zoomeye, urlscan, leakix, crt.sh, wayback, recon, bug bounty, attack surface, asm, openai key leak, anthropic key, stripe leak, slack token, terraform state, kubeconfig, helm values, mcp server, llm leaks, ghdb, exploit-db, favicon hash, mmh3, subdomain takeover, dependency confusion">
 <meta name="author" content="Night Dork Ops">
 <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1">
@@ -14,21 +14,25 @@
 <link rel="canonical" href="https://dork-ops.pages.dev/">
 <meta property="og:type" content="website">
 <meta property="og:title" content="Night Dork Ops — Modern OSINT Dork Toolkit">
-<meta property="og:description" content="150+ modern dorks across 30+ engines (Google, raw.githubusercontent.com, GitHub, grep.app, Shodan, FOFA, ZoomEye, Censys, urlscan, LeakIX, crt.sh, Wayback). Built for bug bounty hunters and authorized red teams.">
+<meta property="og:description" content="230+ modern OSINT dorks across 35+ engines (Google, raw.githubusercontent.com, GitHub, grep.app, Shodan, FOFA, ZoomEye, Censys, urlscan, LeakIX, crt.sh, Wayback). Built for bug bounty hunters and authorized red teams.">
 <meta property="og:url" content="https://dork-ops.pages.dev/">
 <meta property="og:site_name" content="Night Dork Ops">
-<meta property="og:image" content="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 630'><defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'><stop offset='0' stop-color='%23051026'/><stop offset='1' stop-color='%2305060a'/></linearGradient></defs><rect width='1200' height='630' fill='url(%23g)'/><path d='M120 330l90 90L1080 200' stroke='%2300ffff' stroke-width='14' fill='none' stroke-linecap='round'/><text x='60' y='540' fill='%23cfe3ff' font-family='monospace' font-size='44' font-weight='700'>Night Dork Ops</text><text x='60' y='590' fill='%237c8899' font-family='monospace' font-size='22'>150+ dorks · 30+ engines · single HTML</text></svg>">
+<meta property="og:image" content="https://dorks.bersec.me/og-image.svg">
+<meta property="og:image:secure_url" content="https://dorks.bersec.me/og-image.svg">
+<meta property="og:image:type" content="image/svg+xml">
+<meta property="og:image:alt" content="Night Dork Ops — modern OSINT dork toolkit">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Night Dork Ops — Modern OSINT Dork Toolkit">
-<meta name="twitter:description" content="150+ modern OSINT dorks across 30+ engines. Single HTML file. Zero deps.">
+<meta name="twitter:description" content="230+ modern OSINT dorks across 35+ engines. Single HTML file. Zero deps.">
+<meta name="twitter:image" content="https://dorks.bersec.me/og-image.svg">
 <link rel="icon" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M2 12l6.5 6.5L22 5' stroke='%2300ffff' stroke-width='2.5' fill='none' stroke-linecap='round'/></svg>">
 <link rel="apple-touch-icon" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><rect width='24' height='24' fill='%2305060a'/><path d='M2 12l6.5 6.5L22 5' stroke='%2300ffff' stroke-width='2.5' fill='none' stroke-linecap='round'/></svg>">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data: https:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; connect-src 'self' https:; form-action 'self'; base-uri 'self'; frame-ancestors 'none'">
 <meta http-equiv="Referrer-Policy" content="no-referrer">
 <script type="application/ld+json">
-{"@context":"https://schema.org","@type":"WebApplication","name":"Night Dork Ops","applicationCategory":"SecurityApplication","operatingSystem":"Any","url":"https://dork-ops.pages.dev/","description":"150+ curated OSINT dorks across 30+ engines for passive reconnaissance, secrets discovery and attack-surface mapping.","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"featureList":["Google dorks","raw.githubusercontent.com dorks","GitHub code search","grep.app regex search","Shodan","FOFA","ZoomEye","Censys","urlscan","LeakIX","crt.sh","Wayback CDX","Severity tagging","Deep-link routing","Favicon hash lab","Permutation generator","Bug bounty scope importer","JS recon pack","OPSEC mode","Bookmarklet"]}
+{"@context":"https://schema.org","@type":"WebApplication","name":"Night Dork Ops","applicationCategory":"SecurityApplication","operatingSystem":"Any","url":"https://dorks.bersec.me/","description":"230+ curated OSINT dorks across 35+ engines for passive reconnaissance, secrets discovery and attack-surface mapping.","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"featureList":["Google dorks","raw.githubusercontent.com dorks","GitHub code search","grep.app regex search","Shodan","FOFA","ZoomEye","Censys","urlscan","LeakIX","crt.sh","Wayback CDX","Severity tagging","Deep-link routing","Favicon hash lab","Permutation generator","Bug bounty scope importer","JS recon pack","Wayback param wordlist","OPSEC mode","Bookmarklet","Recon recipes","GHDB integration"]}
 </script>
 <style>
 :root{
@@ -336,6 +340,8 @@ a.btn#bookmarklet:hover{text-decoration:none}
       <option value="opsecSafe">OPSEC-safe</option>
     </select>
     <label class="opsec" title="Hides logging engines (Shodan, FOFA, Censys, urlscan), uses Wayback proxy where possible"><input type="checkbox" id="opsec"> OPSEC mode</label>
+    <span id="visibleCount" class="kbd-hint" style="margin-left:auto" aria-live="polite"></span>
+    <button class="btn ghost" id="recipeClear" title="Clear active recipe" style="display:none">✕ Recipe</button>
     <button class="btn ghost" id="helpBtn" title="Keyboard shortcuts &amp; engine legend"><span class="kbd-hint">?</span></button>
   </div>
 
@@ -357,12 +363,16 @@ a.btn#bookmarklet:hover{text-decoration:none}
 
   <section class="drawer" id="drawer-favicon">
     <h3>🧩 Favicon Hash Lab — Shodan / FOFA / ZoomEye pivot</h3>
-    <p class="help">Compute MurmurHash3 (Shodan) + MD5 (Censys) of a favicon to map every host serving the same icon. Classic top-tier pivot.</p>
+    <p class="help">Compute MurmurHash3 (Shodan) + MD5 (Censys) of a favicon. Two modes: <b>URL</b> (fetch — needs CORS-permissive origin) or <b>file upload</b> (always works, save the favicon locally first).</p>
     <div class="row">
       <input id="favUrl" type="text" placeholder="favicon URL (https://example.com/favicon.ico)">
-      <button class="btn" id="favCompute">Compute</button>
+      <button class="btn" id="favCompute">Compute from URL</button>
     </div>
-    <div class="out" id="favOut">Drop a favicon URL above. Hash and pivot links will appear here.</div>
+    <div class="row">
+      <input id="favFile" type="file" accept=".ico,.png,.jpg,.jpeg,.svg,image/*">
+      <span class="kbd-hint">file upload bypasses CORS</span>
+    </div>
+    <div class="out" id="favOut">Drop a favicon URL above OR select a local file. Hash and pivot links will appear here.</div>
   </section>
 
   <section class="drawer" id="drawer-asn">
@@ -384,9 +394,13 @@ a.btn#bookmarklet:hover{text-decoration:none}
 
   <section class="drawer" id="drawer-scope">
     <h3>📜 Bug Bounty Scope Importer</h3>
-    <p class="help">Paste H1 structured_scope JSON, Bugcrowd asset list, or one domain per line. Out-of-scope items are skipped.</p>
+    <p class="help">Paste H1 <code>structured_scope</code> JSON, Bugcrowd asset list, or one domain per line. Out-of-scope items are skipped. Click a chip to set as target. <b>"Run on all"</b> opens the current category × every target (max 50 tabs, requires confirm).</p>
     <div class="row"><textarea id="scopeIn" placeholder='{"data":[{"asset_identifier":"*.example.com","eligible_for_submission":true}]}  — or just one domain per line'></textarea></div>
-    <div class="row"><button class="btn" id="scopeParse">Parse</button><button class="btn ghost" id="scopeClear">Clear</button></div>
+    <div class="row">
+      <button class="btn" id="scopeParse">Parse</button>
+      <button class="btn warn" id="scopeRunAll" title="For each parsed target × every visible item → open in tab (capped at 50)">🚀 Run on all (× current view)</button>
+      <button class="btn ghost" id="scopeClear">Clear</button>
+    </div>
     <div class="chips" id="scopeChips"></div>
   </section>
 
@@ -1024,6 +1038,7 @@ let state = {
   filter: "",
   sevs: new Set(["info","low","med","high","crit"]),
   opsec: false,
+  recipe: null,       // active recipe key (string) or null
   history: []
 };
 function loadState(){
@@ -1085,12 +1100,17 @@ function readHash(){
     const t = normHost(params.get("target")||"");
     if (t) $("#target").value = t;
   }
+  if (params.has("recipe")){
+    const rk = params.get("recipe");
+    if (RECIPES[rk]) state.recipe = rk;
+  }
 }
 function writeHash(){
   const params = new URLSearchParams();
   params.set("cat", state.cat === -1 ? "all" : (DATA[state.cat]?.id || "raw-gh"));
   if (state.filter) params.set("filter", state.filter);
   params.set("sev", [...state.sevs].join(","));
+  if (state.recipe) params.set("recipe", state.recipe);
   history.replaceState(null, "", "#" + params.toString());
 }
 
@@ -1114,7 +1134,7 @@ function totalCounts(){
 }
 function renderStats(){
   const { dorks, cats, engines } = totalCounts();
-  $stats.innerHTML = `<b>${dorks}</b> dorks · <b>${cats}</b> categories · <b>${engines}</b> engines · <b>${TOP_PATTERNS.length}</b> top patterns`;
+  $stats.innerHTML = `<b>${dorks}</b> dorks · <b>${cats}</b> categories · <b>${engines}</b> engines · <b>${TOP_PATTERNS.length}</b> top patterns · <b>${Object.keys(RECIPES).length}</b> recipes · <b>${GHDB_PICKS.length}</b> GHDB picks · <b>${CROWN.length}</b> crown jewels`;
 }
 function renderCategories(){
   $catNav.innerHTML = "";
@@ -1170,6 +1190,20 @@ function itemMatchesOpsec(it){
   const engines = [it.engine, ...((it.links||[]).map(l=>l.engine))];
   return engines.every(e => ENGINES[e] && ENGINES[e].opsec !== false);
 }
+function itemMatchesRecipe(it, catId){
+  if (!state.recipe) return true;
+  const r = RECIPES[state.recipe]; if (!r) return true;
+  if (r.onlyCats && !r.onlyCats.includes(catId)) return false;
+  if (r.filterTags){
+    const tags = it.tags || [];
+    if (!r.filterTags.some(t => tags.includes(t))) return false;
+  }
+  if (r.onlyEngines){
+    const engines = [it.engine, ...((it.links||[]).map(l=>l.engine))];
+    if (!engines.every(e => r.onlyEngines.includes(e))) return false;
+  }
+  return true;
+}
 function visibleCategories(){
   if (state.cat === -1) return DATA.map((c,i)=>({c,i}));
   return [{c:DATA[state.cat], i:state.cat}];
@@ -1196,6 +1230,7 @@ function renderCards(){
 
     let catCount = 0;
     c.items.forEach(it => {
+      if (!itemMatchesRecipe(it, c.id)) return;
       if (!itemMatchesFilter(it, state.filter)) return;
       if (!itemMatchesSev(it)) return;
       if (!itemMatchesOpsec(it)) return;
@@ -1214,6 +1249,15 @@ function renderCards(){
     empty.textContent = "No dorks match the current filter.";
     $grid.appendChild(empty);
   }
+  // Update visible count + recipe-clear button visibility
+  const allTotal = totalCounts().dorks;
+  const vc = $("#visibleCount");
+  if (vc){
+    const recipeNote = state.recipe ? ` · 🍱 ${RECIPES[state.recipe]?.label || state.recipe}` : "";
+    vc.textContent = `showing ${total}/${allTotal}${recipeNote}`;
+  }
+  const rc = $("#recipeClear");
+  if (rc) rc.style.display = state.recipe ? "" : "none";
 }
 function renderCard(it, t){
   const card = document.createElement("article");
@@ -1299,7 +1343,7 @@ function visibleItems(){
   const out = [];
   visibleCategories().forEach(({c}) => {
     c.items.forEach(it => {
-      if (itemMatchesFilter(it, state.filter) && itemMatchesSev(it) && itemMatchesOpsec(it)){
+      if (itemMatchesRecipe(it, c.id) && itemMatchesFilter(it, state.filter) && itemMatchesSev(it) && itemMatchesOpsec(it)){
         out.push({it, t});
       }
     });
@@ -1442,30 +1486,41 @@ function setupDrawers(){
     };
   });
 
-  // Favicon Hash
+  // Favicon Hash — shared rendering
+  const favShow = async (buf, source) => {
+    const mh3 = shodanFaviconHash(buf);
+    const md5 = await md5Hex(buf);
+    const lines = [
+      `Source: ${source} (${buf.byteLength} bytes)`,
+      ``,
+      `MMH3 (Shodan):  ${mh3}`,
+      `MD5  (Censys):  ${md5}`,
+      ``,
+      `Pivot links:`,
+      `Shodan:  ${ENGINES.sh.url("http.favicon.hash:"+mh3)}`,
+      `FOFA:    ${ENGINES.fo.url('icon_hash="'+mh3+'"')}`,
+      `ZoomEye: ${ENGINES.ze.url('iconhash:"'+mh3+'"')}`,
+      `Censys:  ${ENGINES.cen.url("services.http.response.favicons.md5_hash: "+md5)}`,
+    ].join("\n");
+    $("#favOut").textContent = lines;
+  };
   $("#favCompute").onclick = async () => {
     const url = ($("#favUrl").value||"").trim();
-    if (!url){ $("#favOut").textContent = "Enter favicon URL first."; return; }
+    if (!url){ $("#favOut").textContent = "Enter favicon URL or pick a file below."; return; }
     $("#favOut").textContent = "Fetching favicon…";
     try {
       const r = await fetch(url, {mode:"cors"});
       const buf = await r.arrayBuffer();
-      const mh3 = shodanFaviconHash(buf);
-      const md5 = await md5Hex(buf);
-      const lines = [
-        `MMH3 (Shodan):  ${mh3}`,
-        `MD5  (Censys):  ${md5}`,
-        ``,
-        `Pivot links:`,
-        `Shodan:  ${ENGINES.sh.url("http.favicon.hash:"+mh3)}`,
-        `FOFA:    ${ENGINES.fo.url('icon_hash="'+mh3+'"')}`,
-        `ZoomEye: ${ENGINES.ze.url('iconhash:"'+mh3+'"')}`,
-        `Censys:  ${ENGINES.cen.url("services.http.response.favicons.md5_hash: "+md5)}`,
-      ].join("\n");
-      $("#favOut").textContent = lines;
+      await favShow(buf, url);
     } catch(e){
-      $("#favOut").textContent = "Fetch failed: " + e.message + "\n\nTip: this needs CORS-enabled favicon. Many sites block cross-origin fetch — open the favicon URL in a tab and the response should still let you see the hash via DevTools, or self-host the file and pass a localhost URL.";
+      $("#favOut").textContent = "Fetch failed: " + e.message + "\n\nMost prod favicons block cross-origin fetch. Workaround: download the favicon and use the file picker below.";
     }
+  };
+  $("#favFile").onchange = async (e) => {
+    const f = e.target.files && e.target.files[0]; if (!f) return;
+    $("#favOut").textContent = `Reading ${f.name}…`;
+    const buf = await f.arrayBuffer();
+    await favShow(buf, f.name);
   };
 
   // ASN Lab
@@ -1499,18 +1554,26 @@ function setupDrawers(){
     const org = hostOrg(t);
     const tld = t.slice(org.length+1);
     const ENV = ["dev","staging","prod","qa","uat","internal","corp","api","admin","test","stage","int","beta","alpha","sandbox"];
-    const TLDS = ["io","app","dev","cloud","ai","sh","co","net","org","xyz","tech","tools"];
+    const TLDS = ["io","app","dev","cloud","ai","sh","co","net","org","xyz","tech","tools","app","run","fyi","io"];
+    const TLD_TYPOS = {com:["con","cm","xom","ney","cmo","om","co"], net:["nte","ent","et","new","mt"], org:["ogr","rg","or","irg"], io:["o","i0","oi","im"]};
     const set = new Set();
     ENV.forEach(p => { set.add(`${org}-${p}.${tld}`); set.add(`${p}-${org}.${tld}`); set.add(`${org}.${p}.${tld}`); });
     TLDS.forEach(t2 => { if (t2 !== tld) set.add(`${org}.${t2}`); });
-    // Typos
+    // TLD typosquats
+    (TLD_TYPOS[tld] || []).forEach(tt => set.add(`${org}.${tt}`));
+    // Org typos
     const typos = (org) => {
-      const subs = {a:"e",e:"a",i:"1",l:"1",o:"0",s:"5",rn:"m",cl:"d"};
+      const subs = {a:"e",e:"a",i:"1",l:"1",o:"0",s:"5",rn:"m",cl:"d",vv:"w"};
       const out = new Set();
       Object.entries(subs).forEach(([k,v])=>{ if (org.includes(k)) out.add(org.replaceAll(k,v)+"."+tld); });
       // double letter
       for (let i=0;i<org.length;i++) out.add(org.slice(0,i)+org[i]+org.slice(i)+"."+tld);
-      return [...out].slice(0,8);
+      // adjacent swap
+      for (let i=0;i<org.length-1;i++){
+        const sw = org.slice(0,i) + org[i+1] + org[i] + org.slice(i+2);
+        if (sw !== org) out.add(sw+"."+tld);
+      }
+      return [...out].slice(0,12);
     };
     typos(org).forEach(x => set.add(x));
     const list = [...set].sort();
@@ -1556,6 +1619,33 @@ function setupDrawers(){
     });
   };
   $("#scopeClear").onclick = () => { $("#scopeIn").value=""; $("#scopeChips").innerHTML=""; };
+
+  $("#scopeRunAll").onclick = () => {
+    const targets = [...$$("#scopeChips .chip")].map(c => c.textContent.trim()).filter(Boolean);
+    if (!targets.length){ alert("No parsed targets. Click 'Parse' first."); return; }
+    // Visible items use current target, but we need item templates; iterate over visibleCategories items
+    const items = [];
+    visibleCategories().forEach(({c}) => {
+      c.items.forEach(it => {
+        if (itemMatchesRecipe(it, c.id) && itemMatchesFilter(it, state.filter) && itemMatchesSev(it) && itemMatchesOpsec(it)) items.push(it);
+      });
+    });
+    if (!items.length){ alert("No visible items in current view to run."); return; }
+    const total = targets.length * items.length;
+    const cap = 50;
+    const willOpen = Math.min(total, cap);
+    const msg = `Open ${willOpen} tabs (${targets.length} targets × ${items.length} items${total>cap ? `, capped at ${cap}` : ""})?`;
+    if (!confirm(msg)) return;
+    let n = 0;
+    outer: for (const t of targets){
+      for (const it of items){
+        if (n >= cap) break outer;
+        const url = buildUrl(it.engine, it.q, t);
+        setTimeout(() => window.open(url, "_blank", "noopener,noreferrer"), n*200);
+        n++;
+      }
+    }
+  };
 
   // JS Recon
   $("#jsFetch").onclick = async () => {
@@ -1668,31 +1758,34 @@ function setupDrawers(){
  * Recipes
  * ============================================================ */
 function applyRecipe(name){
-  const r = RECIPES[name]; if (!r) return;
-  if (r.onlyCats){
-    state.cat = -1;
-    state.filter = "";
-  } else if (r.filterTags){
-    state.cat = -1;
-    state.filter = r.filterTags.join(" ");
-  }
-  if (r.onlyEngines){
-    state.cat = -1; state.filter = "";
-  }
+  const r = RECIPES[name];
+  state.recipe = (r && name) ? name : null;
+  state.cat = -1;
+  state.filter = "";
+  state.sevs = new Set(["info","low","med","high","crit"]);
+  $$("#sevToggle .sev-pill").forEach(p => p.classList.add("on"));
+  if ($filter) $filter.value = "";
   saveState(); writeHash(); render();
-  if (r.extraDrawers){
+  if (r && r.extraDrawers){
     r.extraDrawers.forEach(d => {
       const dt = $$('.drawer-toggle .dt').find(b => b.dataset.drawer===d);
-      if (dt) dt.click();
+      const drw = document.getElementById('drawer-'+d);
+      if (dt && drw && !drw.classList.contains("open")) dt.click();
     });
   }
+}
+function clearRecipe(){
+  state.recipe = null;
+  saveState(); writeHash(); render();
+  const sel = $("#recipe"); if (sel) sel.value = "";
 }
 
 /* ============================================================
  * Bookmarklet
  * ============================================================ */
 function makeBookmarklet(){
-  const code = `(function(){var h=location.hostname;window.open('https://dork-ops.pages.dev/#cat=raw-gh&target='+encodeURIComponent(h),'_blank');})();`;
+  const origin = location.origin || "https://dorks.bersec.me";
+  const code = `(function(){var h=location.hostname;window.open('${origin}/#cat=raw-gh&target='+encodeURIComponent(h),'_blank');})();`;
   return "javascript:" + code;
 }
 
@@ -1737,6 +1830,9 @@ function wire(){
 
   // Recipe
   $("#recipe").onchange = e => { if (e.target.value) { applyRecipe(e.target.value); e.target.value=""; } };
+  $("#recipeClear").onclick = clearRecipe;
+  // Reflect persisted recipe in UI on load
+  if (state.recipe && RECIPES[state.recipe]){ /* render() will show badge + button via visibleCount */ }
 
   // Target
   $target.value = $target.value || "example.com";
@@ -1747,9 +1843,13 @@ function wire(){
   $("#normalize").onclick = () => { $target.value = normHost($target.value); pushHistory($target.value); render(); };
   $("#openCat").onclick = () => openInTabs(visibleItems());
   $("#crownJewels").onclick = () => {
-    if (!confirm("Open the 10 highest-ROI dorks in tabs?")) return;
     const t = currentTarget();
-    CROWN.forEach((c,i) => setTimeout(()=>window.open(buildUrl(c.engine, c.q, t), "_blank", "noopener,noreferrer"), i*250));
+    const list = CROWN.filter(c => !state.opsec || (ENGINES[c.engine] && ENGINES[c.engine].opsec !== false));
+    if (!list.length){ alert("All Crown Jewels engines are excluded by OPSEC mode. Disable OPSEC to use this batch."); return; }
+    const skipped = CROWN.length - list.length;
+    const msg = `Open ${list.length} highest-ROI dorks in tabs?` + (skipped ? ` (${skipped} skipped due to OPSEC)` : "");
+    if (!confirm(msg)) return;
+    list.forEach((c,i) => setTimeout(()=>window.open(buildUrl(c.engine, c.q, t), "_blank", "noopener,noreferrer"), i*250));
   };
   $("#exportJson").onclick = exportJson;
   $("#exportMd").onclick   = exportMd;
