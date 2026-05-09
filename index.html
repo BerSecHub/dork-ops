@@ -1,405 +1,1695 @@
 <!DOCTYPE html>
-<html lang="pl">
+<html lang="en">
 <head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Night Dork Ops</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Night Dork Ops — Modern OSINT Dork & Recon Toolkit (Google · GitHub · Shodan · FOFA · Censys · Wayback)</title>
+<meta name="description" content="150+ curated OSINT dorks across 30+ engines: Google, raw.githubusercontent.com, GitHub, grep.app, Shodan, FOFA, ZoomEye, Censys, urlscan, LeakIX, crt.sh, Wayback. Modern secret formats (OpenAI / Anthropic / Stripe / Slack / GitHub PAT), DevOps leaks (tfstate, kubeconfig, helm, ArgoCD), SaaS leaks (Notion, Airtable, Postman, Confluence), AI/LLM and MCP attack surface. Single HTML file. Zero deps. Authorized testing only.">
+<meta name="keywords" content="osint, google dorks, github dorks, raw.githubusercontent.com, shodan, fofa, censys, zoomeye, urlscan, leakix, crt.sh, wayback, recon, bug bounty, attack surface, asm, openai key leak, anthropic key, stripe leak, slack token, terraform state, kubeconfig, helm values, mcp server, llm leaks, ghdb, exploit-db, favicon hash, mmh3, subdomain takeover, dependency confusion">
+<meta name="author" content="Night Dork Ops">
+<meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1">
+<meta name="theme-color" content="#05060a" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#f5f7fb" media="(prefers-color-scheme: light)">
+<meta name="color-scheme" content="dark light">
+<link rel="canonical" href="https://dork-ops.pages.dev/">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Night Dork Ops — Modern OSINT Dork Toolkit">
+<meta property="og:description" content="150+ modern dorks across 30+ engines (Google, raw.githubusercontent.com, GitHub, grep.app, Shodan, FOFA, ZoomEye, Censys, urlscan, LeakIX, crt.sh, Wayback). Built for bug bounty hunters and authorized red teams.">
+<meta property="og:url" content="https://dork-ops.pages.dev/">
+<meta property="og:site_name" content="Night Dork Ops">
+<meta property="og:image" content="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 630'><defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'><stop offset='0' stop-color='%23051026'/><stop offset='1' stop-color='%2305060a'/></linearGradient></defs><rect width='1200' height='630' fill='url(%23g)'/><path d='M120 330l90 90L1080 200' stroke='%2300ffff' stroke-width='14' fill='none' stroke-linecap='round'/><text x='60' y='540' fill='%23cfe3ff' font-family='monospace' font-size='44' font-weight='700'>Night Dork Ops</text><text x='60' y='590' fill='%237c8899' font-family='monospace' font-size='22'>150+ dorks · 30+ engines · single HTML</text></svg>">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Night Dork Ops — Modern OSINT Dork Toolkit">
+<meta name="twitter:description" content="150+ modern OSINT dorks across 30+ engines. Single HTML file. Zero deps.">
+<link rel="icon" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M2 12l6.5 6.5L22 5' stroke='%2300ffff' stroke-width='2.5' fill='none' stroke-linecap='round'/></svg>">
+<link rel="apple-touch-icon" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><rect width='24' height='24' fill='%2305060a'/><path d='M2 12l6.5 6.5L22 5' stroke='%2300ffff' stroke-width='2.5' fill='none' stroke-linecap='round'/></svg>">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data: https:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; connect-src 'self' https://web.archive.org https://crt.sh; form-action 'self'; base-uri 'self'; frame-ancestors 'none'">
+<meta http-equiv="Referrer-Policy" content="no-referrer">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"WebApplication","name":"Night Dork Ops","applicationCategory":"SecurityApplication","operatingSystem":"Any","url":"https://dork-ops.pages.dev/","description":"150+ curated OSINT dorks across 30+ engines for passive reconnaissance, secrets discovery and attack-surface mapping.","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"featureList":["Google dorks","raw.githubusercontent.com dorks","GitHub code search","grep.app regex search","Shodan","FOFA","ZoomEye","Censys","urlscan","LeakIX","crt.sh","Wayback CDX","Severity tagging","Deep-link routing","Favicon hash lab","Permutation generator","Bug bounty scope importer","JS recon pack","OPSEC mode","Bookmarklet"]}
+</script>
 <style>
-  :root{
-    --bg:#05060a; --panel:#0c0f17; --ink:#e6f1ff; --muted:#7c8899;
-    --acc:#08f; --acc2:#0ff; --ok:#77ff99; --warn:#ffdb6e;
-    --grid: clamp(280px, 35vw, 450px);
-  }
-  *{box-sizing:border-box}
-  html,body{height:100%}
-  body{
-    margin:0; font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-    background:radial-gradient(80% 110% at 100% 0%, #0b1020 0%, #05060a 55%) fixed;
-    color:var(--ink); font-size:13px;
-  }
-  header{
-    position:sticky; top:0; backdrop-filter: blur(12px);
-    background:linear-gradient(180deg, #05060af8, #05060a80);
-    z-index:100; padding:20px 16px 12px; border-bottom:1px solid #0e1526;
-  }
-  .brand{display:flex; gap:14px; align-items:center; margin-bottom:16px}
-  .brand h1{margin:0; font-size:20px; letter-spacing:1.2px; color:#cfe3ff; font-weight:600}
-  .sub{color:var(--muted); font-size:13px; margin-top:4px}
-  .controls{display:flex; gap:12px; align-items:center; margin-bottom:16px}
-  input[type=text]{
-    flex:1; min-width:300px; padding:14px 18px; border:1px solid #0e2344;
-    background:#050912; color:var(--ink); border-radius:8px; outline:none;
-    box-shadow:inset 0 1px 3px rgba(0,0,0,0.3); font-size:14px;
-    transition:border-color 0.2s ease;
-  }
-  input[type=text]:focus{border-color:#2a6ddf; box-shadow:inset 0 1px 3px rgba(0,0,0,0.3), 0 0 0 2px #07214a}
-  button{
-    background:linear-gradient(180deg, #0a1730, #091226);
-    border:1px solid #183a70; color:#ccedff; padding:12px 18px; cursor:pointer;
-    border-radius:8px; text-transform:uppercase; letter-spacing:.7px; font-weight:600;
-    transition:all 0.2s ease; font-size:12px;
-  }
-  button:hover{border-color:#2a6ddf; box-shadow:0 2px 8px rgba(42,109,223,0.2)}
-  button:active{transform:translateY(1px)}
-  
-  /* Category Navigation - Fixed Grid */
-  .category-nav{
-    display:grid; 
-    grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); 
-    gap:8px; 
-    margin-bottom:8px;
-  }
-  .cat-btn{
-    padding:10px 14px; border:1px solid #0e2344; background:#050912;
-    color:#9fb7ff; border-radius:6px; cursor:pointer; transition:all 0.2s ease;
-    text-align:center; font-size:11px; text-transform:uppercase; letter-spacing:0.5px;
-    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
-  }
-  .cat-btn:hover{border-color:#2a6ddf; background:#081226}
-  .cat-btn.active{
-    border-color:#3ea1ff; color:#fff; background:#0a2d66;
-    box-shadow:0 2px 8px rgba(62,161,255,0.3);
-  }
-  
-  main{padding:16px; padding-bottom:80px}
-  .grid{display:grid; grid-template-columns:repeat(auto-fill, minmax(var(--grid),1fr)); gap:14px}
-  .card{
-    background:linear-gradient(180deg, #0a0f1b, #0a0e19); 
-    border:1px solid #0e1a33; border-radius:12px;
-    padding:16px; position:relative; overflow:hidden;
-    transition:all 0.2s ease;
-  }
-  .card:hover{border-color:#1c3868; transform:translateY(-2px); box-shadow:0 8px 24px rgba(0,0,0,0.4)}
-  .card h3{margin:0 0 8px 0; font-size:15px; color:#d8e9ff; font-weight:600}
-  .card p{margin:0 0 12px 0; color:var(--muted); font-size:12px; line-height:1.5}
-  .links{display:flex; flex-direction:column; gap:10px}
-  .link{
-    display:block; padding:12px 14px; border:1px solid #16335f; border-radius:8px;
-    text-decoration:none; color:#cfe3ff; transition:all 0.2s ease;
-    background:rgba(5,9,18,0.6);
-  }
-  .link:hover{
-    background:#081226; border-color:#2a6ddf; 
-    transform:translateY(-1px); box-shadow:0 4px 12px rgba(42,109,223,0.2);
-  }
-  .query-text{
-    font-family:inherit; font-size:11px; color:#9fb7ff; 
-    word-break:break-all; line-height:1.4; margin-top:6px;
-  }
-  .engine-tag{
-    display:inline-block; background:#0a2d66; color:#cfe3ff; 
-    padding:2px 8px; border-radius:4px; font-size:10px; 
-    text-transform:uppercase; letter-spacing:0.5px; margin-bottom:6px;
-  }
-  
-  .copy{
-    position:absolute; top:12px; right:12px; 
-    background:rgba(5,9,18,0.8); border:1px solid #16335f; 
-    color:#9fb7ff; padding:6px 10px; border-radius:6px; 
-    font-size:10px; cursor:pointer; transition:all 0.2s ease;
-  }
-  .copy:hover{border-color:#2a6ddf; color:#cfe3ff}
-  
-  footer{
-    position:fixed; bottom:0; left:0; right:0; padding:12px 16px; 
-    display:flex; gap:12px; align-items:center; justify-content:space-between;
-    background:linear-gradient(0deg, #05060af8, #05060a00); 
-    border-top:1px solid #0e1526; backdrop-filter:blur(8px);
-  }
-  .footer-left{display:flex; gap:12px; align-items:center}
-  .export-btn{
-    background:rgba(8,255,255,0.1); border:1px solid rgba(8,255,255,0.3);
-    color:#0ff; padding:8px 14px; border-radius:6px; font-size:11px;
-  }
-  .export-btn:hover{background:rgba(8,255,255,0.2); border-color:#0ff}
-  .hint{color:#7c8899; font-size:11px}
-  
-  /* Status indicator */
-  .status{
-    padding:6px 12px; background:rgba(119,255,153,0.1); 
-    border:1px solid rgba(119,255,153,0.3); color:#77ff99; 
-    border-radius:6px; font-size:11px;
-  }
+:root{
+  --bg:#05060a; --panel:#0c0f17; --panel2:#0a0f1b; --ink:#e6f1ff; --muted:#7c8899; --line:#0e1a33;
+  --acc:#2a6ddf; --acc2:#0ff; --ok:#77ff99; --warn:#ffdb6e; --err:#ff5c7a;
+  --sev-info:#5a6b85; --sev-low:#3ea1ff; --sev-med:#ffdb6e; --sev-high:#ff9a3e; --sev-crit:#ff5c7a;
+  --grid:clamp(280px,30vw,420px);
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
+}
+@media (prefers-color-scheme: light){
+  :root{--bg:#f5f7fb;--panel:#fff;--panel2:#fff;--ink:#0b1226;--muted:#5a6b85;--line:#dbe4f3}
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0;font-family:var(--mono);font-size:13px;color:var(--ink);
+  background:radial-gradient(80% 110% at 100% 0%,#0b1020 0%,var(--bg) 55%) fixed;
+  line-height:1.45;
+}
+a{color:#9fc3ff;text-decoration:none}
+a:hover{color:#cfe3ff;text-decoration:underline}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer;background:none;border:none}
+
+/* Header */
+header{
+  position:sticky;top:0;z-index:100;padding:14px 16px 10px;
+  background:linear-gradient(180deg,#05060af8,#05060ad0);
+  backdrop-filter:blur(12px);border-bottom:1px solid var(--line);
+}
+.brand{display:flex;gap:12px;align-items:center;margin-bottom:10px;flex-wrap:wrap}
+.brand .logo{flex-shrink:0}
+.brand h1{margin:0;font-size:18px;letter-spacing:1.1px;color:#cfe3ff;font-weight:700}
+.brand .sub{color:var(--muted);font-size:12px;margin-top:2px}
+.brand .stats{margin-left:auto;color:var(--muted);font-size:11px;text-align:right;line-height:1.55}
+.brand .stats b{color:#cfe3ff;font-weight:600}
+
+.controls{display:grid;grid-template-columns:2fr 1.2fr auto auto auto;gap:8px;align-items:center;margin-bottom:10px}
+@media (max-width:720px){.controls{grid-template-columns:1fr 1fr}}
+.controls input[type=text]{
+  padding:11px 14px;border:1px solid #0e2344;background:#050912;color:var(--ink);
+  border-radius:7px;outline:none;font-size:13px;width:100%;
+  box-shadow:inset 0 1px 2px rgba(0,0,0,.3);
+}
+.controls input[type=text]:focus{border-color:var(--acc);box-shadow:inset 0 1px 2px rgba(0,0,0,.3),0 0 0 2px rgba(42,109,223,.4)}
+.btn{
+  padding:10px 14px;border:1px solid #183a70;color:#ccedff;border-radius:7px;
+  background:linear-gradient(180deg,#0a1730,#091226);text-transform:uppercase;
+  font-size:11px;font-weight:700;letter-spacing:.5px;white-space:nowrap;
+  transition:all .15s;
+}
+.btn:hover{border-color:var(--acc);box-shadow:0 2px 8px rgba(42,109,223,.25)}
+.btn.warn{border-color:#7a3a3a;color:#ffc6c6;background:linear-gradient(180deg,#1a0a0e,#100509)}
+.btn.warn:hover{border-color:var(--err);box-shadow:0 2px 8px rgba(255,92,122,.3)}
+.btn.ok{border-color:#3a7a44;color:#caffd2;background:linear-gradient(180deg,#0a1a0e,#051009)}
+.btn.ok:hover{border-color:var(--ok)}
+.btn.ghost{background:transparent;color:var(--muted)}
+.btn.ghost:hover{color:var(--ink)}
+
+/* Toolbar row 2: filter + sev + recipe + opsec */
+.toolbar{display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap}
+.toolbar input[type=text]{flex:1;min-width:220px;padding:9px 12px;border:1px solid #0e2344;background:#050912;color:var(--ink);border-radius:7px;outline:none;font-size:12px}
+.sev-toggle{display:flex;gap:4px;align-items:center}
+.sev-toggle .sev-pill{
+  padding:4px 8px;border:1px solid var(--line);border-radius:5px;font-size:10px;
+  text-transform:uppercase;letter-spacing:.5px;display:flex;align-items:center;gap:5px;
+  cursor:pointer;color:var(--muted);background:#050912;transition:all .15s;
+}
+.sev-toggle .sev-pill .dot{width:7px;height:7px;border-radius:50%}
+.sev-toggle .sev-pill.on{color:var(--ink);border-color:var(--acc)}
+.sev-pill[data-sev=info] .dot{background:var(--sev-info)}
+.sev-pill[data-sev=low] .dot{background:var(--sev-low)}
+.sev-pill[data-sev=med] .dot{background:var(--sev-med)}
+.sev-pill[data-sev=high] .dot{background:var(--sev-high)}
+.sev-pill[data-sev=crit] .dot{background:var(--sev-crit)}
+select.recipe{padding:9px 10px;border:1px solid #0e2344;background:#050912;color:var(--ink);border-radius:7px;font-size:12px}
+.opsec{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted);user-select:none;cursor:pointer}
+.opsec input{accent-color:var(--err)}
+body.opsec-on{--bg:#0a0306}
+body.opsec-on header{box-shadow:inset 0 -2px 0 rgba(255,92,122,.4)}
+
+/* Category nav */
+.category-nav{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:6px;margin-bottom:6px}
+.cat-btn{
+  padding:9px 10px;border:1px solid var(--line);background:#050912;color:#9fb7ff;
+  border-radius:6px;text-align:center;font-size:10.5px;text-transform:uppercase;
+  letter-spacing:.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  display:flex;align-items:center;justify-content:center;gap:6px;
+  transition:all .15s;
+}
+.cat-btn:hover{border-color:var(--acc);background:#081226}
+.cat-btn.active{border-color:#3ea1ff;color:#fff;background:#0a2d66;box-shadow:0 2px 10px rgba(62,161,255,.25)}
+.cat-btn .icon{font-size:13px}
+.cat-btn .count{color:var(--muted);font-size:9.5px;font-weight:600}
+
+/* Top secret patterns rail */
+.patterns{
+  display:flex;gap:6px;align-items:center;overflow-x:auto;
+  margin-top:8px;padding-bottom:4px;
+  scrollbar-width:thin;scrollbar-color:#16335f transparent;
+}
+.patterns .label{color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.5px;white-space:nowrap}
+.patterns .pat{
+  padding:5px 9px;border:1px solid #16335f;border-radius:5px;font-size:11px;
+  color:#9fc3ff;background:rgba(5,9,18,.6);white-space:nowrap;cursor:pointer;
+  font-family:var(--mono);transition:all .15s;
+}
+.patterns .pat:hover{border-color:var(--acc2);color:#cfffff;box-shadow:0 0 8px rgba(0,255,255,.2)}
+
+/* Creative modules drawer */
+.drawer-toggle{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.drawer-toggle .dt{
+  padding:6px 10px;border:1px solid var(--line);background:#050912;color:#9fb7ff;
+  border-radius:5px;font-size:10.5px;text-transform:uppercase;letter-spacing:.5px;cursor:pointer;
+}
+.drawer-toggle .dt:hover{border-color:var(--acc);color:#cfe3ff}
+.drawer-toggle .dt.on{border-color:var(--acc2);color:#cfffff;background:#031a26}
+.drawer{display:none;margin-top:8px;padding:12px;border:1px solid var(--line);background:var(--panel);border-radius:8px}
+.drawer.open{display:block}
+.drawer h3{margin:0 0 8px;font-size:12px;color:#cfe3ff;text-transform:uppercase;letter-spacing:.5px}
+.drawer p.help{color:var(--muted);font-size:11px;margin:0 0 10px}
+.drawer .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.drawer .row input[type=text],.drawer .row textarea{
+  padding:8px 10px;border:1px solid #0e2344;background:#030711;color:var(--ink);
+  border-radius:6px;font-size:12px;font-family:var(--mono);outline:none;flex:1;min-width:240px;
+}
+.drawer .row textarea{min-height:80px;resize:vertical}
+.drawer .out{
+  margin-top:10px;padding:10px;background:#030711;border:1px solid var(--line);border-radius:6px;
+  font-size:11px;color:#cfe3ff;max-height:240px;overflow:auto;white-space:pre-wrap;word-break:break-all;
+}
+.drawer .chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px}
+.drawer .chip{
+  padding:4px 8px;border:1px solid #16335f;border-radius:4px;background:rgba(5,9,18,.6);
+  color:#cfe3ff;font-size:11px;cursor:pointer;font-family:var(--mono);
+}
+.drawer .chip:hover{border-color:var(--acc2);color:#cfffff}
+
+/* Main grid */
+main{padding:14px 16px 96px}
+.section-title{margin:18px 0 10px;font-size:12px;color:#9fb7ff;text-transform:uppercase;letter-spacing:1px;display:flex;gap:8px;align-items:center}
+.section-title .icon{font-size:16px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(var(--grid),1fr));gap:12px}
+.card{
+  position:relative;padding:14px 14px 12px;border:1px solid var(--line);
+  background:linear-gradient(180deg,var(--panel),var(--panel2));border-radius:10px;
+  overflow:hidden;transition:all .15s;
+}
+.card:hover{border-color:#1c3868;transform:translateY(-1px);box-shadow:0 8px 22px rgba(0,0,0,.4)}
+.card .sev-ring{position:absolute;left:0;top:0;bottom:0;width:3px}
+.card[data-sev=info] .sev-ring{background:var(--sev-info)}
+.card[data-sev=low]  .sev-ring{background:var(--sev-low);box-shadow:0 0 8px var(--sev-low)}
+.card[data-sev=med]  .sev-ring{background:var(--sev-med);box-shadow:0 0 8px var(--sev-med)}
+.card[data-sev=high] .sev-ring{background:var(--sev-high);box-shadow:0 0 10px var(--sev-high)}
+.card[data-sev=crit] .sev-ring{background:var(--sev-crit);box-shadow:0 0 12px var(--sev-crit)}
+.card h3{margin:0 0 4px 6px;font-size:14px;color:#d8e9ff;font-weight:600;display:flex;align-items:center;gap:6px}
+.card .sev-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.card[data-sev=info] .sev-dot{background:var(--sev-info)}
+.card[data-sev=low]  .sev-dot{background:var(--sev-low)}
+.card[data-sev=med]  .sev-dot{background:var(--sev-med)}
+.card[data-sev=high] .sev-dot{background:var(--sev-high)}
+.card[data-sev=crit] .sev-dot{background:var(--sev-crit)}
+.card p.desc{margin:4px 0 8px 6px;color:var(--muted);font-size:11.5px;line-height:1.5}
+.card .tags{display:flex;flex-wrap:wrap;gap:4px;margin:0 0 8px 6px}
+.card .tag{
+  padding:1px 6px;border:1px solid var(--line);border-radius:3px;
+  font-size:9.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;cursor:pointer;
+}
+.card .tag:hover{color:#cfe3ff;border-color:var(--acc)}
+.card .links{display:flex;flex-direction:column;gap:6px;margin-left:6px}
+.card .link{
+  display:flex;flex-direction:column;gap:4px;
+  padding:9px 11px;border:1px solid #16335f;border-radius:6px;
+  background:rgba(5,9,18,.6);text-decoration:none;color:#cfe3ff;
+  transition:all .15s;
+}
+.card .link:hover{background:#081226;border-color:var(--acc);text-decoration:none}
+.card .link .head{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.card .engine-tag{
+  display:inline-block;padding:1px 6px;border-radius:3px;font-size:9.5px;
+  font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:#0b1020;
+}
+.card .engine-tag.dark{color:#cfe3ff}
+.card .lock{font-size:10px;color:var(--warn)}
+.card .q{font-size:10.5px;color:#9fb7ff;font-family:var(--mono);word-break:break-all;line-height:1.4}
+.card .actions{position:absolute;top:10px;right:10px;display:flex;gap:4px}
+.card .ico-btn{
+  padding:4px 7px;background:rgba(5,9,18,.85);border:1px solid var(--line);
+  border-radius:5px;font-size:10px;color:var(--muted);transition:all .15s;
+}
+.card .ico-btn:hover{border-color:var(--acc);color:#cfe3ff}
+
+/* Footer */
+footer{
+  position:fixed;left:0;right:0;bottom:0;padding:10px 16px;z-index:90;
+  background:linear-gradient(0deg,#05060af8,#05060a00);border-top:1px solid var(--line);
+  backdrop-filter:blur(8px);
+  display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;
+}
+footer .left{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+footer .right{display:flex;gap:8px;align-items:center;flex-wrap:wrap;color:var(--muted);font-size:11px}
+footer .right a{color:var(--muted)}
+footer .right a:hover{color:var(--ink)}
+
+/* Disclaimer */
+.disclaimer{
+  position:fixed;left:16px;right:16px;bottom:60px;z-index:200;
+  padding:14px 18px;border:1px solid var(--warn);background:rgba(255,219,110,.08);
+  border-radius:10px;display:flex;gap:14px;align-items:center;justify-content:space-between;
+  backdrop-filter:blur(10px);
+}
+.disclaimer p{margin:0;font-size:12px;color:#ffe9b3;line-height:1.5}
+.disclaimer .actions{display:flex;gap:8px}
+
+/* Modal */
+.modal-bg{
+  position:fixed;inset:0;z-index:300;background:rgba(0,0,0,.6);
+  display:flex;align-items:center;justify-content:center;padding:20px;
+}
+.modal{
+  background:var(--panel);border:1px solid var(--line);border-radius:10px;
+  padding:18px 22px;max-width:560px;width:100%;max-height:85vh;overflow:auto;
+}
+.modal h2{margin:0 0 12px;font-size:16px;color:#cfe3ff}
+.modal table{width:100%;border-collapse:collapse;font-size:12px}
+.modal th,.modal td{padding:6px 8px;text-align:left;border-bottom:1px solid var(--line)}
+.modal th{color:var(--muted);font-weight:600;text-transform:uppercase;font-size:10px;letter-spacing:.5px}
+.modal kbd{
+  padding:2px 6px;background:#030711;border:1px solid var(--line);
+  border-radius:4px;font-family:var(--mono);font-size:10px;color:#cfe3ff;
+}
+.modal .actions{margin-top:14px;display:flex;gap:8px;justify-content:flex-end}
+
+/* Misc */
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{animation:none!important;transition:none!important}
+  .card:hover{transform:none}
+}
+.kbd-hint{display:inline-block;padding:1px 5px;background:#030711;border:1px solid var(--line);border-radius:3px;font-size:9.5px;color:var(--muted);font-family:var(--mono)}
+.noscript-fallback{padding:18px;color:var(--muted);font-size:13px;line-height:1.6}
+.noscript-fallback h2{color:#cfe3ff;font-size:14px;margin:14px 0 4px;text-transform:uppercase;letter-spacing:.5px}
+.noscript-fallback ul{margin:0;padding-left:18px}
 </style>
 </head>
 <body>
-<header>
+
+<header role="banner">
   <div class="brand">
-    <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+    <svg class="logo" width="28" height="28" viewBox="0 0 24 24" fill="none" aria-hidden="true">
       <path d="M2 12l6.5 6.5L22 5" stroke="#0ff" stroke-width="2.5" stroke-linecap="round"/>
     </svg>
     <div>
       <h1>Night Dork Ops</h1>
-      <div class="sub">Advanced OSINT reconnaissance toolkit</div>
+      <div class="sub">Modern OSINT dork &amp; recon toolkit · authorized testing only</div>
     </div>
+    <div class="stats" id="stats" aria-live="polite">loading…</div>
   </div>
-  
+
   <div class="controls">
-    <input id="target" type="text" placeholder="Enter target domain (e.g., example.com)" value="example.com" autocomplete="off"/>
-    <button id="normalize">Normalize</button>
-    <button id="openAll">Open Category</button>
+    <input id="target" type="text" placeholder="target domain (e.g., example.com)" value="example.com" autocomplete="off" list="targetHistory" aria-label="Target domain">
+    <datalist id="targetHistory"></datalist>
+    <input id="filter" type="text" placeholder="/ filter dorks (name, desc, query, tag)" autocomplete="off" aria-label="Filter">
+    <button class="btn" id="normalize" title="Normalize host (strip protocol, path)">Normalize</button>
+    <button class="btn ok" id="openCat" title="Open all visible dorks in tabs (with confirm)">Open Visible</button>
+    <button class="btn warn" id="crownJewels" title="Open the 10 highest-ROI dorks">🎯 Crown Jewels</button>
   </div>
-  
-  <div id="categoryNav" class="category-nav"></div>
+
+  <div class="toolbar">
+    <div class="sev-toggle" id="sevToggle" aria-label="Severity filter">
+      <span class="sev-pill on" data-sev="info"><span class="dot"></span>info</span>
+      <span class="sev-pill on" data-sev="low"><span class="dot"></span>low</span>
+      <span class="sev-pill on" data-sev="med"><span class="dot"></span>med</span>
+      <span class="sev-pill on" data-sev="high"><span class="dot"></span>high</span>
+      <span class="sev-pill on" data-sev="crit"><span class="dot"></span>crit</span>
+    </div>
+    <select class="recipe" id="recipe" title="Curated recon recipes">
+      <option value="">— Recon Recipe —</option>
+      <option value="firstPass">First Pass (light)</option>
+      <option value="bbTriage">Bug Bounty Triage (top 25)</option>
+      <option value="aiEra">AI Era (LLM + MCP + JS)</option>
+      <option value="shadowIT">Shadow IT (cert + perm)</option>
+      <option value="opsecSafe">OPSEC-safe</option>
+    </select>
+    <label class="opsec" title="Hides logging engines (Shodan, FOFA, Censys, urlscan), uses Wayback proxy where possible"><input type="checkbox" id="opsec"> OPSEC mode</label>
+    <button class="btn ghost" id="helpBtn" title="Keyboard shortcuts &amp; engine legend"><span class="kbd-hint">?</span></button>
+  </div>
+
+  <nav id="categoryNav" class="category-nav" aria-label="Categories"></nav>
+
+  <div class="patterns" id="patterns" aria-label="Top secret patterns (one-click grep.app)">
+    <span class="label">🔥 Top secrets:</span>
+  </div>
+
+  <div class="drawer-toggle" aria-label="Creative modules">
+    <button class="dt" data-drawer="favicon">🧩 Favicon Hash</button>
+    <button class="dt" data-drawer="asn">🛰️ ASN Lab</button>
+    <button class="dt" data-drawer="perm">🧬 Permutations</button>
+    <button class="dt" data-drawer="scope">📜 Scope Importer</button>
+    <button class="dt" data-drawer="js">🔬 JS Recon</button>
+    <button class="dt" data-drawer="ghdb">📚 GHDB</button>
+  </div>
+
+  <section class="drawer" id="drawer-favicon">
+    <h3>🧩 Favicon Hash Lab — Shodan / FOFA / ZoomEye pivot</h3>
+    <p class="help">Compute MurmurHash3 (Shodan) + MD5 (Censys) of a favicon to map every host serving the same icon. Classic top-tier pivot.</p>
+    <div class="row">
+      <input id="favUrl" type="text" placeholder="favicon URL (https://example.com/favicon.ico)">
+      <button class="btn" id="favCompute">Compute</button>
+    </div>
+    <div class="out" id="favOut">Drop a favicon URL above. Hash and pivot links will appear here.</div>
+  </section>
+
+  <section class="drawer" id="drawer-asn">
+    <h3>🛰️ ASN Lab — discover the netblock</h3>
+    <p class="help">Click through to BGP / ASN explorers, then pivot Shodan / FOFA / Censys by ASN.</p>
+    <div class="row">
+      <input id="asnInput" type="text" placeholder="ASN (e.g., AS13335) or leave blank to use target">
+      <button class="btn" id="asnGo">Go</button>
+    </div>
+    <div class="out" id="asnOut">Enter target above (or ASN here) and click Go.</div>
+  </section>
+
+  <section class="drawer" id="drawer-perm">
+    <h3>🧬 Permutation Generator — AlterX-light</h3>
+    <p class="help">Generates dev/staging/typo permutations of the target. Click any to swap target.</p>
+    <div class="row"><button class="btn" id="permGo">Generate</button><button class="btn ghost" id="permCopy">Copy as wordlist</button></div>
+    <div class="chips" id="permChips"></div>
+  </section>
+
+  <section class="drawer" id="drawer-scope">
+    <h3>📜 Bug Bounty Scope Importer</h3>
+    <p class="help">Paste H1 structured_scope JSON, Bugcrowd asset list, or one domain per line. Out-of-scope items are skipped.</p>
+    <div class="row"><textarea id="scopeIn" placeholder='{"data":[{"asset_identifier":"*.example.com","eligible_for_submission":true}]}  — or just one domain per line'></textarea></div>
+    <div class="row"><button class="btn" id="scopeParse">Parse</button><button class="btn ghost" id="scopeClear">Clear</button></div>
+    <div class="chips" id="scopeChips"></div>
+  </section>
+
+  <section class="drawer" id="drawer-js">
+    <h3>🔬 JS Recon Pack — LinkFinder / SecretFinder client-side</h3>
+    <p class="help">Paste JS file content (or a URL — it will fetch). Extracts endpoints, secrets and revealing comments. 100% local regex.</p>
+    <div class="row"><input id="jsUrl" type="text" placeholder="JS file URL (optional, will fetch)"><button class="btn" id="jsFetch">Fetch</button></div>
+    <div class="row"><textarea id="jsIn" placeholder="…or paste JS content here"></textarea></div>
+    <div class="row"><button class="btn" id="jsScan">Scan</button></div>
+    <div class="out" id="jsOut">Awaiting input.</div>
+  </section>
+
+  <section class="drawer" id="drawer-ghdb">
+    <h3>📚 Google Hacking Database (Exploit-DB) — curated live picks</h3>
+    <p class="help">Browse upstream GHDB by category, or run a curated still-working dork against your current target.</p>
+    <div class="row" id="ghdbCats"></div>
+    <div class="chips" id="ghdbList"></div>
+  </section>
 </header>
 
-<main>
-  <div id="grid" class="grid"></div>
+<main role="main">
+  <div id="grid" class="grid" aria-live="polite"></div>
+  <noscript>
+    <div class="noscript-fallback">
+      <h2>Night Dork Ops — query catalog</h2>
+      <p>This is an interactive panel; JavaScript is required for the live UI. The full catalog of 16 categories and ~150 dorks is described below for reference (and for indexing).</p>
+      <h2>Categories</h2>
+      <ul>
+        <li><b>Raw GitHub (Google-indexed)</b> — `site:raw.githubusercontent.com` dorks: env files, AWS keys, Slack webhooks, Stripe live, OpenAI / Anthropic / GitHub PAT, kubeconfig, tfstate, Firebase config.</li>
+        <li><b>AI / LLM Leaks</b> — OpenAI/Anthropic/HuggingFace/Replicate/Cohere keys via grep.app regex; Pinecone/Weaviate endpoints; exposed Open WebUI, Ollama, LiteLLM.</li>
+        <li><b>Modern Secret Formats</b> — GitHub PAT (ghp_*, github_pat_*), GitLab PAT (glpat-), Slack (xox*), Stripe (sk_live_), SendGrid, Twilio, Telegram, AWS AKIA, GCP service accounts, Azure SAS, JWT, private keys.</li>
+        <li><b>DevOps / Cloud Native</b> — Terraform state, kubeconfig, Helm values, Vault, Sealed Secrets, Docker Compose, GH Actions, source maps, Sentry DSN, Firebase, Supabase, ArgoCD, Portainer, Rancher.</li>
+        <li><b>SaaS / Collaboration Leaks</b> — Notion, Trello, Airtable, Figma, Miro, Coda, Postman, Confluence, Jira, Loom, Slack archive, pastebins.</li>
+        <li><b>Network &amp; Service Intel</b> — Shodan/FOFA/ZoomEye/Censys/Hunter.how/Netlas/LeakIX/Onyphe/GreyNoise/BinaryEdge/urlscan pivots by org, cert, hostname.</li>
+        <li><b>DNS / Cert / Subdomain Recon</b> — crt.sh JSON wildcards, DNSDumpster, SecurityTrails, VirusTotal, Phonebook.cz, AlienVault OTX, Wayback, CommonCrawl.</li>
+        <li><b>Web Archive / Historical</b> — Wayback CDX URLs / sensitive ext / params / archived robots.txt &amp; .well-known &amp; .git, IntelX historical leaks.</li>
+        <li><b>Code Search Cross-Engine</b> — GitHub org enum, gists, grep.app, Sourcegraph, searchcode, PublicWWW (UA-/GTM-/ca-pub-), NerdyData, npm, PyPI, Docker Hub, RubyGems.</li>
+        <li><b>Attack Vectors</b> — Open Redirect, SSRF, LFI, XSS reflection, implicit OAuth, SAML metadata, OIDC well-known, webhook listeners, SQL errors, WordPress wp-json, Drupal, Magento, file upload, auth, Keycloak.</li>
+        <li><b>ICS / IoT / Niestandardowe</b> — Modbus, MQTT, BACnet, Siemens S7, RTSP cameras, Hikvision, Dahua, Elasticsearch, MongoDB, Redis, Memcached, Jenkins, Grafana, Prometheus, Kibana.</li>
+        <li><b>Cloud Storage</b> — S3 (multiple variants), GCS, Azure Blob, DO Spaces, R2, Backblaze B2, Wasabi, OVH.</li>
+        <li><b>People / Email OSINT</b> — Hunter.io, HIBP, LinkedIn, GitHub committer emails, Phonebook.cz.</li>
+        <li><b>Subdomain Takeover</b> — Heroku, GH Pages, Azure, Fastly, Shopify, Tumblr, Unbounce, S3 NoSuchBucket fingerprints.</li>
+        <li><b>MCP / AI Agent Leaks</b> — MCP servers, Claude Desktop config, AutoGPT/AgentGPT logs, browser-use traces, Cursor / Continue.dev configs, LangSmith / LangGraph leaks.</li>
+        <li><b>SBOM / Dependency Confusion</b> — exposed SBOM (CycloneDX, syft), npm/pypi internal package patterns, .npmrc registries, extra-index-url.</li>
+        <li><b>Job Ad Recon</b> — LinkedIn / Indeed / Greenhouse / Lever / Workable for tech-stack mining.</li>
+        <li><b>CDN Origin Discovery</b> — FOFA / Censys / Shodan / urlscan pivots ruling out Cloudflare cert.</li>
+      </ul>
+    </div>
+  </noscript>
 </main>
 
 <footer>
-  <div class="footer-left">
-    <button class="export-btn" onclick="exportQueries()">Export Results</button>
-    <div class="status">Scope: Passive Recon Only</div>
+  <div class="left">
+    <button class="btn ok" id="exportJson">Export JSON</button>
+    <button class="btn ok" id="exportMd">Export MD</button>
+    <button class="btn ok" id="exportCsv">Export CSV</button>
+    <button class="btn ghost" id="bookmarklet" title="Drag this to your bookmarks bar">🔖 Bookmarklet</button>
   </div>
-  <div class="hint">Professional OSINT toolkit for authorized testing</div>
+  <div class="right">
+    <span>Passive recon · authorized targets only</span>
+    <a href="https://github.com/bersechub/dork-ops" target="_blank" rel="noopener noreferrer" referrerpolicy="no-referrer">Source</a>
+    <a href="https://www.exploit-db.com/google-hacking-database" target="_blank" rel="noopener noreferrer" referrerpolicy="no-referrer">GHDB</a>
+  </div>
 </footer>
 
+<div id="modalRoot"></div>
+
 <script>
-  // === Enhanced Data ===
-  const DATA = [
-    {
-      label: "Exposed Files",
-      description: "Configuration files, secrets, environment variables, and sensitive documents",
-      items: [
-        {name: "Environment & Config Files", engine:"g", q:'site:{t} (ext:env OR ext:yml OR ext:yaml OR ext:conf OR ext:ini OR ext:cfg) ("AWS_SECRET_ACCESS_KEY" OR "AWS_ACCESS_KEY_ID" OR "SECRET_KEY" OR "database_password" OR "api_key")'},
-        {name: "Application Logs", engine:"g", q:'site:{t} (ext:log OR ext:txt) ("Exception" OR "Stack trace" OR "password=" OR "error" OR "debug")'},
-        {name: "Backup Files", engine:"g", q:'site:{t} (ext:bak OR ext:old OR ext:backup OR ext:zip OR ext:tar.gz OR ext:7z OR ext:sql) -inurl:download'},
-        {name: "Git Repository Exposure", engine:"g", q:'site:{t} intext:"Index of /.git" OR inurl:"/.git/" OR filetype:git'},
-        {name: "PHP Info Pages", engine:"g", q:'site:{t} filetype:php intitle:"phpinfo" "published by the PHP Group"'},
-        {name: "Sensitive Documents", engine:"g", q:'site:{t} (ext:pdf OR ext:docx OR ext:xlsx OR ext:csv OR ext:sql) ("confidential" OR "internal use only" OR "restricted")'}
-      ]
-    },
-    {
-      label: "API & Debug",
-      description: "API documentation, debug interfaces, and development tools",
-      items: [
-        {name:"Swagger/OpenAPI UI", engine:"g", q:'site:{t} (intitle:"Swagger UI" OR inurl:"/swagger-ui/" OR inurl:"/api-docs" OR inurl:"/docs")'},
-        {name:"OpenAPI Specifications", engine:"g", q:'site:{t} (inurl:"/swagger.json" OR inurl:"/openapi.json" OR inurl:"/api/v1" OR inurl:"/api/v2")'},
-        {name:"GraphQL Endpoints", engine:"g", q:'site:{t} (intitle:"GraphQL Playground" OR intitle:"Altair GraphQL" OR inurl:"/graphql" OR inurl:"/graphiql")'},
-        {name:"Spring Boot Actuator", engine:"g", q:'site:{t} (inurl:"/actuator" OR inurl:"/manage" OR inurl:"/health" OR inurl:"/env" OR inurl:"/metrics")'},
-        {name:"Debug Interfaces", engine:"g", q:'site:{t} (inurl:"/_profiler" OR inurl:"/debug" OR intitle:"Django" "server error")'},
-        {name:"API Keys in URLs", engine:"g", q:'site:{t} (inurl:"api_key=" OR inurl:"apikey=" OR inurl:"key=" OR inurl:"token=")'}
-      ]
-    },
-    {
-      label: "Infrastructure",
-      description: "CI/CD systems, monitoring dashboards, and administrative interfaces",
-      items: [
-        {name:"Jenkins CI/CD", engine:"g", q:'site:{t} (intitle:"Dashboard [Jenkins]" OR inurl:"/jenkins" OR inurl:":8080")'},
-        {name:"Grafana Dashboards", engine:"g", q:'site:{t} (intitle:"Grafana" OR inurl:"/grafana" OR inurl:":3000")'},
-        {name:"Kibana Analytics", engine:"g", q:'site:{t} (intitle:"Kibana" OR inurl:"/kibana" OR inurl:":5601")'},
-        {name:"Docker Registry", engine:"g", q:'site:{t} (inurl:"/v2/" OR intitle:"Docker Registry" OR inurl:":5000")'},
-        {name:"Admin Panels", engine:"g", q:'site:{t} (inurl:"/admin" OR inurl:"/administrator" OR intitle:"Admin Panel")'}
-      ]
-    },
-    {
-      label: "Cloud Storage",
-      description: "Public cloud storage buckets and CDN endpoints",
-      items: [
-        {name:"Amazon S3 Buckets", engine:"g", q:'site:s3.amazonaws.com "{t}" OR site:*.s3.amazonaws.com "{t}"'},
-        {name:"Google Cloud Storage", engine:"g", q:'site:storage.googleapis.com "{t}" OR site:*.storage.googleapis.com'},
-        {name:"Azure Blob Storage", engine:"g", q:'site:*.blob.core.windows.net "{t}"'},
-        {name:"DigitalOcean Spaces", engine:"g", q:'site:*.digitaloceanspaces.com "{t}"'},
-        {name:"Cloudflare R2", engine:"g", q:'site:*.r2.dev "{t}" OR site:*.r2.cloudflarestorage.com "{t}"'},
-        {name:"CDN Endpoints", engine:"g", q:'site:*.amazonaws.com "{t}" OR site:*.cloudfront.net "{t}"'}
-      ]
-    },
-    {
-      label: "Code Repositories",
-      description: "Source code, configuration leaks, and development artifacts",
-      items: [
-        {name:"GitHub Code Search", engine:"gh", q:'"{t}" (password OR secret OR key OR token OR config) NOT test'},
-        {name:"GitHub Organization", engine:"gh", q:'org:{t_no_tld} fork:true'},
-        {name:"Public Gists", engine:"g", q:'site:gist.github.com "{t}"'},
-        {name:"GitLab Projects", engine:"g", q:'site:gitlab.com "{t}" OR site:*.gitlab.io "{t}"'},
-        {name:"Pastebin Content", engine:"g", q:'site:pastebin.com "{t}" OR site:paste.ee "{t}"'},
-        {name:"PublicWWW API Keys", engine:"pw", q:'"{t}" AND ("api" OR "key" OR "secret" OR "token")'}
-      ]
-    },
-    {
-      label: "Web Archive",
-      description: "Historical data and archived content analysis",
-      items: [
-        {name:"Wayback URLs", engine:"wa", q:'https://web.archive.org/cdx/search/cdx?url=*.{t}/*&output=text&fl=original&collapse=urlkey&limit=1000'},
-        {name:"Sensitive Archives", engine:"wa", q:'https://web.archive.org/cdx/search/cdx?url=*.{t}/*&output=text&fl=original&filter=original:.*\\.(sql|env|yml|log|bak|key|json|csv|xml)&limit=500'},
-        {name:"Parameter Discovery", engine:"wa", q:'https://web.archive.org/cdx/search/cdx?url=*.{t}/*&output=text&fl=original&filter=original:.*\\?.*=&collapse=urlkey'}
-      ]
-    },
-    {
-      label: "Attack Vectors",
-      description: "Potential security vulnerabilities and attack surfaces",
-      items: [
-        {name:"Open Redirect Parameters", engine:"g", q:'site:{t} (inurl:"redirect=" OR inurl:"url=" OR inurl:"return=" OR inurl:"next=" OR inurl:"continue=")'},
-        {name:"Authentication Endpoints", engine:"g", q:'site:{t} (inurl:"/login" OR inurl:"/signin" OR inurl:"/auth" OR inurl:"/oauth" OR inurl:"/sso")'},
-        {name:"File Upload Pages", engine:"g", q:'site:{t} (inurl:"/upload" OR intitle:"upload" OR "choose file" OR "select file")'},
-        {name:"SQL Injection Errors", engine:"g", q:'site:{t} ("sql syntax" OR "mysql_fetch" OR "ORA-" OR "PostgreSQL" OR "Microsoft OLE DB")'}
-      ]
-    },
-    {
-      label: "Reconnaissance",
-      description: "Basic enumeration and information gathering",
-      items: [
-        {name:"Directory Listings", engine:"g", q:'site:{t} intitle:"index of" OR intitle:"directory listing"'},
-        {name:"Subdomain Enumeration", engine:"g", q:'site:*.{t} -site:www.{t} -site:{t}'},
-        {name:"Email Addresses", engine:"g", q:'site:{t} "@{t}" (contact OR email OR mailto)'},
-        {name:"Certificate Transparency", engine:"crt", q:'{t}'},
-        {name:"Technology Stack", engine:"g", q:'site:{t} (powered by OR built with OR using OR technology)'}
-      ]
-    },
-    {
-      label: "Network Intel",
-      description: "Network infrastructure and exposed services",
-      items: [
-        {name:"Shodan Network Scan", engine:"sh", q:'hostname:{t}'},
-        {name:"IP Range Discovery", engine:"g", q:'"{t}" (netblock OR CIDR OR IP range OR subnet)'},
-        {name:"DNS Records", engine:"g", q:'site:{t} (TXT OR MX OR NS OR CNAME OR SPF)'}
-      ]
+"use strict";
+
+/* ============================================================
+ * Utilities
+ * ============================================================ */
+const $ = (s, r) => (r||document).querySelector(s);
+const $$ = (s, r) => Array.from((r||document).querySelectorAll(s));
+const enc = encodeURIComponent;
+const fmtDate = () => new Date().toISOString().slice(0,10);
+const b64 = s => { try { return btoa(unescape(encodeURIComponent(s))); } catch(e){ return btoa(s); } };
+const debounce = (fn, ms) => { let t; return (...a) => { clearTimeout(t); t = setTimeout(()=>fn(...a), ms); }; };
+
+function normHost(v){
+  v = (v||'').trim();
+  v = v.replace(/^https?:\/\//,'').replace(/\/.*$/,'').toLowerCase();
+  v = v.replace(/^\*\.?/,'').replace(/[^a-z0-9.\-]/g,'');
+  return v.slice(0,253);
+}
+function hostOrg(v){
+  // example.co.uk -> example   ; example.com -> example
+  const p = (v||'').split('.');
+  if(p.length<2) return v;
+  const tld2 = ['co.uk','co.jp','com.au','com.br','com.cn','com.mx','co.in','co.kr','co.za','com.tr'];
+  const last2 = p.slice(-2).join('.');
+  if (tld2.includes(last2) && p.length>=3) return p[p.length-3];
+  return p[p.length-2];
+}
+
+/* ============================================================
+ * MurmurHash3 (32-bit) — for Shodan favicon hash. Public-domain.
+ * ============================================================ */
+function mmh3_32(key, seed){
+  seed = seed||0;
+  const c1 = 0xcc9e2d51, c2 = 0x1b873593, r1 = 15, r2 = 13, m = 5, n = 0xe6546b64;
+  let h = seed|0, i = 0, len = key.length, k;
+  const remainder = len & 3, bytes = len - remainder;
+  function mul32(a,b){ return (((a & 0xffff) * b) + ((((a >>> 16) * b) & 0xffff) << 16)) | 0; }
+  function rotl32(x,n){ return (x<<n) | (x>>>(32-n)); }
+  while(i < bytes){
+    k = (key.charCodeAt(i) & 0xff) |
+        ((key.charCodeAt(i+1) & 0xff) << 8) |
+        ((key.charCodeAt(i+2) & 0xff) << 16) |
+        ((key.charCodeAt(i+3) & 0xff) << 24);
+    i += 4;
+    k = mul32(k, c1); k = rotl32(k, r1); k = mul32(k, c2);
+    h ^= k; h = rotl32(h, r2); h = (mul32(h, m) + n) | 0;
+  }
+  k = 0;
+  switch(remainder){
+    case 3: k ^= (key.charCodeAt(i+2) & 0xff) << 16;
+    case 2: k ^= (key.charCodeAt(i+1) & 0xff) << 8;
+    case 1: k ^= (key.charCodeAt(i) & 0xff);
+            k = mul32(k, c1); k = rotl32(k, r1); k = mul32(k, c2); h ^= k;
+  }
+  h ^= len; h ^= h >>> 16; h = mul32(h, 0x85ebca6b);
+  h ^= h >>> 13; h = mul32(h, 0xc2b2ae35); h ^= h >>> 16;
+  return h | 0;
+}
+// Shodan favicon hash: mmh3 over base64(content) with \n every 76 chars + trailing \n
+function shodanFaviconHash(arrayBuffer){
+  const u8 = new Uint8Array(arrayBuffer);
+  let bin = "";
+  for (let i=0;i<u8.length;i++) bin += String.fromCharCode(u8[i]);
+  let b = btoa(bin);
+  // Python base64.encodebytes line-wraps every 76 chars and trails with \n
+  let out = "";
+  for (let i=0;i<b.length;i+=76) out += b.substr(i,76) + "\n";
+  return mmh3_32(out, 0);
+}
+async function md5Hex(arrayBuffer){
+  if (window.crypto && crypto.subtle && crypto.subtle.digest){
+    try {
+      // No SHA1 fallback exists for md5 in webcrypto; use simple JS impl.
+    } catch(e){}
+  }
+  return jsMd5(new Uint8Array(arrayBuffer));
+}
+// Tiny MD5 (RFC 1321). Public-domain compact impl.
+function jsMd5(bytes){
+  function rh(n){ let s='',j=0; for(j=0;j<=3;j++) s += ((n>>(j*8+4))&0x0F).toString(16) + ((n>>(j*8))&0x0F).toString(16); return s; }
+  function aa(a,b){ const l=(a&0xFFFF)+(b&0xFFFF); return (((a>>16)+(b>>16)+(l>>16))<<16)|(l&0xFFFF); }
+  function rl(n,c){ return (n<<c)|(n>>>(32-c)); }
+  function ct(q,a,b,x,s,t){ return aa(rl(aa(aa(a,q),aa(x,t)),s),b); }
+  function ff(a,b,c,d,x,s,t){ return ct((b&c)|((~b)&d),a,b,x,s,t); }
+  function gg(a,b,c,d,x,s,t){ return ct((b&d)|(c&(~d)),a,b,x,s,t); }
+  function hh(a,b,c,d,x,s,t){ return ct(b^c^d,a,b,x,s,t); }
+  function ii(a,b,c,d,x,s,t){ return ct(c^(b|(~d)),a,b,x,s,t); }
+  function cb(b){
+    let nbl=((b.length+8)>>6)+1, bl=nbl*16, blocks=new Array(bl).fill(0);
+    for(let i=0;i<b.length;i++) blocks[i>>2] |= b[i] << ((i%4)*8);
+    blocks[b.length>>2] |= 0x80 << ((b.length%4)*8);
+    blocks[bl-2] = b.length*8;
+    let a=1732584193,B=-271733879,c=-1732584194,d=271733878;
+    for(let i=0;i<bl;i+=16){
+      const oa=a,oB=B,oc=c,od=d;
+      a=ff(a,B,c,d,blocks[i+0],7,-680876936); d=ff(d,a,B,c,blocks[i+1],12,-389564586);
+      c=ff(c,d,a,B,blocks[i+2],17,606105819); B=ff(B,c,d,a,blocks[i+3],22,-1044525330);
+      a=ff(a,B,c,d,blocks[i+4],7,-176418897); d=ff(d,a,B,c,blocks[i+5],12,1200080426);
+      c=ff(c,d,a,B,blocks[i+6],17,-1473231341); B=ff(B,c,d,a,blocks[i+7],22,-45705983);
+      a=ff(a,B,c,d,blocks[i+8],7,1770035416); d=ff(d,a,B,c,blocks[i+9],12,-1958414417);
+      c=ff(c,d,a,B,blocks[i+10],17,-42063); B=ff(B,c,d,a,blocks[i+11],22,-1990404162);
+      a=ff(a,B,c,d,blocks[i+12],7,1804603682); d=ff(d,a,B,c,blocks[i+13],12,-40341101);
+      c=ff(c,d,a,B,blocks[i+14],17,-1502002290); B=ff(B,c,d,a,blocks[i+15],22,1236535329);
+      a=gg(a,B,c,d,blocks[i+1],5,-165796510); d=gg(d,a,B,c,blocks[i+6],9,-1069501632);
+      c=gg(c,d,a,B,blocks[i+11],14,643717713); B=gg(B,c,d,a,blocks[i+0],20,-373897302);
+      a=gg(a,B,c,d,blocks[i+5],5,-701558691); d=gg(d,a,B,c,blocks[i+10],9,38016083);
+      c=gg(c,d,a,B,blocks[i+15],14,-660478335); B=gg(B,c,d,a,blocks[i+4],20,-405537848);
+      a=gg(a,B,c,d,blocks[i+9],5,568446438); d=gg(d,a,B,c,blocks[i+14],9,-1019803690);
+      c=gg(c,d,a,B,blocks[i+3],14,-187363961); B=gg(B,c,d,a,blocks[i+8],20,1163531501);
+      a=gg(a,B,c,d,blocks[i+13],5,-1444681467); d=gg(d,a,B,c,blocks[i+2],9,-51403784);
+      c=gg(c,d,a,B,blocks[i+7],14,1735328473); B=gg(B,c,d,a,blocks[i+12],20,-1926607734);
+      a=hh(a,B,c,d,blocks[i+5],4,-378558); d=hh(d,a,B,c,blocks[i+8],11,-2022574463);
+      c=hh(c,d,a,B,blocks[i+11],16,1839030562); B=hh(B,c,d,a,blocks[i+14],23,-35309556);
+      a=hh(a,B,c,d,blocks[i+1],4,-1530992060); d=hh(d,a,B,c,blocks[i+4],11,1272893353);
+      c=hh(c,d,a,B,blocks[i+7],16,-155497632); B=hh(B,c,d,a,blocks[i+10],23,-1094730640);
+      a=hh(a,B,c,d,blocks[i+13],4,681279174); d=hh(d,a,B,c,blocks[i+0],11,-358537222);
+      c=hh(c,d,a,B,blocks[i+3],16,-722521979); B=hh(B,c,d,a,blocks[i+6],23,76029189);
+      a=hh(a,B,c,d,blocks[i+9],4,-640364487); d=hh(d,a,B,c,blocks[i+12],11,-421815835);
+      c=hh(c,d,a,B,blocks[i+15],16,530742520); B=hh(B,c,d,a,blocks[i+2],23,-995338651);
+      a=ii(a,B,c,d,blocks[i+0],6,-198630844); d=ii(d,a,B,c,blocks[i+7],10,1126891415);
+      c=ii(c,d,a,B,blocks[i+14],15,-1416354905); B=ii(B,c,d,a,blocks[i+5],21,-57434055);
+      a=ii(a,B,c,d,blocks[i+12],6,1700485571); d=ii(d,a,B,c,blocks[i+3],10,-1894986606);
+      c=ii(c,d,a,B,blocks[i+10],15,-1051523); B=ii(B,c,d,a,blocks[i+1],21,-2054922799);
+      a=ii(a,B,c,d,blocks[i+8],6,1873313359); d=ii(d,a,B,c,blocks[i+15],10,-30611744);
+      c=ii(c,d,a,B,blocks[i+6],15,-1560198380); B=ii(B,c,d,a,blocks[i+13],21,1309151649);
+      a=ii(a,B,c,d,blocks[i+4],6,-145523070); d=ii(d,a,B,c,blocks[i+11],10,-1120210379);
+      c=ii(c,d,a,B,blocks[i+2],15,718787259); B=ii(B,c,d,a,blocks[i+9],21,-343485551);
+      a=aa(a,oa); B=aa(B,oB); c=aa(c,oc); d=aa(d,od);
     }
-  ];
-
-  // === Core Functions ===
-  const $categoryNav = document.getElementById('categoryNav');
-  const $grid = document.getElementById('grid');
-  const $target = document.getElementById('target');
-
-  function normHost(v){
-    v = (v||'').trim();
-    v = v.replace(/^https?:\/\//,'').replace(/\/.*$/,'').toLowerCase();
-    return v.replace(/^\*\.?/,'');
+    return rh(a)+rh(B)+rh(c)+rh(d);
   }
+  return cb(bytes);
+}
 
-  function hostOrg(v){
-    const p = v.split('.');
-    if(p.length>=2){ return p[p.length-2]; }
-    return v;
+/* ============================================================
+ * Engine registry
+ * ============================================================ */
+const ENGINES = {
+  g:   { name:"Google",        color:"#4285F4", url: q => `https://www.google.com/search?q=${enc(q)}` },
+  gnp: { name:"Google (no PWS)",color:"#4285F4",url: q => `https://www.google.com/search?q=${enc(q)}&pws=0&gl=us&hl=en` },
+  ddg: { name:"DuckDuckGo",    color:"#DE5833", url: q => `https://duckduckgo.com/?q=${enc(q)}` },
+  bg:  { name:"Bing",          color:"#008373", url: q => `https://www.bing.com/search?q=${enc(q)}` },
+  ya:  { name:"Yandex",        color:"#FFCC00", url: q => `https://yandex.com/search/?text=${enc(q)}` },
+  bd:  { name:"Baidu",         color:"#2932E1", url: q => `https://www.baidu.com/s?wd=${enc(q)}` },
+  gh:  { name:"GitHub",        color:"#444",    url: q => `https://github.com/search?q=${enc(q)}&type=code` },
+  gho: { name:"GH Issues",     color:"#444",    url: q => `https://github.com/search?q=${enc(q)}&type=issues` },
+  gra: { name:"grep.app",      color:"#0aa",    url: q => `https://grep.app/search?q=${enc(q)}&regexp=true` },
+  sg:  { name:"Sourcegraph",   color:"#7048e8", url: q => `https://sourcegraph.com/search?q=${enc(q)}&patternType=regexp` },
+  sc:  { name:"searchcode",    color:"#3a8",    url: q => `https://searchcode.com/?q=${enc(q)}` },
+  pw:  { name:"PublicWWW",     color:"#888",    url: q => `https://publicwww.com/websites/${enc(q)}/`, auth:true },
+  nd:  { name:"NerdyData",     color:"#0c8",    url: q => `https://search.nerdydata.com/search?query=${enc(q)}` },
+  sh:  { name:"Shodan",        color:"#c00",    url: q => `https://www.shodan.io/search?query=${enc(q)}`, auth:true, opsec:false },
+  fo:  { name:"FOFA",          color:"#e44",    url: q => `https://en.fofa.info/result?qbase64=${enc(b64(q))}`, auth:true, opsec:false },
+  ze:  { name:"ZoomEye",       color:"#36c",    url: q => `https://www.zoomeye.org/searchResult?q=${enc(q)}`, auth:true, opsec:false },
+  cen: { name:"Censys",        color:"#3a3",    url: q => `https://search.censys.io/search?resource=hosts&q=${enc(q)}`, auth:true, opsec:false },
+  hh:  { name:"Hunter.how",    color:"#e60",    url: q => `https://hunter.how/search?searchValue=${enc(q)}`, auth:true },
+  nl:  { name:"Netlas",        color:"#26a",    url: q => `https://app.netlas.io/responses/?q=${enc(q)}`, auth:true },
+  oy:  { name:"Onyphe",        color:"#024",    url: q => `https://www.onyphe.io/search?q=${enc(q)}`, auth:true },
+  be:  { name:"BinaryEdge",    color:"#222",    url: q => `https://app.binaryedge.io/services/query?query=${enc(q)}`, auth:true },
+  gn:  { name:"GreyNoise",     color:"#2a2",    url: q => `https://viz.greynoise.io/query/?gnql=${enc(q)}` },
+  lx:  { name:"LeakIX",        color:"#e22",    url: q => `https://leakix.net/search?q=${enc(q)}` },
+  crt: { name:"crt.sh",        color:"#36c",    url: q => `https://crt.sh/?q=${enc(q)}&output=json` },
+  dd:  { name:"DNSDumpster",   color:"#643",    url: q => `https://dnsdumpster.com/?target=${enc(q)}`, auth:true },
+  st:  { name:"SecurityTrails",color:"#06c",    url: q => `https://securitytrails.com/list/apex_domain/${enc(q)}`, auth:true },
+  vt:  { name:"VirusTotal",    color:"#306",    url: q => `https://www.virustotal.com/gui/domain/${enc(q)}/relations` },
+  pb:  { name:"Phonebook.cz",  color:"#a40",    url: q => `https://phonebook.cz/?q=${enc(q)}`, auth:true },
+  us:  { name:"urlscan",       color:"#26b",    url: q => `https://urlscan.io/search/#${enc(q)}`, opsec:false },
+  ot:  { name:"AlienVault OTX",color:"#06c",    url: q => `https://otx.alienvault.com/browse/global/indicators?q=${enc(q)}` },
+  wa:  { name:"Wayback",       color:"#888",    url: q => q },
+  cc:  { name:"CommonCrawl",   color:"#666",    url: q => `https://index.commoncrawl.org/CC-MAIN-2025-30-index?url=${enc(q)}&output=json` },
+  ix:  { name:"IntelX",        color:"#900",    url: q => `https://intelx.io/?s=${enc(q)}`, auth:true },
+  hi:  { name:"HIBP",          color:"#222",    url: q => `https://haveibeenpwned.com/unifiedsearch/${enc(q)}`, auth:true },
+  hu:  { name:"Hunter.io",     color:"#fa3",    url: q => `https://hunter.io/search/${enc(q)}`, auth:true },
+  li:  { name:"LinkedIn",      color:"#0a66c2", url: q => `https://www.google.com/search?q=site%3Alinkedin.com%2Fin+%22${enc(q)}%22` },
+  wig: { name:"WiGLE",         color:"#2c2",    url: q => `https://wigle.net/search?ssid=${enc(q)}`, auth:true },
+  ghdb:{ name:"Exploit-DB GHDB",color:"#900",   url: q => `https://www.exploit-db.com/ghdb/${enc(q)}` },
+};
+function isDarkColor(hex){
+  const c = hex.replace('#',''); const n = c.length===3 ? c.split('').map(x=>x+x).join('') : c;
+  const r=parseInt(n.slice(0,2),16), g=parseInt(n.slice(2,4),16), b=parseInt(n.slice(4,6),16);
+  return (r*0.299+g*0.587+b*0.114) < 140;
+}
+
+/* ============================================================
+ * DATA — categories & dorks (per-card desc, severity, tags)
+ * ============================================================ */
+const DATA = [
+
+{ id:"raw-gh", label:"Raw GitHub", icon:"🐙", description:"site:raw.githubusercontent.com — Google indexes raw file content; bypasses GH UI rate-limit and finds private forks of public repos.", items:[
+  {name:"Env files w/ password / api_key",      desc:".env files mentioning the target with password / secret / api_key, excluding obvious samples.",                           sev:"crit", tags:["secret","raw-gh"], engine:"g", q:'site:raw.githubusercontent.com "{t}" filetype:env (intext:"password" OR intext:"secret" OR intext:"api_key") -intext:"sample" -intext:"example"'},
+  {name:"YAML configs w/ token",                desc:"YAML configs mentioning the target with password / token / apiKey.",                                                       sev:"crit", tags:["secret","raw-gh"], engine:"g", q:'site:raw.githubusercontent.com "{t}" filetype:yaml (intext:"password" OR intext:"token" OR intext:"apiKey")'},
+  {name:"JSON tokens / client_secret",          desc:"JSON files exposing token / client_secret / api_key for the target.",                                                      sev:"crit", tags:["secret","raw-gh"], engine:"g", q:'site:raw.githubusercontent.com "{t}" filetype:json (intext:"token" OR intext:"client_secret" OR intext:"api_key")'},
+  {name:"Authorization: Bearer in raw files",   desc:"Hardcoded Bearer tokens in any raw GH file referencing the target.",                                                       sev:"crit", tags:["jwt","raw-gh"],    engine:"g", q:'site:raw.githubusercontent.com "{t}" intext:"Authorization: Bearer"'},
+  {name:"AWS access keys (AKIA)",               desc:"AWS Access Key IDs (AKIA*) in raw GH files referencing the target.",                                                       sev:"crit", tags:["aws","raw-gh"],    engine:"g", q:'site:raw.githubusercontent.com "{t}" intext:"AKIA"'},
+  {name:"Slack webhooks",                       desc:"Slack incoming webhooks (hooks.slack.com/services/T…) leaked in raw files.",                                                sev:"high", tags:["slack","raw-gh"],  engine:"g", q:'site:raw.githubusercontent.com "{t}" intext:"hooks.slack.com/services/T"'},
+  {name:"Stripe live keys (sk_live_)",          desc:"Stripe live secret keys exposed in raw repo files.",                                                                       sev:"crit", tags:["stripe","raw-gh"], engine:"g", q:'site:raw.githubusercontent.com "{t}" intext:"sk_live_"'},
+  {name:"OpenAI keys (sk-…)",                   desc:"OpenAI API keys (sk-…) in raw GH files referencing the target.",                                                            sev:"crit", tags:["llm","raw-gh"],    engine:"g", q:'site:raw.githubusercontent.com "{t}" intext:"sk-" intext:"openai"'},
+  {name:"Anthropic keys (sk-ant-)",             desc:"Anthropic API keys (sk-ant-…) in raw GH files.",                                                                            sev:"crit", tags:["llm","raw-gh"],    engine:"g", q:'site:raw.githubusercontent.com "{t}" intext:"sk-ant-"'},
+  {name:"GitHub PAT (ghp_, github_pat_)",       desc:"Leaked GitHub PATs (classic ghp_ or fine-grained github_pat_) in raw files.",                                              sev:"crit", tags:["github","raw-gh"], engine:"g", q:'site:raw.githubusercontent.com "{t}" (intext:"ghp_" OR intext:"github_pat_")'},
+  {name:"Private RSA keys",                     desc:"-----BEGIN RSA PRIVATE KEY----- markers in raw repo files.",                                                                sev:"crit", tags:["pki","raw-gh"],    engine:"g", q:'site:raw.githubusercontent.com "{t}" intext:"BEGIN RSA PRIVATE KEY"'},
+  {name:"Terraform state in raw GH",            desc:"Terraform .tfstate files (often contain plaintext credentials) referencing the target.",                                   sev:"crit", tags:["devops","raw-gh"], engine:"g", q:'site:raw.githubusercontent.com "{t}" filetype:tfstate'},
+  {name:"Kubeconfig in raw GH",                 desc:"Kubernetes kubeconfig (kind: Config + clusters) — full cluster admin access if leaked.",                                   sev:"crit", tags:["k8s","raw-gh"],    engine:"g", q:'site:raw.githubusercontent.com "{t}" intext:"kind: Config" intext:"clusters:"'},
+  {name:"Firebase web SDK config",              desc:"firebaseConfig {apiKey, authDomain, …} from frontend bundles checked into repo.",                                          sev:"high", tags:["firebase","raw-gh"], engine:"g", q:'site:raw.githubusercontent.com "{t}" intext:"firebaseConfig" intext:"apiKey"'},
+  {name:".npmrc auth tokens",                   desc:"_authToken= entries in .npmrc files (private registry credentials).",                                                      sev:"high", tags:["npm","raw-gh"],    engine:"g", q:'site:raw.githubusercontent.com "{t}" intext:"_authToken="'},
+  {name:".pypirc with password",                desc:"PyPI publish credentials in .pypirc.",                                                                                     sev:"high", tags:["pypi","raw-gh"],   engine:"g", q:'site:raw.githubusercontent.com "{t}" intext:"[pypi]" intext:"password"'}
+]},
+
+{ id:"ai-llm", label:"AI / LLM Leaks", icon:"🧠", description:"AI/LLM era secrets and exposed agentic infra. Highest signal in 2025-2026.", items:[
+  {name:"OpenAI live keys (regex)",            desc:"sk-[A-Za-z0-9]{48} pattern across public code — grep.app supports regex, GitHub UI does not.",                              sev:"crit", tags:["llm","openai"], engine:"gra", q:'sk-[A-Za-z0-9]{48}.*"{t}"'},
+  {name:"OpenAI project keys (sk-proj-)",      desc:"sk-proj- format introduced 2024, often skipped by older scanners.",                                                          sev:"crit", tags:["llm","openai"], engine:"gra", q:'sk-proj-[A-Za-z0-9_-]{20,}.*"{t}"'},
+  {name:"Anthropic keys (sk-ant-)",            desc:"sk-ant-[A-Za-z0-9_-]{90,} regex via grep.app.",                                                                              sev:"crit", tags:["llm","anthropic"], engine:"gra", q:'sk-ant-[A-Za-z0-9_-]{90,}.*"{t}"'},
+  {name:"Google AI / Gemini (AIzaSy…)",        desc:"AIzaSy[A-Za-z0-9_-]{33} — Google API key prefix used by Gemini, Maps, etc.",                                                 sev:"high", tags:["llm","gcp"], engine:"gra", q:'AIzaSy[A-Za-z0-9_-]{33}.*"{t}"'},
+  {name:"HuggingFace tokens (hf_)",            desc:"hf_[A-Za-z0-9]{30,} — HF user/org tokens.",                                                                                  sev:"high", tags:["llm","hf"], engine:"gra", q:'hf_[A-Za-z0-9]{30,}.*"{t}"'},
+  {name:"Replicate tokens (r8_)",              desc:"r8_[A-Za-z0-9]{37,} — Replicate.com tokens.",                                                                                sev:"high", tags:["llm"], engine:"gra", q:'r8_[A-Za-z0-9]{37,}.*"{t}"'},
+  {name:"LangSmith API (lsv2_…)",              desc:"lsv2_pt_/lsv2_sk_ — LangChain LangSmith keys, expose full trace history.",                                                   sev:"high", tags:["llm","langchain"], engine:"gra", q:'lsv2_(pt|sk)_[a-f0-9]{32,}.*"{t}"'},
+  {name:"Pinecone endpoints + api_key",        desc:"Hardcoded Pinecone vector DB URLs and keys.",                                                                                 sev:"high", tags:["llm","vector"], engine:"gh", q:'"{t}" "pinecone.io" "api_key"'},
+  {name:"Weaviate / Qdrant prod URLs",         desc:"Public vector DB endpoints with embedded keys.",                                                                              sev:"high", tags:["llm","vector"], engine:"gh", q:'"{t}" ("weaviate.network" OR "qdrant.tech") "api_key"'},
+  {name:"LangChain prompt templates",          desc:"Prompt-injection surface: ChatPromptTemplate definitions referencing the target.",                                            sev:"med",  tags:["llm","prompt"], engine:"gh", q:'"{t}" "ChatPromptTemplate" extension:py'},
+  {name:"Jupyter notebooks w/ AI keys",        desc:".ipynb files at the target referencing openai/anthropic/API_KEY — devs often forget notebooks.",                              sev:"high", tags:["llm","notebook"], engine:"g", q:'site:{t} ext:ipynb ("openai" OR "anthropic" OR "API_KEY")'},
+  {name:"Open WebUI exposed",                  desc:"Self-hosted Open WebUI panels (HTTP title fingerprint) — often without auth.",                                                sev:"high", tags:["llm","panel"], engine:"fo", q:'title="Open WebUI"'},
+  {name:"Ollama exposed (port 11434)",         desc:"Open Ollama API on port 11434 — model hosting, sometimes with sensitive private models.",                                     sev:"high", tags:["llm","panel"], engine:"sh", q:'port:11434 "Ollama is running"'},
+  {name:"LiteLLM proxy panels",                desc:"LiteLLM proxy with admin UI exposed.",                                                                                        sev:"high", tags:["llm","panel"], engine:"cen", q:'services.http.response.html_title:"LiteLLM"'},
+  {name:"Flowise / Dify panels",               desc:"Visual LLM-flow builders (Flowise, Dify) exposed publicly.",                                                                  sev:"med",  tags:["llm","panel"], engine:"fo", q:'title="Flowise" || title="Dify"'},
+  {name:"Cohere keys",                         desc:"Cohere SDK init in code referencing the target.",                                                                              sev:"high", tags:["llm"], engine:"gh", q:'"{t}" "cohere.Client(\\""'}
+]},
+
+{ id:"secrets", label:"Modern Secrets", icon:"🔑", description:"Prefix-format secret scanning across code search engines — TruffleHog/Gitleaks rule pack.", items:[
+  {name:"GitHub PAT (ghp_/github_pat_)",       desc:"All GitHub PAT formats (classic + fine-grained, gho_, ghs_, ghr_).",                                                          sev:"crit", tags:["github"], engine:"gra", q:'(ghp|gho|ghs|ghr|github_pat)_[A-Za-z0-9_]{30,}.*"{t}"'},
+  {name:"GitLab PAT (glpat-)",                 desc:"glpat-[A-Za-z0-9_-]{20,} regex.",                                                                                              sev:"crit", tags:["gitlab"], engine:"gra", q:'glpat-[A-Za-z0-9_-]{20,}.*"{t}"'},
+  {name:"Slack tokens (xox*)",                 desc:"Slack user/bot/app/refresh tokens — xoxa/b/p/r/s prefix.",                                                                    sev:"crit", tags:["slack"], engine:"gra", q:'xox[abprs]-[A-Za-z0-9-]{10,}.*"{t}"'},
+  {name:"Slack webhook URLs",                  desc:"hooks.slack.com/services/T… — message injection / channel disclosure.",                                                       sev:"high", tags:["slack"], engine:"gh", q:'"hooks.slack.com/services/T" "{t}"'},
+  {name:"Discord webhook URLs",                desc:"discord(app).com/api/webhooks/{id}/{token}.",                                                                                  sev:"med",  tags:["discord"], engine:"gra", q:'discord(app)?\\.com/api/webhooks/[0-9]+/[A-Za-z0-9_-]+.*"{t}"'},
+  {name:"Stripe live secret (sk_live_)",       desc:"sk_live_ prefix — full payment account access.",                                                                               sev:"crit", tags:["stripe","fintech"], engine:"gra", q:'sk_live_[A-Za-z0-9]{24,}.*"{t}"'},
+  {name:"Stripe restricted (rk_live_)",        desc:"Restricted Stripe keys — narrower but still risky.",                                                                           sev:"high", tags:["stripe","fintech"], engine:"gra", q:'rk_live_[A-Za-z0-9]{24,}.*"{t}"'},
+  {name:"SendGrid (SG.*)",                     desc:"SendGrid API keys: SG.{22}.{43}.",                                                                                              sev:"high", tags:["mail"], engine:"gra", q:'SG\\.[A-Za-z0-9_-]{22}\\.[A-Za-z0-9_-]{43}.*"{t}"'},
+  {name:"Mailgun (key-)",                      desc:"Mailgun API keys: key-[a-z0-9]{32}.",                                                                                          sev:"high", tags:["mail"], engine:"gra", q:'key-[a-z0-9]{32}.*"{t}"'},
+  {name:"Twilio Account SID (AC…)",            desc:"AC[a-f0-9]{32} — Twilio Account SID, paired with auth token leaks.",                                                            sev:"high", tags:["telco"], engine:"gra", q:'AC[a-f0-9]{32}.*"{t}"'},
+  {name:"Telegram bot tokens",                 desc:"\\d{8,10}:[A-Za-z0-9_-]{35} — Telegram bot tokens, full bot takeover.",                                                         sev:"high", tags:["telegram"], engine:"gra", q:'[0-9]{8,10}:[A-Za-z0-9_-]{35}.*"{t}"'},
+  {name:"Square (sq0atp/csp)",                 desc:"Square OAuth/access tokens.",                                                                                                  sev:"high", tags:["fintech"], engine:"gra", q:'sq0(atp|csp)-[A-Za-z0-9_-]{22,}.*"{t}"'},
+  {name:"AWS Access Key ID (AKIA)",            desc:"AKIA[0-9A-Z]{16}.",                                                                                                            sev:"crit", tags:["aws"], engine:"gra", q:'AKIA[0-9A-Z]{16}.*"{t}"'},
+  {name:"AWS access+secret pair",              desc:"aws_access_key_id + aws_secret_access_key co-located.",                                                                        sev:"crit", tags:["aws"], engine:"gh", q:'"{t}" "aws_access_key_id" "aws_secret_access_key"'},
+  {name:"GCP service-account JSON",            desc:'"type": "service_account" + "private_key" — full GCP project takeover.',                                                       sev:"crit", tags:["gcp"], engine:"gh", q:'"{t}" "\\"type\\": \\"service_account\\"" "private_key"'},
+  {name:"Azure Blob SAS tokens",               desc:'sv= sig= se= sp= patterns + blob.core.windows.net.',                                                                            sev:"high", tags:["azure"], engine:"gh", q:'"{t}" "sv=" "sig=" "se=" "blob.core.windows.net"'},
+  {name:"Mapbox secret (sk.eyJ…)",             desc:"Mapbox secret tokens, JWT-shaped.",                                                                                            sev:"high", tags:["mapbox"], engine:"gra", q:'sk\\.eyJ1Ijoi[A-Za-z0-9_-]+\\..*"{t}"'},
+  {name:"JWT in URL",                          desc:"site:{t} inurl:eyJ — JWT tokens in URL params (often leak via Referer).",                                                      sev:"high", tags:["jwt"], engine:"g", q:'site:{t} inurl:"eyJ"'},
+  {name:"Private keys in archive",             desc:"Wayback CDX filter for archived .pem/.key/.p12/.pfx/.jks at the target.",                                                      sev:"crit", tags:["pki","wayback"], engine:"wa", q:'https://web.archive.org/cdx/search/cdx?url=*.{t}/*&output=text&fl=original&filter=original:.*\\.(pem|key|p12|pfx|jks)$&from=20180101&limit=500'}
+]},
+
+{ id:"devops", label:"DevOps / Cloud Native", icon:"⚙️", description:"Tfstate, kubeconfig, helm, ArgoCD, source maps, Sentry DSN, Firebase, Supabase, Docker Registry.", items:[
+  {name:"Terraform state files",               desc:"extension:tfstate referencing the target — plaintext creds and ARNs.",                                                       sev:"crit", tags:["terraform"], engine:"gh", q:'extension:tfstate "{t}"'},
+  {name:"Terraform .tfstate.backup",           desc:"Backup tfstate copies (often forgotten).",                                                                                    sev:"crit", tags:["terraform"], engine:"gh", q:'extension:tfstate.backup "{t}"'},
+  {name:"Kubeconfig (.kube/config)",           desc:".kube/config files with cluster credentials.",                                                                                sev:"crit", tags:["k8s"], engine:"gh", q:'filename:.kube/config "{t_no_tld}"'},
+  {name:"Helm values w/ secrets",              desc:"path:**/values.yaml + password|secret|token + target.",                                                                       sev:"high", tags:["k8s","helm"], engine:"gh", q:'path:**/values.yaml "{t}" (password OR secret OR token)'},
+  {name:"Sealed Secrets manifests",            desc:'kind: SealedSecret — encrypted but still target intel.',                                                                      sev:"low",  tags:["k8s"], engine:"gh", q:'"{t}" "kind: SealedSecret"'},
+  {name:"Docker Compose w/ DB pw",             desc:"docker-compose.yml with POSTGRES_PASSWORD or MYSQL_ROOT_PASSWORD.",                                                            sev:"high", tags:["docker"], engine:"gh", q:'filename:docker-compose.yml "{t}" (POSTGRES_PASSWORD OR MYSQL_ROOT_PASSWORD)'},
+  {name:"Dockerfile ARG SECRET",               desc:"Hardcoded ARG TOKEN/SECRET in Dockerfiles.",                                                                                  sev:"med",  tags:["docker"], engine:"gh", q:'path:Dockerfile "{t}" "ARG" (TOKEN OR SECRET)'},
+  {name:"GH Actions w/ hardcoded creds",       desc:".github/workflows files with PASSWORD/TOKEN hardcoded.",                                                                      sev:"high", tags:["ci"], engine:"gh", q:'path:.github/workflows "{t}" (PASSWORD OR TOKEN)'},
+  {name:"GitLab CI w/ creds",                  desc:".gitlab-ci.yml hardcoded secrets.",                                                                                           sev:"high", tags:["ci"], engine:"gh", q:'filename:.gitlab-ci.yml "{t}" (PASSWORD OR TOKEN)'},
+  {name:"Source maps in prod",                 desc:"site:{t} ext:map — exposed .js.map files reveal original source code.",                                                       sev:"high", tags:["frontend"], engine:"g", q:'site:{t} ext:map'},
+  {name:"Sentry DSN",                          desc:"Sentry DSN URLs — allow event injection / project takeover.",                                                                  sev:"med",  tags:["monitoring"], engine:"gra", q:'https://[a-f0-9]{32,}@[a-z0-9.]+\\.ingest\\.sentry\\.io/[0-9]+.*"{t}"'},
+  {name:"Firebase web SDK config",             desc:"apiKey + authDomain + projectId + appId co-located.",                                                                          sev:"high", tags:["firebase"], engine:"gh", q:'"{t}" "apiKey" "authDomain" "projectId" "appId"'},
+  {name:"Supabase service_role key",           desc:"service_role / supabaseKey — admin access to Supabase project.",                                                              sev:"crit", tags:["supabase"], engine:"gh", q:'"{t}" ("service_role" OR "supabaseKey")'},
+  {name:"PlanetScale connection strings",      desc:"pscale.cloud connection URLs, often with password.",                                                                          sev:"high", tags:["db"], engine:"gh", q:'"{t}" "pscale.cloud"'},
+  {name:"Neon / Vercel postgres URLs",         desc:"neon.tech / vercel-storage.com postgres:// connections.",                                                                      sev:"high", tags:["db"], engine:"gh", q:'"{t}" ("neon.tech" OR "vercel-storage.com") "postgres://"'},
+  {name:"ArgoCD UI exposed",                   desc:'FOFA title="Argo CD" — full GitOps cluster takeover surface.',                                                                 sev:"high", tags:["k8s","panel"], engine:"fo", q:'title="Argo CD"'},
+  {name:"Portainer UI",                        desc:"Portainer container management UI exposed.",                                                                                  sev:"high", tags:["docker","panel"], engine:"fo", q:'title="Portainer"'},
+  {name:"HashiCorp Vault UI",                  desc:"Vault UI exposed — auth screen at minimum.",                                                                                  sev:"med",  tags:["vault","panel"], engine:"fo", q:'title="Vault"'},
+  {name:"Rancher UI",                          desc:"Rancher cluster manager exposed.",                                                                                            sev:"high", tags:["k8s","panel"], engine:"fo", q:'title="Rancher"'},
+  {name:"Kubernetes API exposed",              desc:'port:6443 + "kubernetes" — kube-apiserver TCP/6443.',                                                                          sev:"crit", tags:["k8s"], engine:"sh", q:'port:6443 "kubernetes"'},
+  {name:"Docker Registry v2 catalog",          desc:"_catalog endpoint of Docker Registry v2 (often unauthenticated).",                                                            sev:"high", tags:["docker"], engine:"g", q:'inurl:"/v2/_catalog" "{t}"'},
+  {name:"Etcd open (port 2379)",               desc:"port:2379 + etcd — full k8s cluster state.",                                                                                  sev:"crit", tags:["k8s"], engine:"sh", q:'port:2379 "etcd"'},
+  {name:"Consul UI",                           desc:'title="Consul by HashiCorp".',                                                                                                sev:"med",  tags:["panel"], engine:"fo", q:'title="Consul by HashiCorp"'}
+]},
+
+{ id:"saas", label:"SaaS / Collaboration", icon:"🤝", description:"Public Notion / Trello / Airtable / Postman / Confluence / Loom — massively under-recon'd.", items:[
+  {name:"Public Notion pages",                 desc:"site:notion.site / notion.so — internal docs accidentally made public.",                                                      sev:"high", tags:["notion"], engine:"g", q:'(site:notion.site OR site:notion.so) "{t}"'},
+  {name:"Public Trello boards",                desc:"Trello boards mentioning the target — often roadmaps with credentials in cards.",                                            sev:"high", tags:["trello"], engine:"g", q:'site:trello.com "{t}"'},
+  {name:"Airtable share links (shr)",          desc:"site:airtable.com inurl:shr — shared bases with internal data.",                                                              sev:"high", tags:["airtable"], engine:"g", q:'site:airtable.com "{t}" inurl:shr'},
+  {name:"Figma files / community",             desc:"Figma assets containing target name — internal mockups, sometimes screenshots of admin UIs.",                                sev:"med",  tags:["figma"], engine:"g", q:'site:figma.com "{t}"'},
+  {name:"Miro boards",                         desc:"Miro whiteboards mentioning target.",                                                                                         sev:"med",  tags:["miro"], engine:"g", q:'site:miro.com "{t}"'},
+  {name:"Coda public docs",                    desc:"site:coda.io — collaborative docs with internal data.",                                                                       sev:"med",  tags:["coda"], engine:"g", q:'site:coda.io "{t}"'},
+  {name:"Postman public collections",          desc:"site:postman.com inurl:workspace — full API collections with example tokens.",                                                sev:"crit", tags:["postman","api"], engine:"g", q:'site:postman.com "{t}" inurl:workspace'},
+  {name:"Postman documenter",                  desc:"documenter.getpostman.com — published API documentation.",                                                                    sev:"high", tags:["postman","api"], engine:"g", q:'site:documenter.getpostman.com "{t}"'},
+  {name:"Confluence wiki spaces",              desc:"site:atlassian.net /wiki/spaces — internal wiki indexed publicly.",                                                            sev:"high", tags:["confluence"], engine:"g", q:'site:atlassian.net "{t}" inurl:/wiki/spaces/'},
+  {name:"Jira tickets indexed",                desc:"site:atlassian.net inurl:browse — issue tracker leaks.",                                                                      sev:"high", tags:["jira"], engine:"g", q:'site:atlassian.net "{t}" inurl:browse'},
+  {name:"ServiceNow instances",                desc:"site:service-now.com — corporate ITSM.",                                                                                      sev:"med",  tags:["servicenow"], engine:"g", q:'site:service-now.com "{t}"'},
+  {name:"Public Google Docs/Sheets",           desc:"docs.google.com mentions of the target — public docs/sheets.",                                                                sev:"high", tags:["gdocs"], engine:"g", q:'site:docs.google.com "{t}"'},
+  {name:"Loom screen recordings",              desc:"loom.com videos — devs record screen with secrets visible.",                                                                  sev:"high", tags:["loom"], engine:"g", q:'site:loom.com "{t}"'},
+  {name:"Slack archive / community",           desc:"Public Slack archive snippets indexed.",                                                                                      sev:"med",  tags:["slack"], engine:"g", q:'site:slack.com "{t}"'},
+  {name:"Smartsheet / Whimsical",              desc:"Spreadsheets and whiteboards.",                                                                                               sev:"med",  tags:["docs"], engine:"g", q:'(site:smartsheet.com OR site:whimsical.com) "{t}"'},
+  {name:"Pastebin family aggregate",           desc:"Multi-pastebin search.",                                                                                                      sev:"high", tags:["paste"], engine:"g", q:'(site:pastebin.com OR site:paste.ee OR site:ghostbin.co OR site:controlc.com OR site:justpaste.it) "{t}"'},
+  {name:"GitLab Snippets",                     desc:"site:gitlab.com inurl:snippets — public GitLab snippets.",                                                                    sev:"med",  tags:["gitlab"], engine:"g", q:'site:gitlab.com "{t}" inurl:snippets'},
+  {name:"Hastebin",                            desc:"site:hastebin.com.",                                                                                                          sev:"low",  tags:["paste"], engine:"g", q:'site:hastebin.com "{t}"'}
+]},
+
+{ id:"net", label:"Network & Service Intel", icon:"🌐", description:"Asset intel across Shodan / FOFA / ZoomEye / Censys / Hunter.how / Netlas / LeakIX / Onyphe.", items:[
+  {name:"FOFA cert.subject (shadow IT)",       desc:"FOFA cert subject match — finds hosts not pointed by target DNS.",                                                            sev:"high", tags:["cert","shadow-it"], engine:"fo", q:'cert.subject="{t_no_tld}"'},
+  {name:"FOFA cert SAN match",                 desc:'cert="{t}" — finds hosts with target in SAN (subdomains too).',                                                               sev:"high", tags:["cert","shadow-it"], engine:"fo", q:'cert="{t}"'},
+  {name:"Censys cert subject_dn",              desc:"Censys cert subject DN match — different dataset, often distinct from FOFA.",                                                 sev:"high", tags:["cert","shadow-it"], engine:"cen", q:'services.tls.certificates.leaf_data.subject_dn: "{t}"'},
+  {name:"Shodan org",                          desc:'org:"{t}" — primary Shodan attribute lookup.',                                                                                sev:"med",  tags:["shodan"], engine:"sh", q:'org:"{t}"'},
+  {name:"Shodan SSL cert",                     desc:'ssl:"{t}" — TLS cert text match.',                                                                                            sev:"med",  tags:["shodan","cert"], engine:"sh", q:'ssl:"{t}"'},
+  {name:"Shodan HTTP title",                   desc:'http.title:"{t}" — HTTP page title match.',                                                                                   sev:"low",  tags:["shodan"], engine:"sh", q:'http.title:"{t}"'},
+  {name:"FOFA host org",                       desc:'org="{t_no_tld}" — FOFA org attribute.',                                                                                      sev:"med",  tags:["fofa"], engine:"fo", q:'org="{t_no_tld}"'},
+  {name:"FOFA host:",                          desc:'host="{t}" — FOFA host match.',                                                                                               sev:"med",  tags:["fofa"], engine:"fo", q:'host="{t}"'},
+  {name:"Censys autonomous_system org",        desc:"AS organization name match in Censys.",                                                                                       sev:"low",  tags:["censys"], engine:"cen", q:'autonomous_system.organization: "{t_no_tld}"'},
+  {name:"ZoomEye SSL",                         desc:'ssl:"{t}" — ZoomEye TLS field.',                                                                                              sev:"med",  tags:["zoomeye"], engine:"ze", q:'ssl:"{t}"'},
+  {name:"ZoomEye hostname",                    desc:'hostname:"{t}" — ZoomEye hostname.',                                                                                          sev:"med",  tags:["zoomeye"], engine:"ze", q:'hostname:"{t}"'},
+  {name:"Hunter.how domain",                   desc:'domain="{t}" — Hunter.how is great for Asia coverage.',                                                                       sev:"med",  tags:["hunterhow"], engine:"hh", q:'domain="{t}"'},
+  {name:"Netlas domain",                       desc:'domain:{t} — Netlas full asset stack and banners.',                                                                           sev:"med",  tags:["netlas"], engine:"nl", q:'domain:{t}'},
+  {name:"Netlas full-text",                    desc:"Free-form Netlas search by org name.",                                                                                        sev:"low",  tags:["netlas"], engine:"nl", q:'"{t_no_tld}"'},
+  {name:"LeakIX +host",                        desc:'+host:"{t}" — public leak index.',                                                                                            sev:"high", tags:["leakix"], engine:"lx", q:'+host:"{t}"'},
+  {name:"Onyphe datascan",                     desc:'category:datascan domain:{t}.',                                                                                                sev:"med",  tags:["onyphe"], engine:"oy", q:'category:datascan domain:{t}'},
+  {name:"GreyNoise org",                       desc:"GreyNoise scanned-IP enrichment by AS organization.",                                                                          sev:"info", tags:["greynoise"], engine:"gn", q:'metadata.organization:"{t_no_tld}"'},
+  {name:"BinaryEdge domain",                   desc:'domain:{t}.',                                                                                                                  sev:"med",  tags:["binaryedge"], engine:"be", q:'domain:{t}'},
+  {name:"urlscan domain",                      desc:'domain:{t} — urlscan scans + screenshots.',                                                                                   sev:"low",  tags:["urlscan"], engine:"us", q:'domain:{t}'}
+]},
+
+{ id:"dns", label:"DNS / Cert / Subdomain", icon:"🪪", description:"Subdomain enum via crt.sh / DNSDumpster / SecurityTrails / VirusTotal / Phonebook / urlscan / Wayback / CommonCrawl.", items:[
+  {name:"crt.sh wildcard JSON",                desc:"crt.sh JSON output for %.{t} — full CT log subdomain list.",                                                                  sev:"high", tags:["cert","ct"], engine:"wa", q:'https://crt.sh/?q=%25.{t}&output=json'},
+  {name:"crt.sh deep wildcard",                desc:"%.%.{t} — second-level subdomains.",                                                                                          sev:"high", tags:["cert","ct"], engine:"wa", q:'https://crt.sh/?q=%25.%25.{t}&output=json'},
+  {name:"DNSDumpster",                         desc:"DNSDumpster passive DNS + service map.",                                                                                      sev:"med",  tags:["dns"], engine:"dd", q:'{t}'},
+  {name:"SecurityTrails apex",                 desc:"SecurityTrails apex domain history.",                                                                                          sev:"med",  tags:["dns"], engine:"st", q:'{t}'},
+  {name:"VirusTotal relations",                desc:"VirusTotal domain → siblings / passive DNS.",                                                                                  sev:"med",  tags:["vt"], engine:"vt", q:'{t}'},
+  {name:"Phonebook.cz",                        desc:"Phonebook.cz — subdomains + emails.",                                                                                          sev:"med",  tags:["dns"], engine:"pb", q:'{t}'},
+  {name:"AlienVault OTX",                      desc:"OTX passive DNS / IOC.",                                                                                                       sev:"low",  tags:["otx"], engine:"ot", q:'{t}'},
+  {name:"urlscan domain",                      desc:"urlscan.io domain index + page captures.",                                                                                    sev:"low",  tags:["urlscan"], engine:"us", q:'domain:{t}'},
+  {name:"Wayback subdomain extract",           desc:"CDX URL list collapsed by urlkey for subdomain hint.",                                                                        sev:"med",  tags:["wayback"], engine:"wa", q:'https://web.archive.org/cdx/search/cdx?url=*.{t}/*&output=text&fl=original&collapse=urlkey&from=20180101&limit=2000'},
+  {name:"CommonCrawl host index",              desc:"CommonCrawl 2025-30 index for *.{t}/* — JSON.",                                                                                sev:"low",  tags:["cc"], engine:"cc", q:'*.{t}/*'}
+]},
+
+{ id:"wayback", label:"Web Archive", icon:"📚", description:"Wayback Machine CDX queries with from=20180101 — historical URLs, sensitive ext, params, archived robots/.git.", items:[
+  {name:"All historical URLs",                 desc:"Full CDX URL dump for the target since 2018, dedup'd.",                                                                       sev:"med",  tags:["wayback"], engine:"wa", q:'https://web.archive.org/cdx/search/cdx?url=*.{t}/*&output=text&fl=original&collapse=urlkey&from=20180101&limit=2000'},
+  {name:"Sensitive ext (sql/env/key/…)",       desc:"CDX filter for archived sensitive file extensions.",                                                                          sev:"high", tags:["wayback","secret"], engine:"wa", q:'https://web.archive.org/cdx/search/cdx?url=*.{t}/*&output=text&fl=original&filter=original:.*\\.(sql|env|yml|log|bak|key|pem|json|csv|xml|tfstate)$&from=20180101&limit=500'},
+  {name:"Param discovery",                     desc:"All historical URLs with query strings — gold for parameter wordlists.",                                                     sev:"med",  tags:["wayback","params"], engine:"wa", q:'https://web.archive.org/cdx/search/cdx?url=*.{t}/*&output=text&fl=original&filter=original:.*\\?.*=&from=20180101&limit=2000'},
+  {name:"Archived robots.txt",                 desc:"Old robots.txt often discloses internal paths.",                                                                              sev:"med",  tags:["wayback"], engine:"wa", q:'https://web.archive.org/cdx/search/cdx?url=*.{t}/*&output=text&fl=original&filter=original:.*robots\\.txt$&from=20180101'},
+  {name:"Archived sitemap.xml",                desc:"Old sitemap.xml — large URL coverage.",                                                                                       sev:"low",  tags:["wayback"], engine:"wa", q:'https://web.archive.org/cdx/search/cdx?url=*.{t}/*&output=text&fl=original&filter=original:.*sitemap\\.xml$&from=20180101'},
+  {name:"Archived security.txt",               desc:".well-known/security.txt history.",                                                                                          sev:"low",  tags:["wayback"], engine:"wa", q:'https://web.archive.org/cdx/search/cdx?url=*.{t}/*&output=text&fl=original&filter=original:.*\\.well-known/security\\.txt$&from=20180101'},
+  {name:"Archived .git/ exposure",             desc:"Wayback captures of leaked /.git/config|HEAD|index.",                                                                         sev:"high", tags:["wayback","git"], engine:"wa", q:'https://web.archive.org/cdx/search/cdx?url=*.{t}/*&output=text&fl=original&filter=original:.*\\.git/(config|HEAD|index)$&from=20180101'},
+  {name:"IntelX historical leaks",             desc:"intelx.io — leaked datasets / paste history.",                                                                                sev:"high", tags:["leak"], engine:"ix", q:'{t}'}
+]},
+
+{ id:"code", label:"Code Search", icon:"🐙", description:"Cross-engine source-code search — GitHub, grep.app, Sourcegraph, searchcode, PublicWWW (analytics IDs), NerdyData.", items:[
+  {name:"GitHub org enum",                     desc:"org:{t_no_tld} fork:false — first thing to do on a new target.",                                                              sev:"med",  tags:["github"], engine:"gh", q:'org:{t_no_tld} fork:false'},
+  {name:"GH Issues w/ secrets keywords",       desc:"Issue tracker often discloses creds in stack traces.",                                                                       sev:"med",  tags:["github"], engine:"gho", q:'org:{t_no_tld} (password OR secret OR key OR token)'},
+  {name:"Public Gists",                        desc:"site:gist.github.com — devs paste throwaway scripts with creds.",                                                             sev:"med",  tags:["github"], engine:"g", q:'site:gist.github.com "{t}"'},
+  {name:"grep.app for env files",              desc:"grep.app regex search across public code with target match.",                                                                 sev:"high", tags:["grep"], engine:"gra", q:'"{t}" extension:env'},
+  {name:"Sourcegraph multi-lang",              desc:"Sourcegraph context:global with target match.",                                                                              sev:"med",  tags:["sourcegraph"], engine:"sg", q:'context:global "{t}" lang:env OR lang:yaml'},
+  {name:"searchcode.com",                      desc:"Older but still useful for SourceForge / Bitbucket coverage.",                                                                sev:"low",  tags:["searchcode"], engine:"sc", q:'"{t}" password'},
+  {name:"PublicWWW: Google Analytics ID",      desc:"Find sister sites by UA-/G- analytics ID.",                                                                                   sev:"med",  tags:["publicwww","pivot"], engine:"pw", q:'"UA-" "{t_no_tld}"'},
+  {name:"PublicWWW: GTM ID",                   desc:"GTM- container reuse pivot.",                                                                                                  sev:"med",  tags:["publicwww","pivot"], engine:"pw", q:'"GTM-" "{t_no_tld}"'},
+  {name:"PublicWWW: AdSense ca-pub-",          desc:"Owner pivot via AdSense publisher ID.",                                                                                       sev:"low",  tags:["publicwww","pivot"], engine:"pw", q:'"ca-pub-" "{t_no_tld}"'},
+  {name:"NerdyData",                           desc:"NerdyData full source-code search engine.",                                                                                   sev:"low",  tags:["nerdydata"], engine:"nd", q:'"{t}"'},
+  {name:"npm packages",                        desc:"site:npmjs.com — packages mentioning the target.",                                                                            sev:"low",  tags:["npm"], engine:"g", q:'site:npmjs.com "{t}"'},
+  {name:"PyPI packages",                       desc:"site:pypi.org.",                                                                                                              sev:"low",  tags:["pypi"], engine:"g", q:'site:pypi.org "{t}"'},
+  {name:"Docker Hub repos",                    desc:"site:hub.docker.com — published images.",                                                                                     sev:"low",  tags:["docker"], engine:"g", q:'site:hub.docker.com "{t}"'},
+  {name:"RubyGems",                            desc:"site:rubygems.org.",                                                                                                          sev:"info", tags:["ruby"], engine:"g", q:'site:rubygems.org "{t}"'},
+  {name:"Maven Central",                       desc:"site:search.maven.org.",                                                                                                      sev:"info", tags:["java"], engine:"g", q:'site:search.maven.org "{t}"'},
+  {name:"crates.io",                           desc:"site:crates.io.",                                                                                                             sev:"info", tags:["rust"], engine:"g", q:'site:crates.io "{t}"'}
+]},
+
+{ id:"attack", label:"Attack Vectors", icon:"🗡️", description:"Open redirect / SSRF / LFI / XSS reflection / SAML / OIDC / WordPress / Drupal / Magento / file upload / auth.", items:[
+  {name:"Open Redirect candidates",            desc:"Suspicious redirect/url/return/next/continue/goto params.",                                                                  sev:"med",  tags:["redirect"], engine:"g", q:'site:{t} (inurl:"redirect=" OR inurl:"url=" OR inurl:"return=" OR inurl:"next=" OR inurl:"continue=" OR inurl:"goto=")'},
+  {name:"SSRF candidates",                     desc:"Likely server-side fetch parameters.",                                                                                       sev:"high", tags:["ssrf"], engine:"g", q:'site:{t} (inurl:"url=" OR inurl:"dest=" OR inurl:"image=" OR inurl:"path=" OR inurl:"file=")'},
+  {name:"LFI candidates",                      desc:"Local-file-include parameters.",                                                                                             sev:"high", tags:["lfi"], engine:"g", q:'site:{t} (inurl:"file=" OR inurl:"page=" OR inurl:"document=" OR inurl:"include=")'},
+  {name:"XSS reflection points",               desc:"Common reflection params.",                                                                                                  sev:"med",  tags:["xss"], engine:"g", q:'site:{t} (inurl:"q=" OR inurl:"search=" OR inurl:"query=" OR inurl:"keyword=")'},
+  {name:"Implicit OAuth (legacy)",             desc:"response_type=token — implicit flow leaks tokens via Referer / browser history.",                                            sev:"high", tags:["oauth"], engine:"g", q:'site:{t} inurl:"response_type=token"'},
+  {name:"SAML metadata exposed",               desc:"/saml/metadata or EntityDescriptor XML.",                                                                                    sev:"med",  tags:["saml"], engine:"g", q:'site:{t} (inurl:"/saml/metadata" OR (ext:xml "EntityDescriptor"))'},
+  {name:"OIDC well-known config",              desc:".well-known/openid-configuration — identity provider discovery.",                                                            sev:"info", tags:["oidc"], engine:"g", q:'site:{t} inurl:".well-known/openid-configuration"'},
+  {name:"Webhook listeners (n8n, Zapier)",     desc:"Public webhook endpoints (often unauth).",                                                                                   sev:"high", tags:["webhook"], engine:"g", q:'site:{t} (inurl:"/webhook/" OR inurl:"hooks.zapier.com" OR inurl:"webhook.site")'},
+  {name:"SQL error leaks",                     desc:"Pages echoing DB errors — SQLi smoke signals.",                                                                              sev:"high", tags:["sqli"], engine:"g", q:'site:{t} ("sql syntax" OR "mysql_fetch" OR "ORA-" OR "PostgreSQL" OR "Microsoft OLE DB")'},
+  {name:"WordPress wp-json users",             desc:"Default REST endpoint enumerates usernames.",                                                                                 sev:"med",  tags:["wp"], engine:"g", q:'site:{t} inurl:"/wp-json/wp/v2/users"'},
+  {name:"WordPress debug.log",                 desc:"wp-content/debug.log occasionally indexed.",                                                                                  sev:"high", tags:["wp"], engine:"g", q:'site:{t} inurl:"wp-content/debug.log"'},
+  {name:"Drupal CHANGELOG.txt",                desc:"Reveals Drupal version (CVE matching).",                                                                                      sev:"low",  tags:["drupal"], engine:"g", q:'site:{t} inurl:"CHANGELOG.txt" Drupal'},
+  {name:"Magento /admin",                      desc:'inurl:"/admin/" Magento — admin panel disclosure.',                                                                          sev:"med",  tags:["magento"], engine:"g", q:'site:{t} inurl:"/admin/" "Magento"'},
+  {name:"File upload pages",                   desc:"Upload forms — pivot to RCE / stored XSS.",                                                                                  sev:"med",  tags:["upload"], engine:"g", q:'site:{t} (inurl:"/upload" OR intitle:"upload" OR "choose file")'},
+  {name:"Auth endpoints",                      desc:"/login /signin /sso /auth/realms — auth attack surface.",                                                                    sev:"info", tags:["auth"], engine:"g", q:'site:{t} (inurl:"/login" OR inurl:"/signin" OR inurl:"/sso" OR inurl:"/auth/realms/")'},
+  {name:"Keycloak realms",                     desc:'inurl:"/auth/realms/" — Keycloak realms exposed.',                                                                            sev:"med",  tags:["keycloak"], engine:"g", q:'site:{t} inurl:"/auth/realms/"'}
+]},
+
+{ id:"ics", label:"ICS / IoT / Datastores", icon:"🏭", description:"Things Google doesn't index — Shodan / FOFA / Censys reveal real-world ICS, cameras and exposed datastores.", items:[
+  {name:"Modbus (port 502)",                   desc:"Industrial PLC protocol on TCP/502.",                                                                                         sev:"crit", tags:["ics"], engine:"sh", q:'port:502 "{t_no_tld}"'},
+  {name:"MQTT brokers",                        desc:"Open MQTT brokers on 1883.",                                                                                                  sev:"high", tags:["iot"], engine:"sh", q:'port:1883 "MQTT"'},
+  {name:"BACnet HVAC",                         desc:"BACnet HVAC controllers on 47808.",                                                                                            sev:"high", tags:["ics"], engine:"sh", q:'port:47808'},
+  {name:"Siemens S7 PLCs",                     desc:"Siemens S7 protocol on TCP/102.",                                                                                              sev:"crit", tags:["ics"], engine:"sh", q:'port:102 "Siemens"'},
+  {name:"SCADA HMI panels",                    desc:'FOFA title="HMI" — exposed industrial HMIs.',                                                                                 sev:"crit", tags:["ics","panel"], engine:"fo", q:'title="HMI"'},
+  {name:"RTSP cameras",                        desc:"Open RTSP cams with screenshot in Shodan.",                                                                                   sev:"med",  tags:["camera"], engine:"sh", q:'has_screenshot:true port:554'},
+  {name:"Hikvision panels",                    desc:"http.title:Hikvision via Censys.",                                                                                            sev:"high", tags:["camera"], engine:"cen", q:'services.http.response.html_title:"Hikvision"'},
+  {name:"Dahua HTML banner",                   desc:"Dahua camera HTML banner.",                                                                                                   sev:"high", tags:["camera"], engine:"cen", q:'services.http.response.body:"Dahua"'},
+  {name:"Open Elasticsearch",                  desc:"port:9200 + cluster_name — public ES clusters.",                                                                              sev:"crit", tags:["db"], engine:"sh", q:'port:9200 "cluster_name"'},
+  {name:"Open MongoDB",                        desc:"port:27017 + MongoDB without auth.",                                                                                          sev:"crit", tags:["db"], engine:"sh", q:'port:27017 "MongoDB" -authentication'},
+  {name:"Open Redis",                          desc:"port:6379 + redis_version.",                                                                                                  sev:"crit", tags:["db"], engine:"sh", q:'port:6379 "redis_version"'},
+  {name:"Memcached exposed",                   desc:"port:11211 — UDP amplification + data leak.",                                                                                 sev:"high", tags:["db"], engine:"sh", q:'port:11211'},
+  {name:"Open Jenkins",                        desc:"Jenkins dashboard via Censys.",                                                                                               sev:"high", tags:["ci","panel"], engine:"cen", q:'services.http.response.html_title:"Dashboard [Jenkins]"'},
+  {name:"Open Grafana",                        desc:"Grafana dashboards.",                                                                                                         sev:"med",  tags:["panel"], engine:"cen", q:'services.http.response.html_title:"Grafana"'},
+  {name:"Open Prometheus",                     desc:"port:9090 + Prometheus.",                                                                                                     sev:"med",  tags:["panel"], engine:"sh", q:'port:9090 "Prometheus"'},
+  {name:"Open Kibana",                         desc:"Kibana panels via Censys.",                                                                                                   sev:"med",  tags:["panel"], engine:"cen", q:'services.http.response.html_title:"Kibana"'},
+  {name:"WiGLE SSID by org",                   desc:"WiGLE for SSIDs containing org name.",                                                                                        sev:"low",  tags:["wifi"], engine:"wig", q:'{t_no_tld}'}
+]},
+
+{ id:"cloud", label:"Cloud Storage", icon:"📦", description:"S3 (multiple variants), GCS, Azure Blob, DO Spaces, R2, Backblaze, Wasabi, OVH.", items:[
+  {name:"S3 by bucket name",                   desc:'site:s3.amazonaws.com with org name and common bucket suffixes.',                                                            sev:"high", tags:["s3"], engine:"g", q:'site:s3.amazonaws.com "{t_no_tld}" (-backup OR -prod OR -dev OR -static OR -uploads OR -media OR -assets OR -logs)'},
+  {name:"S3 virtual host URL",                 desc:"inurl:{org}. site:s3.amazonaws.com — virtual-hosted bucket URLs.",                                                            sev:"high", tags:["s3"], engine:"g", q:'inurl:"{t_no_tld}." site:s3.amazonaws.com'},
+  {name:"S3 ListBucketResult XML",             desc:"Public bucket listing XML on the open web.",                                                                                 sev:"high", tags:["s3"], engine:"g", q:'intext:"<ListBucketResult" "{t_no_tld}"'},
+  {name:"Google Cloud Storage",                desc:"site:storage.googleapis.com.",                                                                                                sev:"high", tags:["gcs"], engine:"g", q:'site:storage.googleapis.com "{t}"'},
+  {name:"Azure Blob",                          desc:"*.blob.core.windows.net.",                                                                                                    sev:"high", tags:["azure"], engine:"g", q:'site:*.blob.core.windows.net "{t}"'},
+  {name:"Azure SAS in code",                   desc:"sv= sig= patterns referencing target.",                                                                                       sev:"high", tags:["azure"], engine:"gh", q:'"sv=" "sig=" "{t}" "blob.core.windows.net"'},
+  {name:"DigitalOcean Spaces",                 desc:"*.digitaloceanspaces.com.",                                                                                                   sev:"med",  tags:["do"], engine:"g", q:'site:*.digitaloceanspaces.com "{t}"'},
+  {name:"Cloudflare R2 (.r2.dev)",             desc:"R2 dev URLs.",                                                                                                                sev:"med",  tags:["r2"], engine:"g", q:'site:*.r2.dev "{t}"'},
+  {name:"Cloudflare R2 storage",               desc:"r2.cloudflarestorage.com.",                                                                                                   sev:"med",  tags:["r2"], engine:"g", q:'site:*.r2.cloudflarestorage.com "{t}"'},
+  {name:"Backblaze B2",                        desc:"*.backblazeb2.com.",                                                                                                          sev:"med",  tags:["b2"], engine:"g", q:'site:*.backblazeb2.com "{t}"'},
+  {name:"Wasabi",                              desc:"*.wasabisys.com.",                                                                                                            sev:"med",  tags:["wasabi"], engine:"g", q:'site:*.wasabisys.com "{t}"'},
+  {name:"OVH Cloud",                           desc:"*.cloud.ovh.net.",                                                                                                            sev:"low",  tags:["ovh"], engine:"g", q:'site:*.cloud.ovh.net "{t}"'}
+]},
+
+{ id:"people", label:"People / Email", icon:"👥", description:"Domain-scoped people OSINT — Hunter.io, HIBP, LinkedIn pivot, Phonebook.cz.", items:[
+  {name:"Hunter.io domain emails",             desc:"Hunter.io pattern + most-common emails by domain.",                                                                          sev:"low",  tags:["email"], engine:"hu", q:'{t}'},
+  {name:"HIBP unified search",                 desc:"Account / paste appearance lookup.",                                                                                          sev:"med",  tags:["breach"], engine:"hi", q:'{t}'},
+  {name:"LinkedIn employees pivot",            desc:"Google site:linkedin.com/in for the org name — employee enum.",                                                              sev:"low",  tags:["people"], engine:"li", q:'{t_no_tld}'},
+  {name:"GitHub committer emails",             desc:'org:{t_no_tld} "@{t}" in:email — committer email enum via issues.',                                                          sev:"low",  tags:["github"], engine:"gho", q:'org:{t_no_tld} "@{t}"'},
+  {name:"Phonebook.cz emails",                 desc:"Phonebook.cz returns emails too, not just subdomains.",                                                                       sev:"med",  tags:["email"], engine:"pb", q:'{t}'}
+]},
+
+{ id:"takeover", label:"Subdomain Takeover", icon:"🪝", description:"can-i-take-over-xyz fingerprints visible via Google.", items:[
+  {name:"Heroku takeover",                     desc:'"There is no app configured at that hostname".',                                                                              sev:"high", tags:["takeover"], engine:"g", q:'site:{t} "There is no app configured at that hostname"'},
+  {name:"GitHub Pages",                        desc:'"There isn\'t a GitHub Pages site here."',                                                                                     sev:"high", tags:["takeover"], engine:"g", q:'site:{t} "There isn\'t a GitHub Pages site here."'},
+  {name:"Azure 404 over .azurewebsites.net",   desc:'.azurewebsites.net + 404 fingerprint.',                                                                                       sev:"high", tags:["takeover"], engine:"g", q:'site:{t} ".azurewebsites.net" intext:"404"'},
+  {name:"Fastly unknown domain",               desc:'"Fastly error: unknown domain"',                                                                                              sev:"high", tags:["takeover"], engine:"g", q:'site:{t} "Fastly error: unknown domain"'},
+  {name:"Shopify shop unavailable",            desc:'"Sorry, this shop is currently unavailable"',                                                                                 sev:"high", tags:["takeover"], engine:"g", q:'site:{t} "Sorry, this shop is currently unavailable"'},
+  {name:"Tumblr placeholder",                  desc:'"There\'s nothing here." Tumblr fingerprint.',                                                                                sev:"med",  tags:["takeover"], engine:"g", q:'site:{t} "There\'s nothing here." Tumblr'},
+  {name:"Unbounce 404",                        desc:'"The requested URL was not found on this server" Unbounce.',                                                                  sev:"med",  tags:["takeover"], engine:"g", q:'site:{t} "The requested URL was not found on this server" Unbounce'},
+  {name:"S3 NoSuchBucket",                     desc:'"NoSuchBucket" — possible S3 bucket takeover.',                                                                               sev:"high", tags:["takeover","s3"], engine:"g", q:'site:{t} "NoSuchBucket"'},
+  {name:"Webflow / Pantheon / Tilda",          desc:"Aggregated other CDN takeover fingerprints.",                                                                                 sev:"med",  tags:["takeover"], engine:"g", q:'site:{t} ("This page is no longer available" OR "404 Webflow" OR "Pantheon" OR "Please renew your subscription")'}
+]},
+
+{ id:"mcp", label:"MCP / AI Agent Leaks", icon:"🤖", description:"Newest 2025-2026 attack surface: MCP servers, Claude Desktop, AutoGPT/AgentGPT, Cursor / Continue.dev, LangSmith.", items:[
+  {name:"MCP servers in code",                 desc:"modelcontextprotocol mentions + mcp.json — agent server configs.",                                                            sev:"high", tags:["mcp"], engine:"gh", q:'"{t}" "modelcontextprotocol" filename:mcp.json'},
+  {name:"Claude Desktop configs",              desc:"claude_desktop_config.json — contains API keys for Anthropic + MCP servers.",                                                 sev:"crit", tags:["mcp","anthropic"], engine:"gh", q:'filename:claude_desktop_config.json "{t}"'},
+  {name:"AutoGPT / AgentGPT logs",             desc:"Public agent logs revealing keys + task history.",                                                                            sev:"high", tags:["agent"], engine:"g", q:'site:{t} (intext:"AutoGPT" OR intext:"AgentGPT") (intext:"OPENAI_API_KEY" OR intext:"task_id")'},
+  {name:"Browser-use / OpenInterpreter logs",  desc:"browser_use trace logs with screenshots — often shows secrets visible on screen.",                                            sev:"high", tags:["agent"], engine:"gra", q:'browser_use.*screenshot.*"\\.log"'},
+  {name:"Cursor .cursorrules",                 desc:".cursorrules files — internal codebase guidelines + sometimes secrets.",                                                     sev:"med",  tags:["agent","cursor"], engine:"gh", q:'filename:.cursorrules "{t}"'},
+  {name:"Continue.dev configs",                desc:"continue config.json with model endpoints.",                                                                                 sev:"med",  tags:["agent"], engine:"gh", q:'filename:config.json "{t}" "continue"'},
+  {name:"LangSmith public traces",             desc:"site:smith.langchain.com — accidentally public traces with prompts/outputs.",                                                sev:"high", tags:["llm"], engine:"g", q:'site:smith.langchain.com "{t}"'},
+  {name:"LangGraph deploy URLs",               desc:'"langgraph.app" + "api_key" patterns in code.',                                                                              sev:"high", tags:["llm"], engine:"gh", q:'"{t}" "langgraph.app" "api_key"'},
+  {name:"Prompt-injectable forms",             desc:'site:{t} ("Ignore previous" OR "system_prompt" OR "you are an") — prompt-injection surface.',                                sev:"info", tags:["prompt-injection"], engine:"g", q:'site:{t} ("Ignore previous" OR "system_prompt" OR "you are an")'}
+]},
+
+{ id:"sbom", label:"SBOM / Dep Confusion", icon:"📦", description:"Exposed SBOM (CycloneDX, syft) and internal package patterns for dependency-confusion attacks.", items:[
+  {name:"SBOM JSON exposed",                   desc:"path:**/*.sbom.json mentioning the target.",                                                                                  sev:"med",  tags:["sbom"], engine:"gh", q:'path:**/*.sbom.json "{t}"'},
+  {name:"CycloneDX XML",                       desc:"path:**/cyclonedx*.xml.",                                                                                                     sev:"med",  tags:["sbom"], engine:"gh", q:'path:**/cyclonedx*.xml "{t}"'},
+  {name:"Syft JSON",                           desc:"path:**/syft*.json.",                                                                                                         sev:"med",  tags:["sbom"], engine:"gh", q:'path:**/syft*.json "{t}"'},
+  {name:"npm internal scope",                  desc:"package.json with @{org}/* scope — DC candidates.",                                                                            sev:"high", tags:["dc","npm"], engine:"gh", q:'"{t_no_tld}" path:package.json "@{t_no_tld}/"'},
+  {name:".npmrc registry",                     desc:".npmrc with registry= entry — internal registries leak.",                                                                     sev:"high", tags:["dc","npm"], engine:"gh", q:'filename:.npmrc "{t}" registry'},
+  {name:"pip extra-index-url",                 desc:"requirements.txt with --extra-index-url internal.",                                                                            sev:"high", tags:["dc","pip"], engine:"gh", q:'"{t}" "extra-index-url"'}
+]},
+
+{ id:"jobs", label:"Job Ad Recon", icon:"💼", description:"Job ads disclose stack + internal tools more deeply than any code dork.", items:[
+  {name:"LinkedIn jobs + tech keywords",       desc:"site:linkedin.com/jobs with kubernetes / terraform / snowflake / datadog / splunk.",                                          sev:"low",  tags:["jobs"], engine:"g", q:'site:linkedin.com/jobs "{t_no_tld}" (kubernetes OR terraform OR snowflake OR datadog OR splunk)'},
+  {name:"Indeed",                              desc:"site:indeed.com + security/devops/sre.",                                                                                      sev:"low",  tags:["jobs"], engine:"g", q:'site:indeed.com "{t_no_tld}" (security OR devops OR sre)'},
+  {name:"Greenhouse boards",                   desc:"site:boards.greenhouse.io — ATS often used by tech orgs.",                                                                    sev:"low",  tags:["jobs"], engine:"g", q:'site:boards.greenhouse.io "{t_no_tld}"'},
+  {name:"Lever",                               desc:"site:jobs.lever.co.",                                                                                                         sev:"low",  tags:["jobs"], engine:"g", q:'site:jobs.lever.co "{t_no_tld}"'},
+  {name:"Workable",                            desc:"site:apply.workable.com.",                                                                                                    sev:"low",  tags:["jobs"], engine:"g", q:'site:apply.workable.com "{t_no_tld}"'},
+  {name:"Internal-tool keyword",               desc:'"internal tool" / "in-house" — discloses bespoke tools by name.',                                                              sev:"low",  tags:["jobs"], engine:"g", q:'site:linkedin.com/jobs "{t_no_tld}" ("internal tool" OR "in-house")'}
+]},
+
+{ id:"cdn", label:"CDN Origin Discovery", icon:"☁️", description:"Pivot to true origin behind Cloudflare/Akamai/Fastly via FOFA/Censys/urlscan body match.", items:[
+  {name:"FOFA body + not-cloudflare",          desc:'body="<unique HTML snippet>" && cert.subject!="cloudflare" — paste a unique prod-page snippet.',                              sev:"high", tags:["cdn"], engine:"fo", q:'body="UNIQUE-HTML-SNIPPET-FROM-{t_no_tld}" && cert.subject!="cloudflare"'},
+  {name:"Censys body match",                   desc:"Censys equivalent.",                                                                                                          sev:"high", tags:["cdn"], engine:"cen", q:'services.http.response.body:"UNIQUE-HTML-SNIPPET-FROM-{t_no_tld}" and not services.tls.certificates.leaf_data.subject.common_name:"cloudflare"'},
+  {name:"Shodan html: + not cloudflare",       desc:"http.html: snippet with cert filter.",                                                                                        sev:"high", tags:["cdn"], engine:"sh", q:'http.html:"UNIQUE-HTML-SNIPPET-FROM-{t_no_tld}" -ssl.cert.subject.cn:cloudflare'},
+  {name:"urlscan domain off-CDN",              desc:"urlscan page.title + page.domain not cloudflare.",                                                                            sev:"med",  tags:["cdn"], engine:"us", q:'page.title:"{t_no_tld}" AND NOT page.domain:cloudflare.com'},
+  {name:"SecurityTrails DNS history",          desc:"Historical A records — origin IP often pre-CDN.",                                                                              sev:"high", tags:["cdn","dns"], engine:"st", q:'{t}'}
+]}
+];
+
+/* ============================================================
+ * Top secret patterns rail (one-click grep.app regex)
+ * ============================================================ */
+const TOP_PATTERNS = [
+  {label:"ghp_*",        q:'(ghp|gho|ghs|ghr|github_pat)_[A-Za-z0-9_]{30,}.*"{t}"'},
+  {label:"glpat-*",      q:'glpat-[A-Za-z0-9_-]{20,}.*"{t}"'},
+  {label:"sk_live_*",    q:'sk_live_[A-Za-z0-9]{24,}.*"{t}"'},
+  {label:"sk-ant-*",     q:'sk-ant-[A-Za-z0-9_-]{90,}.*"{t}"'},
+  {label:"sk-proj-*",    q:'sk-proj-[A-Za-z0-9_-]{20,}.*"{t}"'},
+  {label:"AKIA*",        q:'AKIA[0-9A-Z]{16}.*"{t}"'},
+  {label:"AIzaSy*",      q:'AIzaSy[A-Za-z0-9_-]{33}.*"{t}"'},
+  {label:"hf_*",         q:'hf_[A-Za-z0-9]{30,}.*"{t}"'},
+  {label:"r8_*",         q:'r8_[A-Za-z0-9]{37,}.*"{t}"'},
+  {label:"xox[abprs]-*", q:'xox[abprs]-[A-Za-z0-9-]{10,}.*"{t}"'},
+  {label:"SG.*",         q:'SG\\.[A-Za-z0-9_-]{22}\\.[A-Za-z0-9_-]{43}.*"{t}"'},
+  {label:"key-* (mailgun)", q:'key-[a-z0-9]{32}.*"{t}"'},
+  {label:"AC[a-f0-9]{32} (twilio)", q:'AC[a-f0-9]{32}.*"{t}"'},
+  {label:"sq0(atp|csp)-*", q:'sq0(atp|csp)-[A-Za-z0-9_-]{22,}.*"{t}"'},
+  {label:"lsv2_*",       q:'lsv2_(pt|sk)_[a-f0-9]{32,}.*"{t}"'}
+];
+
+/* ============================================================
+ * Crown Jewels — top 10 ROI (2026) batch
+ * ============================================================ */
+const CROWN = [
+  {engine:"g",   q:'site:raw.githubusercontent.com "{t}" intext:"AKIA"'},
+  {engine:"g",   q:'site:raw.githubusercontent.com "{t}" (intext:"ghp_" OR intext:"github_pat_")'},
+  {engine:"g",   q:'site:raw.githubusercontent.com "{t}" intext:"sk_live_"'},
+  {engine:"g",   q:'site:raw.githubusercontent.com "{t}" intext:"sk-ant-"'},
+  {engine:"gh",  q:'extension:tfstate "{t}"'},
+  {engine:"wa",  q:'https://crt.sh/?q=%25.%25.{t}&output=json'},
+  {engine:"fo",  q:'cert.subject="{t_no_tld}"'},
+  {engine:"wa",  q:'https://web.archive.org/cdx/search/cdx?url=*.{t}/*&output=text&fl=original&filter=original:.*\\.(env|sql|tfstate|pem|key)$&from=20180101&limit=500'},
+  {engine:"g",   q:'site:notion.site "{t}"'},
+  {engine:"gh",  q:'path:**/values.yaml "{t}" (password OR secret)'}
+];
+
+/* ============================================================
+ * GHDB curated picks (still-working in 2026 by community report)
+ * Each is a Google query template; clicking runs against current target.
+ * ============================================================ */
+const GHDB_PICKS = [
+  {label:"index.of .env",       q:'site:{t} intitle:"index of" .env'},
+  {label:"DB_PASSWORD env",     q:'site:{t} filetype:env "DB_PASSWORD"'},
+  {label:".sql backup",         q:'site:{t} ext:sql intext:"INSERT INTO" intext:"PASSWORD"'},
+  {label:".log debug",          q:'site:{t} ext:log "Exception"'},
+  {label:"phpinfo()",           q:'site:{t} ext:php intitle:"phpinfo()"'},
+  {label:"id_rsa",              q:'site:{t} intitle:"index of" "id_rsa"'},
+  {label:"WordPress wp-config", q:'site:{t} inurl:"wp-config.php" intitle:"index of"'},
+  {label:".bash_history",       q:'site:{t} intitle:"index of" ".bash_history"'},
+  {label:"SSH known_hosts",     q:'site:{t} intitle:"index of" "known_hosts"'},
+  {label:"Apache server-status",q:'site:{t} inurl:"/server-status" intext:"Apache Server Status"'},
+  {label:"Open Directory",      q:'site:{t} intitle:"index of" "parent directory"'}
+];
+const GHDB_CATS = [
+  {label:"Files w/ Passwords",   url:"https://www.exploit-db.com/google-hacking-database?category=4"},
+  {label:"Files w/ Juicy Info",  url:"https://www.exploit-db.com/google-hacking-database?category=8"},
+  {label:"Sensitive Directories",url:"https://www.exploit-db.com/google-hacking-database?category=2"},
+  {label:"Login Portals",        url:"https://www.exploit-db.com/google-hacking-database?category=8"},
+  {label:"Vulnerable Servers",   url:"https://www.exploit-db.com/google-hacking-database?category=10"},
+  {label:"Network/Vuln Data",    url:"https://www.exploit-db.com/google-hacking-database?category=3"}
+];
+
+/* ============================================================
+ * Recon recipes (preset filters/batches)
+ * ============================================================ */
+const RECIPES = {
+  firstPass: { label:"First Pass", filterTags:["cert","ct","dns"], maxPerCat:3 },
+  bbTriage:  { label:"BB Triage",  filterTags:["raw-gh","postman","secret","terraform","airtable","notion","s3","aws","github","slack","stripe"], maxPerCat:4 },
+  aiEra:     { label:"AI Era",     onlyCats:["ai-llm","mcp"], extraDrawers:["js"] },
+  shadowIT:  { label:"Shadow IT",  filterTags:["shadow-it","cert","ct","dns","subdomain"], extraDrawers:["perm"] },
+  opsecSafe: { label:"OPSEC Safe", onlyEngines:["g","ddg","gra","wa","crt","gh","gho","st","vt","pb","ot"] }
+};
+
+/* ============================================================
+ * State + storage
+ * ============================================================ */
+const STORAGE_KEY = "ndo_state_v1";
+let state = {
+  cat: 0,             // index in DATA, or -1 for "All"
+  filter: "",
+  sevs: new Set(["info","low","med","high","crit"]),
+  opsec: false,
+  history: []
+};
+function loadState(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw){ const s = JSON.parse(raw); Object.assign(state, s); state.sevs = new Set(s.sevs||["info","low","med","high","crit"]); }
+  }catch(e){}
+}
+function saveState(){
+  try{
+    const s = {...state, sevs:[...state.sevs]};
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(s));
+  }catch(e){}
+}
+function pushHistory(t){
+  if (!t) return;
+  state.history = [t, ...state.history.filter(x=>x!==t)].slice(0,8);
+  saveState();
+  refreshHistoryDatalist();
+}
+function refreshHistoryDatalist(){
+  const dl = $("#targetHistory");
+  dl.innerHTML = state.history.map(h => `<option value="${h}">`).join("");
+}
+
+/* ============================================================
+ * URL templating + engine resolution
+ * ============================================================ */
+function applyTemplate(q, t){
+  return (q||"")
+    .replaceAll("{t_no_tld}", hostOrg(t))
+    .replaceAll("{t}", t)
+    .replaceAll("{date}", fmtDate());
+}
+function buildUrl(engineKey, q, t){
+  const e = ENGINES[engineKey];
+  if (!e) return "#";
+  return e.url(applyTemplate(q, t));
+}
+
+/* ============================================================
+ * Hash routing
+ * ============================================================ */
+function readHash(){
+  const h = location.hash.replace(/^#/, "");
+  const params = new URLSearchParams(h);
+  const cat = params.get("cat");
+  if (cat === "all") state.cat = -1;
+  else if (cat){
+    const idx = DATA.findIndex(c => c.id === cat);
+    if (idx >= 0) state.cat = idx;
   }
+  if (params.has("filter")) state.filter = params.get("filter") || "";
+  if (params.has("sev")){
+    state.sevs = new Set((params.get("sev")||"").split(",").filter(Boolean));
+    if (state.sevs.size === 0) state.sevs = new Set(["info","low","med","high","crit"]);
+  }
+  if (params.has("target")){
+    const t = normHost(params.get("target")||"");
+    if (t) $("#target").value = t;
+  }
+}
+function writeHash(){
+  const params = new URLSearchParams();
+  params.set("cat", state.cat === -1 ? "all" : (DATA[state.cat]?.id || "raw-gh"));
+  if (state.filter) params.set("filter", state.filter);
+  params.set("sev", [...state.sevs].join(","));
+  history.replaceState(null, "", "#" + params.toString());
+}
 
-  function buildUrl(engine, query, t){
-    const enc = s => encodeURIComponent(s);
-    const q = query.replaceAll('{t}', t).replaceAll('{t_no_tld}', hostOrg(t));
-    switch(engine){
-      case 'g':  return 'https://www.google.com/search?q='+enc(q);
-      case 'gh': return 'https://github.com/search?q='+enc(q)+'&type=code';
-      case 'pw': return 'https://publicwww.com/websites/'+enc(q)+'/';
-      case 'wa': return q;
-      case 'crt':return 'https://crt.sh/?q='+enc(q);
-      case 'sh': return 'https://www.shodan.io/search?query='+enc(q);
-      default:   return '#';
+/* ============================================================
+ * Render — categories + cards + stats
+ * ============================================================ */
+const $grid = $("#grid");
+const $catNav = $("#categoryNav");
+const $stats = $("#stats");
+const $target = $("#target");
+const $filter = $("#filter");
+
+function totalCounts(){
+  const dorks = DATA.reduce((a,c)=>a+c.items.length,0);
+  const engines = new Set();
+  DATA.forEach(c => c.items.forEach(i => {
+    engines.add(i.engine);
+    (i.links||[]).forEach(l => engines.add(l.engine));
+  }));
+  return { dorks, cats: DATA.length, engines: engines.size };
+}
+function renderStats(){
+  const { dorks, cats, engines } = totalCounts();
+  $stats.innerHTML = `<b>${dorks}</b> dorks · <b>${cats}</b> categories · <b>${engines}</b> engines · <b>${TOP_PATTERNS.length}</b> top patterns`;
+}
+function renderCategories(){
+  $catNav.innerHTML = "";
+  // "All" pseudo-tab first
+  const allBtn = document.createElement("button");
+  allBtn.className = "cat-btn" + (state.cat === -1 ? " active" : "");
+  allBtn.innerHTML = `<span class="icon">✶</span><span>All</span><span class="count">${totalCounts().dorks}</span>`;
+  allBtn.title = "Show all categories";
+  allBtn.onclick = () => { state.cat = -1; saveState(); writeHash(); render(); };
+  $catNav.appendChild(allBtn);
+
+  DATA.forEach((cat, i) => {
+    const btn = document.createElement("button");
+    btn.className = "cat-btn" + (i === state.cat ? " active" : "");
+    btn.innerHTML = `<span class="icon">${cat.icon}</span><span>${cat.label}</span><span class="count">${cat.items.length}</span>`;
+    btn.title = cat.description;
+    btn.onclick = () => { state.cat = i; saveState(); writeHash(); render(); };
+    $catNav.appendChild(btn);
+  });
+}
+function renderPatterns(){
+  const root = $("#patterns");
+  root.innerHTML = '<span class="label">🔥 Top secrets:</span>';
+  TOP_PATTERNS.forEach(p => {
+    const el = document.createElement("button");
+    el.className = "pat";
+    el.textContent = p.label;
+    el.title = "Open grep.app for: " + p.q;
+    el.onclick = () => {
+      const t = currentTarget();
+      window.open(buildUrl("gra", p.q, t), "_blank", "noopener,noreferrer");
+    };
+    root.appendChild(el);
+  });
+}
+
+function currentTarget(){
+  const t = normHost($target.value);
+  if (!t) return "example.com";
+  return t;
+}
+
+function itemMatchesFilter(it, q){
+  if (!q) return true;
+  const hay = [it.name, it.desc, it.q, ...(it.tags||[]), ...(it.links||[]).map(l=>l.q).filter(Boolean)].join(" ").toLowerCase();
+  return q.toLowerCase().split(/\s+/).every(part => hay.includes(part));
+}
+function itemMatchesSev(it){
+  return state.sevs.has(it.sev || "info");
+}
+function itemMatchesOpsec(it){
+  if (!state.opsec) return true;
+  const engines = [it.engine, ...((it.links||[]).map(l=>l.engine))];
+  return engines.every(e => ENGINES[e] && ENGINES[e].opsec !== false);
+}
+function visibleCategories(){
+  if (state.cat === -1) return DATA.map((c,i)=>({c,i}));
+  return [{c:DATA[state.cat], i:state.cat}];
+}
+function renderCards(){
+  $grid.innerHTML = "";
+  const t = currentTarget();
+  let total = 0;
+  visibleCategories().forEach(({c,i}) => {
+    if (state.cat === -1){
+      const h = document.createElement("h2");
+      h.className = "section-title";
+      h.innerHTML = `<span class="icon">${c.icon}</span> ${c.label} <span style="color:var(--muted);font-weight:400;font-size:11px">— ${c.description}</span>`;
+      $grid.appendChild(h);
     }
-  }
+    const subgrid = state.cat === -1 ? document.createElement("div") : $grid;
+    if (state.cat === -1){ subgrid.className = "grid"; subgrid.style.marginBottom = "20px"; $grid.appendChild(subgrid); }
 
-  // === UI Rendering ===
-  let activeCategory = 0;
-
-  function renderCategories(){
-    $categoryNav.innerHTML = '';
-    DATA.forEach((cat, i) => {
-      const btn = document.createElement('div');
-      btn.className = 'cat-btn' + (i === activeCategory ? ' active' : '');
-      btn.textContent = cat.label;
-      btn.title = cat.description;
-      btn.onclick = () => { activeCategory = i; render(); };
-      $categoryNav.appendChild(btn);
+    c.items.forEach(it => {
+      if (!itemMatchesFilter(it, state.filter)) return;
+      if (!itemMatchesSev(it)) return;
+      if (!itemMatchesOpsec(it)) return;
+      total++;
+      subgrid.appendChild(renderCard(it, t));
     });
+  });
+  if (total === 0){
+    const empty = document.createElement("div");
+    empty.style.cssText = "padding:30px;color:var(--muted);text-align:center;font-size:13px";
+    empty.textContent = "No dorks match the current filter.";
+    $grid.appendChild(empty);
+  }
+}
+function renderCard(it, t){
+  const card = document.createElement("article");
+  card.className = "card";
+  card.dataset.sev = it.sev || "info";
+
+  card.innerHTML = `<div class="sev-ring"></div>`;
+
+  const h3 = document.createElement("h3");
+  h3.innerHTML = `<span class="sev-dot" aria-hidden="true"></span>${escHtml(it.name)}`;
+  card.appendChild(h3);
+
+  if (it.desc){
+    const p = document.createElement("p");
+    p.className = "desc";
+    p.textContent = it.desc;
+    card.appendChild(p);
   }
 
-  function renderCards(){
-    const t = normHost($target.value);
-    $grid.innerHTML = '';
-    
-    DATA[activeCategory].items.forEach((item, idx) => {
-      const card = document.createElement('div');
-      card.className = 'card';
-      
-      const h3 = document.createElement('h3');
-      h3.textContent = item.name;
-      card.appendChild(h3);
-      
-      const p = document.createElement('p');
-      p.textContent = DATA[activeCategory].description;
-      card.appendChild(p);
-      
-      const links = document.createElement('div');
-      links.className = 'links';
-      
-      const url = buildUrl(item.engine, item.q, t);
-      const link = document.createElement('a');
-      link.className = 'link';
-      link.href = url;
-      link.target = '_blank';
-      
-      const engineTag = document.createElement('div');
-      engineTag.className = 'engine-tag';
-      engineTag.textContent = item.engine.toUpperCase();
-      link.appendChild(engineTag);
-      
-      const queryText = document.createElement('div');
-      queryText.className = 'query-text';
-      queryText.textContent = item.q.replaceAll('{t}', t).replaceAll('{t_no_tld}', hostOrg(t));
-      link.appendChild(queryText);
-      
-      links.appendChild(link);
-      card.appendChild(links);
-      
-      const copyBtn = document.createElement('button');
-      copyBtn.className = 'copy';
-      copyBtn.textContent = 'Copy';
-      copyBtn.onclick = (e) => {
-        e.preventDefault();
-        const query = item.q.replaceAll('{t}', t).replaceAll('{t_no_tld}', hostOrg(t));
-        navigator.clipboard.writeText(query);
-        copyBtn.textContent = '✓';
-        setTimeout(() => copyBtn.textContent = 'Copy', 1000);
-      };
-      card.appendChild(copyBtn);
-      
-      $grid.appendChild(card);
+  if (it.tags && it.tags.length){
+    const tags = document.createElement("div");
+    tags.className = "tags";
+    it.tags.forEach(tg => {
+      const span = document.createElement("span");
+      span.className = "tag";
+      span.textContent = tg;
+      span.onclick = () => { state.filter = tg; $filter.value = tg; saveState(); writeHash(); render(); };
+      tags.appendChild(span);
     });
+    card.appendChild(tags);
   }
 
-  function render(){
-    renderCategories();
-    renderCards();
-  }
+  const links = document.createElement("div");
+  links.className = "links";
+  const allLinks = [{engine:it.engine, q:it.q}, ...((it.links)||[])];
+  allLinks.forEach(L => {
+    const e = ENGINES[L.engine]; if (!e) return;
+    const url = buildUrl(L.engine, L.q, t);
+    const a = document.createElement("a");
+    a.className = "link";
+    a.href = url;
+    a.target = "_blank";
+    a.rel = "noopener noreferrer";
+    a.referrerPolicy = "no-referrer";
+    const head = document.createElement("div"); head.className = "head";
+    const tag = document.createElement("span");
+    tag.className = "engine-tag" + (isDarkColor(e.color) ? " dark" : "");
+    tag.style.background = e.color;
+    tag.textContent = e.name;
+    head.appendChild(tag);
+    if (e.auth){ const lk = document.createElement("span"); lk.className = "lock"; lk.textContent = "🔒 login"; head.appendChild(lk); }
+    a.appendChild(head);
+    const q = document.createElement("div"); q.className = "q"; q.textContent = applyTemplate(L.q, t);
+    a.appendChild(q);
+    links.appendChild(a);
+  });
+  card.appendChild(links);
 
-  // === Event Handlers ===
-  document.getElementById('normalize').onclick = () => {
-    $target.value = normHost($target.value);
-    render();
+  const actions = document.createElement("div"); actions.className = "actions";
+  const cb = document.createElement("button"); cb.className = "ico-btn"; cb.textContent = "📋 Q";
+  cb.title = "Copy query";
+  cb.onclick = e => { e.preventDefault(); navigator.clipboard.writeText(applyTemplate(it.q, t)); cb.textContent = "✓"; setTimeout(()=>cb.textContent="📋 Q",900); };
+  const cu = document.createElement("button"); cu.className = "ico-btn"; cu.textContent = "🔗 URL";
+  cu.title = "Copy URL";
+  cu.onclick = e => { e.preventDefault(); navigator.clipboard.writeText(buildUrl(it.engine, it.q, t)); cu.textContent = "✓"; setTimeout(()=>cu.textContent="🔗 URL",900); };
+  actions.appendChild(cb); actions.appendChild(cu);
+  card.appendChild(actions);
+
+  return card;
+}
+function escHtml(s){ return String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
+
+function render(){
+  renderCategories();
+  renderCards();
+}
+
+/* ============================================================
+ * Open visible (with guard) + Crown Jewels
+ * ============================================================ */
+function visibleItems(){
+  const t = currentTarget();
+  const out = [];
+  visibleCategories().forEach(({c}) => {
+    c.items.forEach(it => {
+      if (itemMatchesFilter(it, state.filter) && itemMatchesSev(it) && itemMatchesOpsec(it)){
+        out.push({it, t});
+      }
+    });
+  });
+  return out;
+}
+function openInTabs(items){
+  if (!items.length) return;
+  if (items.length > 5){
+    if (!confirm(`Open ${items.length} tabs?`)) return;
+  }
+  items.forEach((x,i) => {
+    setTimeout(() => {
+      const it = x.it || x;
+      const t  = x.t || currentTarget();
+      const e  = it.engine, q = it.q;
+      window.open(buildUrl(e, q, t), "_blank", "noopener,noreferrer");
+    }, i * 250);
+  });
+}
+
+/* ============================================================
+ * Disclaimer banner
+ * ============================================================ */
+function maybeShowDisclaimer(){
+  if (localStorage.getItem("ndo_disclaimer_v1")) return;
+  const d = document.createElement("div");
+  d.className = "disclaimer";
+  d.innerHTML = `<p><b>Authorized testing only.</b> Night Dork Ops generates passive search-engine queries. You are solely responsible for compliance with local law, target ToS and your engagement scope. No queries are run from this app — you click through to public engines.</p>
+    <div class="actions"><button class="btn ok" id="discAccept">I understand</button></div>`;
+  document.body.appendChild(d);
+  $("#discAccept").onclick = () => { localStorage.setItem("ndo_disclaimer_v1","1"); d.remove(); };
+}
+
+/* ============================================================
+ * Help modal
+ * ============================================================ */
+function openHelp(){
+  const root = $("#modalRoot");
+  root.innerHTML = `<div class="modal-bg"><div class="modal" role="dialog" aria-modal="true" aria-labelledby="hm">
+    <h2 id="hm">Keyboard shortcuts &amp; engine legend</h2>
+    <table>
+      <tr><th>Key</th><th>Action</th></tr>
+      <tr><td><kbd>/</kbd></td><td>focus filter</td></tr>
+      <tr><td><kbd>j</kbd> / <kbd>k</kbd></td><td>next / prev category</td></tr>
+      <tr><td><kbd>c</kbd></td><td>copy first visible card's query</td></tr>
+      <tr><td><kbd>?</kbd></td><td>this help</td></tr>
+      <tr><td><kbd>esc</kbd></td><td>close modal</td></tr>
+    </table>
+    <h2 style="margin-top:14px">Engines (🔒 needs login)</h2>
+    <table id="engTable"><tr><th>key</th><th>engine</th><th>auth</th></tr></table>
+    <div class="actions"><button class="btn" id="hmClose">Close</button></div>
+  </div></div>`;
+  const t = $("#engTable");
+  Object.entries(ENGINES).forEach(([k,e]) => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `<td><kbd>${k}</kbd></td><td><span class="engine-tag" style="background:${e.color};color:${isDarkColor(e.color)?'#cfe3ff':'#0b1020'}">${e.name}</span></td><td>${e.auth?"🔒":""}</td>`;
+    t.appendChild(tr);
+  });
+  $("#hmClose").onclick = closeModal;
+  $(".modal-bg").onclick = e => { if (e.target.classList.contains("modal-bg")) closeModal(); };
+}
+function closeModal(){ $("#modalRoot").innerHTML = ""; }
+
+/* ============================================================
+ * Export — JSON / Markdown / CSV
+ * ============================================================ */
+function buildExportData(){
+  const t = currentTarget();
+  const cats = state.cat === -1 ? DATA : [DATA[state.cat]];
+  return cats.map(c => ({
+    category: c.label,
+    description: c.description,
+    items: c.items.filter(i => itemMatchesFilter(i, state.filter) && itemMatchesSev(i) && itemMatchesOpsec(i)).map(i => ({
+      name: i.name,
+      desc: i.desc,
+      sev: i.sev,
+      tags: i.tags||[],
+      engine: i.engine,
+      query: applyTemplate(i.q, t),
+      url: buildUrl(i.engine, i.q, t)
+    }))
+  }));
+}
+function dl(name, content, mime){
+  const blob = new Blob([content], {type: mime});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = name;
+  a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href), 1000);
+}
+function exportJson(){
+  dl(`night-dork-ops-${currentTarget()}-${fmtDate()}.json`, JSON.stringify(buildExportData(), null, 2), "application/json");
+}
+function exportMd(){
+  const data = buildExportData();
+  let md = `# Night Dork Ops — ${currentTarget()} — ${fmtDate()}\n\n`;
+  data.forEach(c => {
+    md += `## ${c.category}\n\n_${c.description}_\n\n`;
+    c.items.forEach(i => {
+      md += `- [ ] **${i.name}** \`[${i.sev}]\` — ${i.desc}\n  - engine: \`${i.engine}\`\n  - query: \`${i.query}\`\n  - url: <${i.url}>\n`;
+    });
+    md += "\n";
+  });
+  dl(`night-dork-ops-${currentTarget()}-${fmtDate()}.md`, md, "text/markdown");
+}
+function exportCsv(){
+  const data = buildExportData();
+  let csv = "category,name,severity,tags,engine,query,url\n";
+  const esc = s => `"${String(s||"").replaceAll('"','""')}"`;
+  data.forEach(c => c.items.forEach(i => {
+    csv += [c.category, i.name, i.sev, (i.tags||[]).join("|"), i.engine, i.query, i.url].map(esc).join(",") + "\n";
+  }));
+  dl(`night-dork-ops-${currentTarget()}-${fmtDate()}.csv`, csv, "text/csv");
+}
+
+/* ============================================================
+ * Drawers — favicon hash, ASN, permutations, scope, JS recon, GHDB
+ * ============================================================ */
+function setupDrawers(){
+  $$(".drawer-toggle .dt").forEach(b => {
+    b.onclick = () => {
+      const id = "drawer-" + b.dataset.drawer;
+      const d = document.getElementById(id);
+      d.classList.toggle("open");
+      b.classList.toggle("on", d.classList.contains("open"));
+    };
+  });
+
+  // Favicon Hash
+  $("#favCompute").onclick = async () => {
+    const url = ($("#favUrl").value||"").trim();
+    if (!url){ $("#favOut").textContent = "Enter favicon URL first."; return; }
+    $("#favOut").textContent = "Fetching favicon…";
+    try {
+      const r = await fetch(url, {mode:"cors"});
+      const buf = await r.arrayBuffer();
+      const mh3 = shodanFaviconHash(buf);
+      const md5 = await md5Hex(buf);
+      const lines = [
+        `MMH3 (Shodan):  ${mh3}`,
+        `MD5  (Censys):  ${md5}`,
+        ``,
+        `Pivot links:`,
+        `Shodan:  ${ENGINES.sh.url("http.favicon.hash:"+mh3)}`,
+        `FOFA:    ${ENGINES.fo.url('icon_hash="'+mh3+'"')}`,
+        `ZoomEye: ${ENGINES.ze.url('iconhash:"'+mh3+'"')}`,
+        `Censys:  ${ENGINES.cen.url("services.http.response.favicons.md5_hash: "+md5)}`,
+      ].join("\n");
+      $("#favOut").textContent = lines;
+    } catch(e){
+      $("#favOut").textContent = "Fetch failed: " + e.message + "\n\nTip: this needs CORS-enabled favicon. Many sites block cross-origin fetch — open the favicon URL in a tab and the response should still let you see the hash via DevTools, or self-host the file and pass a localhost URL.";
+    }
   };
 
-  document.getElementById('openAll').onclick = () => {
-    const t = normHost($target.value);
-    DATA[activeCategory].items.forEach(item => {
-      const url = buildUrl(item.engine, item.q, t);
-      window.open(url, '_blank');
-    });
+  // ASN Lab
+  $("#asnGo").onclick = () => {
+    const t = currentTarget();
+    const asn = ($("#asnInput").value||"").trim().replace(/^AS/i,"");
+    let lines = [
+      `Target: ${t}`,
+      ``,
+      `BGP.HE DNS:   https://bgp.he.net/dns/${enc(t)}`,
+      `bgp.tools:    https://bgp.tools/dns/${enc(t)}`,
+      `IPinfo:       https://ipinfo.io/${enc(t)}`,
+      `HE reverse:   https://bgp.he.net/ip/${enc(t)}`,
+      `AbuseIPDB:    https://www.abuseipdb.com/check/${enc(t)}`,
+    ];
+    if (asn){
+      lines.push(``, `ASN AS${asn}:`, `BGP.HE: https://bgp.he.net/AS${asn}`, `bgp.tools: https://bgp.tools/as/${asn}`, ``,
+        `Pivots:`,
+        `Shodan:  ${ENGINES.sh.url("asn:AS"+asn)}`,
+        `FOFA:    ${ENGINES.fo.url('asn="'+asn+'"')}`,
+        `Censys:  ${ENGINES.cen.url("autonomous_system.asn: "+asn)}`,
+        `Netlas:  ${ENGINES.nl.url("asn:"+asn)}`
+      );
+    }
+    $("#asnOut").textContent = lines.join("\n");
   };
 
-  function exportQueries(){
-    const t = normHost($target.value);
-    const results = DATA.map(category => ({
-      category: category.label,
-      description: category.description,
-      items: category.items.map(item => ({
-        name: item.name,
-        engine: item.engine,
-        query: item.q.replaceAll('{t}', t).replaceAll('{t_no_tld}', hostOrg(t)),
-        url: buildUrl(item.engine, item.q, t)
-      }))
-    }));
-    
-    const blob = new Blob([JSON.stringify(results, null, 2)], {type: 'application/json'});
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = `osint-dorks-${t}-${new Date().toISOString().split('T')[0]}.json`;
-    a.click();
-  }
+  // Permutations
+  $("#permGo").onclick = () => {
+    const t = currentTarget();
+    const org = hostOrg(t);
+    const tld = t.slice(org.length+1);
+    const ENV = ["dev","staging","prod","qa","uat","internal","corp","api","admin","test","stage","int","beta","alpha","sandbox"];
+    const TLDS = ["io","app","dev","cloud","ai","sh","co","net","org","xyz","tech","tools"];
+    const set = new Set();
+    ENV.forEach(p => { set.add(`${org}-${p}.${tld}`); set.add(`${p}-${org}.${tld}`); set.add(`${org}.${p}.${tld}`); });
+    TLDS.forEach(t2 => { if (t2 !== tld) set.add(`${org}.${t2}`); });
+    // Typos
+    const typos = (org) => {
+      const subs = {a:"e",e:"a",i:"1",l:"1",o:"0",s:"5",rn:"m",cl:"d"};
+      const out = new Set();
+      Object.entries(subs).forEach(([k,v])=>{ if (org.includes(k)) out.add(org.replaceAll(k,v)+"."+tld); });
+      // double letter
+      for (let i=0;i<org.length;i++) out.add(org.slice(0,i)+org[i]+org.slice(i)+"."+tld);
+      return [...out].slice(0,8);
+    };
+    typos(org).forEach(x => set.add(x));
+    const list = [...set].sort();
+    const root = $("#permChips"); root.innerHTML = "";
+    list.forEach(p => {
+      const c = document.createElement("span"); c.className = "chip"; c.textContent = p;
+      c.title = "Click to use as target";
+      c.onclick = () => { $target.value = p; pushHistory(p); render(); };
+      root.appendChild(c);
+    });
+  };
+  $("#permCopy").onclick = () => {
+    const txt = [...$$("#permChips .chip")].map(c=>c.textContent).join("\n");
+    if (txt) navigator.clipboard.writeText(txt);
+  };
 
-  // === Initialize ===
-  $target.addEventListener('input', render);
+  // Scope importer
+  $("#scopeParse").onclick = () => {
+    const raw = ($("#scopeIn").value||"").trim();
+    if (!raw) return;
+    const out = new Set();
+    try {
+      const j = JSON.parse(raw);
+      // HackerOne: data[].asset_identifier + eligible_for_submission, asset_type=URL/DOMAIN/WILDCARD
+      const arr = j.data || j.assets || [];
+      arr.forEach(a => {
+        if (a.eligible_for_submission === false || a.in_scope === false) return;
+        const id = a.asset_identifier || a.target || a.uri;
+        if (!id) return;
+        const norm = normHost(id.replace(/^\*\.?/,""));
+        if (norm) out.add(norm);
+      });
+    } catch(e){
+      // Plain list
+      raw.split(/[\n,]/).forEach(l => { const v = normHost(l.trim()); if (v) out.add(v); });
+    }
+    const root = $("#scopeChips"); root.innerHTML = "";
+    [...out].forEach(d => {
+      const c = document.createElement("span"); c.className = "chip"; c.textContent = d;
+      c.title = "Click to use as target";
+      c.onclick = () => { $target.value = d; pushHistory(d); render(); };
+      root.appendChild(c);
+    });
+  };
+  $("#scopeClear").onclick = () => { $("#scopeIn").value=""; $("#scopeChips").innerHTML=""; };
+
+  // JS Recon
+  $("#jsFetch").onclick = async () => {
+    const url = ($("#jsUrl").value||"").trim();
+    if (!url) return;
+    $("#jsOut").textContent = "Fetching…";
+    try { const r = await fetch(url); const txt = await r.text(); $("#jsIn").value = txt; $("#jsOut").textContent = `Fetched ${txt.length} bytes. Click "Scan".`; }
+    catch(e){ $("#jsOut").textContent = "Fetch failed: " + e.message; }
+  };
+  $("#jsScan").onclick = () => {
+    const txt = $("#jsIn").value || "";
+    if (!txt){ $("#jsOut").textContent = "No content."; return; }
+    const SECRET_REGEXES = [
+      ["AWS AKIA",        /AKIA[0-9A-Z]{16}/g],
+      ["GitHub PAT",      /(ghp|gho|ghs|ghr|github_pat)_[A-Za-z0-9_]{30,}/g],
+      ["Slack token",     /xox[abprs]-[A-Za-z0-9-]{10,}/g],
+      ["Slack webhook",   /hooks\.slack\.com\/services\/T[A-Za-z0-9_/]+/g],
+      ["Stripe live",     /sk_live_[A-Za-z0-9]{24,}/g],
+      ["SendGrid",        /SG\.[A-Za-z0-9_-]{22}\.[A-Za-z0-9_-]{43}/g],
+      ["Mailgun",         /key-[a-z0-9]{32}/g],
+      ["Twilio SID",      /AC[a-f0-9]{32}/g],
+      ["Mapbox secret",   /sk\.eyJ1Ijoi[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+/g],
+      ["JWT",             /eyJ[A-Za-z0-9_-]{20,}\.[A-Za-z0-9_-]{20,}\.[A-Za-z0-9_-]{20,}/g],
+      ["Google API key",  /AIzaSy[A-Za-z0-9_-]{33}/g],
+      ["OpenAI key",      /sk-[A-Za-z0-9]{48}/g],
+      ["Anthropic key",   /sk-ant-[A-Za-z0-9_-]{90,}/g],
+      ["HuggingFace",     /hf_[A-Za-z0-9]{30,}/g],
+      ["Replicate",       /r8_[A-Za-z0-9]{37,}/g],
+      ["LangSmith",       /lsv2_(pt|sk)_[a-f0-9]{32,}/g],
+      ["GitLab PAT",      /glpat-[A-Za-z0-9_-]{20,}/g],
+      ["Sentry DSN",      /https:\/\/[a-f0-9]{32,}@[a-z0-9.]+\.ingest\.sentry\.io\/[0-9]+/g],
+      ["Firebase",        /[A-Za-z0-9_-]{1,40}\.firebaseio\.com/g],
+      ["Telegram bot",    /\b\d{8,10}:[A-Za-z0-9_-]{35}\b/g],
+      ["Discord webhook", /discord(?:app)?\.com\/api\/webhooks\/\d+\/[A-Za-z0-9_-]+/g],
+      ["Private key block",/-----BEGIN [A-Z ]+PRIVATE KEY-----/g]
+    ];
+    const ENDPOINT_REGEX = /(['"`])((?:https?:\/\/[^'"`\s]{4,})|(?:\/[a-zA-Z0-9_\-?&=\/.%]{2,}))\1/g;
+    const COMMENT_REGEX  = /\/\*\*?[\s\S]*?\*\/|\/\/[^\n]{4,}/g;
+    const findings = {Secrets:[], Endpoints:[], Comments:[]};
+    SECRET_REGEXES.forEach(([name, rx]) => { (txt.match(rx)||[]).forEach(m => findings.Secrets.push(`[${name}] ${m}`)); });
+    let m; while ((m = ENDPOINT_REGEX.exec(txt))) findings.Endpoints.push(m[2]);
+    findings.Endpoints = [...new Set(findings.Endpoints)].slice(0,200);
+    findings.Comments = [...new Set((txt.match(COMMENT_REGEX)||[]).map(s=>s.trim()).filter(s=>s.length<400))].slice(0,80);
+    let out = "";
+    Object.entries(findings).forEach(([k,arr]) => {
+      out += `=== ${k} (${arr.length}) ===\n`;
+      out += (arr.length ? arr.join("\n") : "(none)") + "\n\n";
+    });
+    $("#jsOut").textContent = out;
+  };
+
+  // GHDB drawer
+  const ghCats = $("#ghdbCats");
+  GHDB_CATS.forEach(c => {
+    const a = document.createElement("a");
+    a.href = c.url; a.target="_blank"; a.rel="noopener noreferrer"; a.referrerPolicy="no-referrer";
+    a.className="btn ghost"; a.textContent = c.label; a.style.padding="6px 10px"; a.style.fontSize="11px";
+    ghCats.appendChild(a);
+  });
+  const ghList = $("#ghdbList");
+  GHDB_PICKS.forEach(p => {
+    const c = document.createElement("button"); c.className = "chip"; c.textContent = p.label;
+    c.title = "Run against current target: " + p.q;
+    c.onclick = () => { window.open(buildUrl("g", p.q, currentTarget()), "_blank", "noopener,noreferrer"); };
+    ghList.appendChild(c);
+  });
+}
+
+/* ============================================================
+ * Recipes
+ * ============================================================ */
+function applyRecipe(name){
+  const r = RECIPES[name]; if (!r) return;
+  if (r.onlyCats){
+    state.cat = -1;
+    state.filter = "";
+  } else if (r.filterTags){
+    state.cat = -1;
+    state.filter = r.filterTags.join(" ");
+  }
+  if (r.onlyEngines){
+    state.cat = -1; state.filter = "";
+  }
+  saveState(); writeHash(); render();
+  if (r.extraDrawers){
+    r.extraDrawers.forEach(d => {
+      const dt = $$('.drawer-toggle .dt').find(b => b.dataset.drawer===d);
+      if (dt) dt.click();
+    });
+  }
+}
+
+/* ============================================================
+ * Bookmarklet
+ * ============================================================ */
+function makeBookmarklet(){
+  const code = `(function(){var h=location.hostname;window.open('https://dork-ops.pages.dev/#cat=raw-gh&target='+encodeURIComponent(h),'_blank');})();`;
+  return "javascript:" + code;
+}
+
+/* ============================================================
+ * Wire-up
+ * ============================================================ */
+function wire(){
+  loadState();
+  refreshHistoryDatalist();
+  readHash();
+
+  // Brand stats
+  renderStats();
+
+  // Patterns rail
+  renderPatterns();
+
+  // Filter input
+  const onFilter = debounce(()=>{ state.filter = $filter.value || ""; saveState(); writeHash(); render(); }, 80);
+  $filter.value = state.filter;
+  $filter.addEventListener("input", onFilter);
+
+  // Sev toggles
+  $$("#sevToggle .sev-pill").forEach(p => {
+    p.classList.toggle("on", state.sevs.has(p.dataset.sev));
+    p.onclick = () => {
+      const k = p.dataset.sev;
+      if (state.sevs.has(k)) state.sevs.delete(k); else state.sevs.add(k);
+      if (state.sevs.size === 0) { state.sevs = new Set(["info","low","med","high","crit"]); }
+      $$("#sevToggle .sev-pill").forEach(x => x.classList.toggle("on", state.sevs.has(x.dataset.sev)));
+      saveState(); writeHash(); render();
+    };
+  });
+
+  // OPSEC
+  $("#opsec").checked = !!state.opsec;
+  document.body.classList.toggle("opsec-on", state.opsec);
+  $("#opsec").onchange = () => {
+    state.opsec = $("#opsec").checked; document.body.classList.toggle("opsec-on", state.opsec);
+    saveState(); render();
+  };
+
+  // Recipe
+  $("#recipe").onchange = e => { if (e.target.value) { applyRecipe(e.target.value); e.target.value=""; } };
+
+  // Target
+  $target.value = $target.value || "example.com";
+  $target.addEventListener("input", debounce(()=>render(), 80));
+  $target.addEventListener("change", ()=>{ const v = normHost($target.value); if (v){ $target.value = v; pushHistory(v); render(); } });
+
+  // Buttons
+  $("#normalize").onclick = () => { $target.value = normHost($target.value); pushHistory($target.value); render(); };
+  $("#openCat").onclick = () => openInTabs(visibleItems());
+  $("#crownJewels").onclick = () => {
+    if (!confirm("Open the 10 highest-ROI dorks in tabs?")) return;
+    const t = currentTarget();
+    CROWN.forEach((c,i) => setTimeout(()=>window.open(buildUrl(c.engine, c.q, t), "_blank", "noopener,noreferrer"), i*250));
+  };
+  $("#exportJson").onclick = exportJson;
+  $("#exportMd").onclick   = exportMd;
+  $("#exportCsv").onclick  = exportCsv;
+  $("#helpBtn").onclick    = openHelp;
+  $("#bookmarklet").onclick = (e) => { e.preventDefault(); navigator.clipboard.writeText(makeBookmarklet()); $("#bookmarklet").textContent = "✓ copied"; setTimeout(()=>$("#bookmarklet").textContent="🔖 Bookmarklet", 1200); };
+
+  // Drawers
+  setupDrawers();
+
+  // Disclaimer
+  maybeShowDisclaimer();
+
+  // Keyboard shortcuts
+  document.addEventListener("keydown", e => {
+    const tag = (e.target && e.target.tagName) || "";
+    const inForm = ["INPUT","TEXTAREA","SELECT"].includes(tag);
+    if (e.key === "Escape") { closeModal(); return; }
+    if (inForm) return;
+    if (e.key === "/") { e.preventDefault(); $filter.focus(); }
+    else if (e.key === "?") { openHelp(); }
+    else if (e.key === "j") {
+      const next = state.cat === -1 ? 0 : Math.min(DATA.length-1, state.cat+1);
+      state.cat = next; saveState(); writeHash(); render();
+    }
+    else if (e.key === "k") {
+      const prev = state.cat <= 0 ? -1 : state.cat-1;
+      state.cat = prev; saveState(); writeHash(); render();
+    }
+    else if (e.key === "c") {
+      const c = $(".card .ico-btn"); if (c) c.click();
+    }
+  });
+
+  // Hash change (back/forward)
+  window.addEventListener("hashchange", () => { readHash(); render(); });
+
   render();
+}
+wire();
 </script>
+
 </body>
 </html>
