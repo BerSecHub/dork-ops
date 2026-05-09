@@ -25,7 +25,7 @@
 <meta name="twitter:description" content="150+ modern OSINT dorks across 30+ engines. Single HTML file. Zero deps.">
 <link rel="icon" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M2 12l6.5 6.5L22 5' stroke='%2300ffff' stroke-width='2.5' fill='none' stroke-linecap='round'/></svg>">
 <link rel="apple-touch-icon" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><rect width='24' height='24' fill='%2305060a'/><path d='M2 12l6.5 6.5L22 5' stroke='%2300ffff' stroke-width='2.5' fill='none' stroke-linecap='round'/></svg>">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data: https:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; connect-src 'self' https://web.archive.org https://crt.sh; form-action 'self'; base-uri 'self'; frame-ancestors 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data: https:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; connect-src 'self' https:; form-action 'self'; base-uri 'self'; frame-ancestors 'none'">
 <meta http-equiv="Referrer-Policy" content="no-referrer">
 <script type="application/ld+json">
 {"@context":"https://schema.org","@type":"WebApplication","name":"Night Dork Ops","applicationCategory":"SecurityApplication","operatingSystem":"Any","url":"https://dork-ops.pages.dev/","description":"150+ curated OSINT dorks across 30+ engines for passive reconnaissance, secrets discovery and attack-surface mapping.","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"featureList":["Google dorks","raw.githubusercontent.com dorks","GitHub code search","grep.app regex search","Shodan","FOFA","ZoomEye","Censys","urlscan","LeakIX","crt.sh","Wayback CDX","Severity tagging","Deep-link routing","Favicon hash lab","Permutation generator","Bug bounty scope importer","JS recon pack","OPSEC mode","Bookmarklet"]}
@@ -271,6 +271,29 @@ footer .right a:hover{color:var(--ink)}
 .noscript-fallback{padding:18px;color:var(--muted);font-size:13px;line-height:1.6}
 .noscript-fallback h2{color:#cfe3ff;font-size:14px;margin:14px 0 4px;text-transform:uppercase;letter-spacing:.5px}
 .noscript-fallback ul{margin:0;padding-left:18px}
+
+/* Brand glitch on hover */
+@media (prefers-reduced-motion: no-preference){
+  .brand h1{transition:text-shadow .15s}
+  .brand h1:hover{
+    text-shadow: 1px 0 0 rgba(255,92,122,.7), -1px 0 0 rgba(0,255,255,.7), 0 0 10px rgba(0,255,255,.25);
+    animation: ndo-glitch .3s steps(2) infinite;
+  }
+  @keyframes ndo-glitch{
+    0%   {transform:translateX(0)}
+    25%  {transform:translateX(-1px) skewX(-2deg)}
+    50%  {transform:translateX(1px)  skewX(2deg)}
+    75%  {transform:translateX(-1px)}
+    100% {transform:translateX(0)}
+  }
+}
+
+/* Empty-category section hide helper */
+.section-title.empty{display:none}
+
+/* Bookmarklet draggable link */
+a.btn#bookmarklet{display:inline-flex;align-items:center;gap:6px;text-decoration:none}
+a.btn#bookmarklet:hover{text-decoration:none}
 </style>
 </head>
 <body>
@@ -328,6 +351,7 @@ footer .right a:hover{color:var(--ink)}
     <button class="dt" data-drawer="perm">🧬 Permutations</button>
     <button class="dt" data-drawer="scope">📜 Scope Importer</button>
     <button class="dt" data-drawer="js">🔬 JS Recon</button>
+    <button class="dt" data-drawer="params">📅 Param Wordlist</button>
     <button class="dt" data-drawer="ghdb">📚 GHDB</button>
   </div>
 
@@ -375,6 +399,16 @@ footer .right a:hover{color:var(--ink)}
     <div class="out" id="jsOut">Awaiting input.</div>
   </section>
 
+  <section class="drawer" id="drawer-params">
+    <h3>📅 Wayback Param Wordlist Generator</h3>
+    <p class="help">Fetches Wayback CDX for <code>*.{target}/*</code> with query strings since 2018, extracts unique parameter names, sorts by frequency, downloads as <code>params-{target}-{date}.txt</code> ready for ffuf/burp.</p>
+    <div class="row">
+      <button class="btn" id="paramGen">Generate &amp; Download</button>
+      <button class="btn ghost" id="paramOpen" title="Open Wayback CDX URL in browser instead">Open CDX in tab</button>
+    </div>
+    <div class="out" id="paramOut">Click "Generate" to fetch from web.archive.org and parse parameters client-side. May take 10-30 s for active domains.</div>
+  </section>
+
   <section class="drawer" id="drawer-ghdb">
     <h3>📚 Google Hacking Database (Exploit-DB) — curated live picks</h3>
     <p class="help">Browse upstream GHDB by category, or run a curated still-working dork against your current target.</p>
@@ -419,7 +453,8 @@ footer .right a:hover{color:var(--ink)}
     <button class="btn ok" id="exportJson">Export JSON</button>
     <button class="btn ok" id="exportMd">Export MD</button>
     <button class="btn ok" id="exportCsv">Export CSV</button>
-    <button class="btn ghost" id="bookmarklet" title="Drag this to your bookmarks bar">🔖 Bookmarklet</button>
+    <button class="btn ghost" id="copyMd" title="Copy all visible queries to clipboard as Markdown checklist">📋 Copy MD</button>
+    <a class="btn ghost" id="bookmarklet" href="#" draggable="true" title="Drag to bookmarks bar — runs Night Dork Ops on whatever site you're on. Click to copy.">🔖 Bookmarklet</a>
   </div>
   <div class="right">
     <span>Passive recon · authorized targets only</span>
@@ -792,6 +827,8 @@ const DATA = [
 ]},
 
 { id:"attack", label:"Attack Vectors", icon:"🗡️", description:"Open redirect / SSRF / LFI / XSS reflection / SAML / OIDC / WordPress / Drupal / Magento / file upload / auth.", items:[
+  {name:"Exposed .git/config (live)",          desc:'inurl:".git/config" — live exposed Git configs leaking remote URLs and creds.',                                              sev:"crit", tags:["git"], engine:"g", q:'site:{t} inurl:".git/config"'},
+  {name:"Index of .git (auto-listing)",        desc:'intitle:"index of" + ".git" — Apache/nginx auto-listing of /.git/ directories.',                                              sev:"crit", tags:["git"], engine:"g", q:'site:{t} intitle:"index of" ".git"'},
   {name:"Open Redirect candidates",            desc:"Suspicious redirect/url/return/next/continue/goto params.",                                                                  sev:"med",  tags:["redirect"], engine:"g", q:'site:{t} (inurl:"redirect=" OR inurl:"url=" OR inurl:"return=" OR inurl:"next=" OR inurl:"continue=" OR inurl:"goto=")'},
   {name:"SSRF candidates",                     desc:"Likely server-side fetch parameters.",                                                                                       sev:"high", tags:["ssrf"], engine:"g", q:'site:{t} (inurl:"url=" OR inurl:"dest=" OR inurl:"image=" OR inurl:"path=" OR inurl:"file=")'},
   {name:"LFI candidates",                      desc:"Local-file-include parameters.",                                                                                             sev:"high", tags:["lfi"], engine:"g", q:'site:{t} (inurl:"file=" OR inurl:"page=" OR inurl:"document=" OR inurl:"include=")'},
@@ -1142,22 +1179,34 @@ function renderCards(){
   const t = currentTarget();
   let total = 0;
   visibleCategories().forEach(({c,i}) => {
+    let header = null;
+    let subgrid;
     if (state.cat === -1){
-      const h = document.createElement("h2");
-      h.className = "section-title";
-      h.innerHTML = `<span class="icon">${c.icon}</span> ${c.label} <span style="color:var(--muted);font-weight:400;font-size:11px">— ${c.description}</span>`;
-      $grid.appendChild(h);
+      header = document.createElement("h2");
+      header.className = "section-title";
+      header.innerHTML = `<span class="icon">${c.icon}</span> ${c.label} <span style="color:var(--muted);font-weight:400;font-size:11px">— ${c.description}</span>`;
+      $grid.appendChild(header);
+      subgrid = document.createElement("div");
+      subgrid.className = "grid";
+      subgrid.style.marginBottom = "20px";
+      $grid.appendChild(subgrid);
+    } else {
+      subgrid = $grid;
     }
-    const subgrid = state.cat === -1 ? document.createElement("div") : $grid;
-    if (state.cat === -1){ subgrid.className = "grid"; subgrid.style.marginBottom = "20px"; $grid.appendChild(subgrid); }
 
+    let catCount = 0;
     c.items.forEach(it => {
       if (!itemMatchesFilter(it, state.filter)) return;
       if (!itemMatchesSev(it)) return;
       if (!itemMatchesOpsec(it)) return;
-      total++;
+      total++; catCount++;
       subgrid.appendChild(renderCard(it, t));
     });
+    // Hide empty category headers/grids when in "All" view + filter active
+    if (state.cat === -1 && catCount === 0){
+      if (header) header.classList.add("empty");
+      subgrid.style.display = "none";
+    }
   });
   if (total === 0){
     const empty = document.createElement("div");
@@ -1346,7 +1395,7 @@ function dl(name, content, mime){
 function exportJson(){
   dl(`night-dork-ops-${currentTarget()}-${fmtDate()}.json`, JSON.stringify(buildExportData(), null, 2), "application/json");
 }
-function exportMd(){
+function buildMd(){
   const data = buildExportData();
   let md = `# Night Dork Ops — ${currentTarget()} — ${fmtDate()}\n\n`;
   data.forEach(c => {
@@ -1356,7 +1405,19 @@ function exportMd(){
     });
     md += "\n";
   });
-  dl(`night-dork-ops-${currentTarget()}-${fmtDate()}.md`, md, "text/markdown");
+  return md;
+}
+function exportMd(){
+  dl(`night-dork-ops-${currentTarget()}-${fmtDate()}.md`, buildMd(), "text/markdown");
+}
+function copyMdToClipboard(){
+  const md = buildMd();
+  navigator.clipboard.writeText(md).then(() => {
+    const b = $("#copyMd");
+    const orig = b.textContent;
+    b.textContent = `✓ copied (${md.length} bytes)`;
+    setTimeout(()=> b.textContent = orig, 1400);
+  });
 }
 function exportCsv(){
   const data = buildExportData();
@@ -1546,6 +1607,46 @@ function setupDrawers(){
     $("#jsOut").textContent = out;
   };
 
+  // Wayback Param Wordlist
+  const cdxUrlForParams = t => `https://web.archive.org/cdx/search/cdx?url=*.${enc(t)}/*&output=text&fl=original&filter=original:.*\\?.*=&from=20180101&limit=5000&collapse=urlkey`;
+  $("#paramOpen").onclick = () => {
+    const t = currentTarget();
+    if (!t) return;
+    window.open(cdxUrlForParams(t), "_blank", "noopener,noreferrer");
+  };
+  $("#paramGen").onclick = async () => {
+    const t = currentTarget();
+    if (!t){ $("#paramOut").textContent = "Set a target first."; return; }
+    const url = cdxUrlForParams(t);
+    $("#paramOut").textContent = `Fetching CDX for *.${t}/*  …\n(${url})`;
+    try {
+      const r = await fetch(url);
+      if (!r.ok){ $("#paramOut").textContent = "CDX returned " + r.status + ". Try the 'Open CDX in tab' button."; return; }
+      const txt = await r.text();
+      const lines = txt.split(/\n+/).filter(Boolean);
+      const counts = new Map();
+      for (const line of lines){
+        const qIdx = line.indexOf("?");
+        if (qIdx < 0) continue;
+        const qs = line.slice(qIdx+1);
+        for (const pair of qs.split(/[&;]/)){
+          const eq = pair.indexOf("=");
+          if (eq <= 0) continue;
+          const k = decodeURIComponent(pair.slice(0,eq)).replace(/[^A-Za-z0-9_\-.\[\]]/g,"");
+          if (!k || k.length > 64) continue;
+          counts.set(k, (counts.get(k)||0)+1);
+        }
+      }
+      const sorted = [...counts.entries()].sort((a,b)=>b[1]-a[1]);
+      const wl = sorted.map(([k,n])=>k).join("\n");
+      const fname = `params-${t}-${fmtDate()}.txt`;
+      dl(fname, wl + "\n", "text/plain");
+      $("#paramOut").textContent = `Done. ${sorted.length} unique params from ${lines.length} archived URLs.\nDownloaded: ${fname}\n\nTop 25:\n` + sorted.slice(0,25).map(([k,n])=>`  ${String(n).padStart(5)}  ${k}`).join("\n");
+    } catch(e){
+      $("#paramOut").textContent = "Fetch failed: " + e.message + "\n\nWayback CDX may be rate-limiting. Try again in a minute, or use the 'Open CDX in tab' button.";
+    }
+  };
+
   // GHDB drawer
   const ghCats = $("#ghdbCats");
   GHDB_CATS.forEach(c => {
@@ -1653,8 +1754,26 @@ function wire(){
   $("#exportJson").onclick = exportJson;
   $("#exportMd").onclick   = exportMd;
   $("#exportCsv").onclick  = exportCsv;
+  $("#copyMd").onclick     = copyMdToClipboard;
   $("#helpBtn").onclick    = openHelp;
-  $("#bookmarklet").onclick = (e) => { e.preventDefault(); navigator.clipboard.writeText(makeBookmarklet()); $("#bookmarklet").textContent = "✓ copied"; setTimeout(()=>$("#bookmarklet").textContent="🔖 Bookmarklet", 1200); };
+
+  // Bookmarklet: draggable <a> link (drag to bookmarks bar) + click-to-copy fallback
+  const $bm = $("#bookmarklet");
+  const bmCode = makeBookmarklet();
+  $bm.setAttribute("href", bmCode);
+  $bm.addEventListener("dragstart", (e) => {
+    if (e.dataTransfer){
+      e.dataTransfer.setData("text/uri-list", bmCode);
+      e.dataTransfer.setData("text/plain", bmCode);
+    }
+  });
+  $bm.addEventListener("click", (e) => {
+    e.preventDefault();
+    navigator.clipboard.writeText(bmCode);
+    const orig = $bm.textContent;
+    $bm.textContent = "✓ copied (or drag me)";
+    setTimeout(()=> $bm.textContent = orig, 1400);
+  });
 
   // Drawers
   setupDrawers();
