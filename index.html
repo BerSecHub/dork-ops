@@ -11,11 +11,11 @@
 <meta name="theme-color" content="#05060a" media="(prefers-color-scheme: dark)">
 <meta name="theme-color" content="#f5f7fb" media="(prefers-color-scheme: light)">
 <meta name="color-scheme" content="dark light">
-<link rel="canonical" href="https://dork-ops.pages.dev/">
+<link rel="canonical" href="https://dorks.bersec.me/">
 <meta property="og:type" content="website">
 <meta property="og:title" content="DorkOps — OSINT Dork & Recon Toolkit">
 <meta property="og:description" content="230+ modern OSINT dorks across 35+ engines (Google, raw.githubusercontent.com, GitHub, grep.app, Shodan, FOFA, ZoomEye, Censys, urlscan, LeakIX, crt.sh, Wayback). Built for bug bounty hunters and authorized red teams.">
-<meta property="og:url" content="https://dork-ops.pages.dev/">
+<meta property="og:url" content="https://dorks.bersec.me/">
 <meta property="og:site_name" content="DorkOps">
 <meta property="og:image" content="https://dorks.bersec.me/og-image.svg">
 <meta property="og:image:secure_url" content="https://dorks.bersec.me/og-image.svg">
@@ -860,7 +860,7 @@ const DATA = [
 { id:"ai-llm", label:"AI / LLM Leaks", icon:"🧠", description:"AI/LLM era secrets and exposed agentic infra. Highest signal in 2025-2026.", items:[
   {name:"OpenAI live keys (regex)",            desc:"sk-[A-Za-z0-9]{48} pattern across public code — grep.app supports regex, GitHub UI does not.",                              sev:"crit", tags:["llm","openai"], engine:"gra", q:'sk-[A-Za-z0-9]{48}'},
   {name:"OpenAI project keys (sk-proj-)",      desc:"sk-proj- format introduced 2024, often skipped by older scanners.",                                                          sev:"crit", tags:["llm","openai"], engine:"gra", q:'sk-proj-[A-Za-z0-9_-]{20,}'},
-  {name:"Anthropic keys (sk-ant-)",            desc:"sk-ant-[A-Za-z0-9_-]{90,} regex via grep.app.",                                                                              sev:"crit", tags:["llm","anthropic"], engine:"gra", q:'sk-ant-[A-Za-z0-9_-]{90,}'},
+  {name:"Anthropic keys (sk-ant- regex)",      desc:"sk-ant-[A-Za-z0-9_-]{90,} pattern hunt via grep.app (triage hits by owner).",                                                sev:"crit", tags:["llm","anthropic"], engine:"gra", q:'sk-ant-[A-Za-z0-9_-]{90,}'},
   {name:"Google AI / Gemini (AIzaSy…)",        desc:"AIzaSy[A-Za-z0-9_-]{33} — Google API key prefix used by Gemini, Maps, etc.",                                                 sev:"high", tags:["llm","gcp"], engine:"gra", q:'AIzaSy[A-Za-z0-9_-]{33}'},
   {name:"HuggingFace tokens (hf_)",            desc:"hf_[A-Za-z0-9]{30,} — HF user/org tokens.",                                                                                  sev:"high", tags:["llm","hf"], engine:"gra", q:'hf_[A-Za-z0-9]{30,}'},
   {name:"Replicate tokens (r8_)",              desc:"r8_[A-Za-z0-9]{37,} — Replicate.com tokens.",                                                                                sev:"high", tags:["llm"], engine:"gra", q:'r8_[A-Za-z0-9]{37,}'},
@@ -910,7 +910,7 @@ const DATA = [
   {name:"GitLab CI w/ creds",                  desc:".gitlab-ci.yml hardcoded secrets.",                                                                                           sev:"high", tags:["ci"], engine:"gh", q:'path:.gitlab-ci.yml "{t}" (PASSWORD OR TOKEN)'},
   {name:"Source maps in prod",                 desc:"site:{t} ext:map — exposed .js.map files reveal original source code.",                                                       sev:"high", tags:["frontend"], engine:"g", q:'site:{t} ext:map'},
   {name:"Sentry DSN",                          desc:"Sentry DSN URLs — allow event injection / project takeover.",                                                                  sev:"med",  tags:["monitoring"], engine:"gra", q:'https://[a-f0-9]{32,}@[a-z0-9.]+\\.ingest\\.sentry\\.io/[0-9]+'},
-  {name:"Firebase web SDK config",             desc:"apiKey + authDomain + projectId + appId co-located.",                                                                          sev:"high", tags:["firebase"], engine:"gh", q:'"{t}" "apiKey" "authDomain" "projectId" "appId"'},
+  {name:"Firebase config (apiKey+authDomain)", desc:"apiKey + authDomain + projectId + appId co-located in GitHub code.",                                                           sev:"high", tags:["firebase"], engine:"gh", q:'"{t}" "apiKey" "authDomain" "projectId" "appId"'},
   {name:"Supabase service_role key",           desc:"service_role / supabaseKey — admin access to Supabase project.",                                                              sev:"crit", tags:["supabase"], engine:"gh", q:'"{t}" ("service_role" OR "supabaseKey")'},
   {name:"PlanetScale connection strings",      desc:"pscale.cloud connection URLs, often with password.",                                                                          sev:"high", tags:["db"], engine:"gh", q:'"{t}" "pscale.cloud"'},
   {name:"Neon / Vercel postgres URLs",         desc:"neon.tech / vercel-storage.com postgres:// connections.",                                                                      sev:"high", tags:["db"], engine:"gh", q:'"{t}" ("neon.tech" OR "vercel-storage.com") "postgres://"'},
@@ -975,7 +975,7 @@ const DATA = [
   {name:"VirusTotal relations",                desc:"VirusTotal domain → siblings / passive DNS.",                                                                                  sev:"med",  tags:["vt"], engine:"vt", q:'{t}'},
   {name:"Phonebook.cz",                        desc:"Phonebook.cz — subdomains + emails.",                                                                                          sev:"med",  tags:["dns"], engine:"pb", q:'{t}'},
   {name:"AlienVault OTX",                      desc:"OTX passive DNS / IOC.",                                                                                                       sev:"low",  tags:["otx"], engine:"ot", q:'{t}'},
-  {name:"urlscan domain",                      desc:"urlscan.io domain index + page captures.",                                                                                    sev:"low",  tags:["urlscan"], engine:"us", q:'domain:{t}'},
+  {name:"urlscan host captures",               desc:"urlscan.io historical scans + screenshots for the domain (subdomain discovery).",                                            sev:"low",  tags:["urlscan","subdomain"], engine:"us", q:'domain:{t}'},
   {name:"Wayback subdomain extract",           desc:"CDX URL list collapsed by urlkey for subdomain hint.",                                                                        sev:"med",  tags:["wayback"], engine:"wa", q:'https://web.archive.org/cdx/search/cdx?url=*.{t}/*&output=text&fl=original&collapse=urlkey&from=20180101&limit=2000'},
   {name:"CommonCrawl host index",              desc:"CommonCrawl 2025-30 index for *.{t}/* — JSON.",                                                                                sev:"low",  tags:["cc"], engine:"cc", q:'*.{t}/*'}
 ]},
