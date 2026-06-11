@@ -35,443 +35,583 @@
 {"@context":"https://schema.org","@type":"WebApplication","name":"Night Dork Ops","applicationCategory":"SecurityApplication","operatingSystem":"Any","url":"https://dorks.bersec.me/","description":"230+ curated OSINT dorks across 35+ engines for passive reconnaissance, secrets discovery and attack-surface mapping.","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"featureList":["Google dorks","raw.githubusercontent.com dorks","GitHub code search","grep.app regex search","Shodan","FOFA","ZoomEye","Censys","urlscan","LeakIX","crt.sh","Wayback CDX","Severity tagging","Deep-link routing","Favicon hash lab","Permutation generator","Bug bounty scope importer","JS recon pack","Wayback param wordlist","OPSEC mode","Bookmarklet","Recon recipes","GHDB integration"]}
 </script>
 <style>
+/* ============================================================
+ *  Night Dork Ops — readable design system (v0.3)
+ *  UI text = system sans · queries/code = monospace
+ * ============================================================ */
 :root{
-  --bg:#05060a; --panel:#0c0f17; --panel2:#0a0f1b; --ink:#e6f1ff; --muted:#7c8899; --line:#0e1a33;
-  --acc:#2a6ddf; --acc2:#0ff; --ok:#77ff99; --warn:#ffdb6e; --err:#ff5c7a;
-  --sev-info:#5a6b85; --sev-low:#3ea1ff; --sev-med:#ffdb6e; --sev-high:#ff9a3e; --sev-crit:#ff5c7a;
-  --grid:clamp(280px,30vw,420px);
-  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
+  /* dark theme tokens (default) */
+  --bg:#0b0e14; --bg-2:#0e131c; --surface:#151b27; --surface-2:#1b2433;
+  --border:#222d40; --border-2:#314158;
+  --text:#e9eef7; --text-2:#abb7ca; --text-3:#7a879d;
+  --accent:#5aa2ff; --accent-ink:#04101f; --accent-soft:#10243f;
+  --ok:#46d39a; --warn:#ffb454; --danger:#ff5d6c;
+  --sev-info:#8a94a6; --sev-low:#5aa2ff; --sev-med:#ffd166; --sev-high:#ff9f43; --sev-crit:#ff5d6c;
+  --shadow:0 8px 28px rgba(0,0,0,.45);
+  --radius:12px; --radius-sm:8px;
+  --font-ui:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,"Apple Color Emoji","Segoe UI Emoji",sans-serif;
+  --font-mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,"Liberation Mono",monospace;
+  --topbar-h:60px;
 }
-@media (prefers-color-scheme: light){
-  :root{--bg:#f5f7fb;--panel:#fff;--panel2:#fff;--ink:#0b1226;--muted:#5a6b85;--line:#dbe4f3}
+html[data-theme="light"]{
+  --bg:#f5f8fc; --bg-2:#eef3f9; --surface:#ffffff; --surface-2:#f1f5fb;
+  --border:#e0e7f1; --border-2:#cad6e6;
+  --text:#0f1828; --text-2:#46556b; --text-3:#6e7c92;
+  --accent:#2f74e0; --accent-ink:#ffffff; --accent-soft:#e6effd;
+  --ok:#0f9d6b; --warn:#c47a16; --danger:#d8324a;
+  --sev-info:#8a94a6; --sev-low:#2f74e0; --sev-med:#c9961a; --sev-high:#e07f1f; --sev-crit:#d8324a;
+  --shadow:0 8px 24px rgba(20,40,80,.12);
 }
+
 *{box-sizing:border-box}
 html,body{height:100%}
 body{
-  margin:0;font-family:var(--mono);font-size:13px;color:var(--ink);
-  background:radial-gradient(80% 110% at 100% 0%,#0b1020 0%,var(--bg) 55%) fixed;
-  line-height:1.45;
+  margin:0; background:var(--bg); color:var(--text);
+  font-family:var(--font-ui); font-size:15px; line-height:1.5;
+  -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
 }
-a{color:#9fc3ff;text-decoration:none}
-a:hover{color:#cfe3ff;text-decoration:underline}
-button,input,select,textarea{font:inherit;color:inherit}
-button{cursor:pointer;background:none;border:none}
+a{color:var(--accent); text-decoration:none}
+a:hover{text-decoration:underline}
+button,input,select,textarea{font:inherit; color:inherit}
+code,kbd,.mono{font-family:var(--font-mono)}
+::selection{background:var(--accent-soft)}
 
-/* Header */
-header{
-  position:sticky;top:0;z-index:100;padding:14px 16px 10px;
-  background:linear-gradient(180deg,#05060af8,#05060ad0);
-  backdrop-filter:blur(12px);border-bottom:1px solid var(--line);
-}
-.brand{display:flex;gap:12px;align-items:center;margin-bottom:10px;flex-wrap:wrap}
-.brand .logo{flex-shrink:0}
-.brand h1{margin:0;font-size:18px;letter-spacing:1.1px;color:#cfe3ff;font-weight:700}
-.brand .sub{color:var(--muted);font-size:12px;margin-top:2px}
-.brand .stats{margin-left:auto;color:var(--muted);font-size:11px;text-align:right;line-height:1.55}
-.brand .stats b{color:#cfe3ff;font-weight:600}
-
-.controls{display:grid;grid-template-columns:2fr 1.2fr auto auto auto;gap:8px;align-items:center;margin-bottom:10px}
-@media (max-width:720px){.controls{grid-template-columns:1fr 1fr}}
-.controls input[type=text]{
-  padding:11px 14px;border:1px solid #0e2344;background:#050912;color:var(--ink);
-  border-radius:7px;outline:none;font-size:13px;width:100%;
-  box-shadow:inset 0 1px 2px rgba(0,0,0,.3);
-}
-.controls input[type=text]:focus{border-color:var(--acc);box-shadow:inset 0 1px 2px rgba(0,0,0,.3),0 0 0 2px rgba(42,109,223,.4)}
+/* ---------- buttons ---------- */
 .btn{
-  padding:10px 14px;border:1px solid #183a70;color:#ccedff;border-radius:7px;
-  background:linear-gradient(180deg,#0a1730,#091226);text-transform:uppercase;
-  font-size:11px;font-weight:700;letter-spacing:.5px;white-space:nowrap;
-  transition:all .15s;
+  display:inline-flex; align-items:center; gap:7px; justify-content:center;
+  padding:9px 14px; border:1px solid var(--border-2); border-radius:var(--radius-sm);
+  background:var(--surface-2); color:var(--text); font-size:13.5px; font-weight:600;
+  cursor:pointer; white-space:nowrap; transition:background .15s,border-color .15s,transform .05s;
 }
-.btn:hover{border-color:var(--acc);box-shadow:0 2px 8px rgba(42,109,223,.25)}
-.btn.warn{border-color:#7a3a3a;color:#ffc6c6;background:linear-gradient(180deg,#1a0a0e,#100509)}
-.btn.warn:hover{border-color:var(--err);box-shadow:0 2px 8px rgba(255,92,122,.3)}
-.btn.ok{border-color:#3a7a44;color:#caffd2;background:linear-gradient(180deg,#0a1a0e,#051009)}
+.btn:hover{border-color:var(--accent); background:var(--surface)}
+.btn:active{transform:translateY(1px)}
+.btn.primary{background:var(--accent); border-color:var(--accent); color:var(--accent-ink)}
+.btn.primary:hover{filter:brightness(1.08)}
+.btn.ok{border-color:color-mix(in srgb,var(--ok) 50%,var(--border-2)); color:var(--ok)}
 .btn.ok:hover{border-color:var(--ok)}
-.btn.ghost{background:transparent;color:var(--muted)}
-.btn.ghost:hover{color:var(--ink)}
-
-/* Toolbar row 2: filter + sev + recipe + opsec */
-.toolbar{display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap}
-.toolbar input[type=text]{flex:1;min-width:220px;padding:9px 12px;border:1px solid #0e2344;background:#050912;color:var(--ink);border-radius:7px;outline:none;font-size:12px}
-.sev-toggle{display:flex;gap:4px;align-items:center}
-.sev-toggle .sev-pill{
-  padding:4px 8px;border:1px solid var(--line);border-radius:5px;font-size:10px;
-  text-transform:uppercase;letter-spacing:.5px;display:flex;align-items:center;gap:5px;
-  cursor:pointer;color:var(--muted);background:#050912;transition:all .15s;
+.btn.warn{border-color:color-mix(in srgb,var(--danger) 45%,var(--border-2)); color:var(--danger)}
+.btn.warn:hover{border-color:var(--danger)}
+.btn.ghost{background:transparent; border-color:transparent; color:var(--text-2); font-weight:500}
+.btn.ghost:hover{background:var(--surface-2); color:var(--text)}
+.btn.sm{padding:6px 10px; font-size:12.5px}
+.iconbtn{
+  display:inline-flex; align-items:center; gap:5px; padding:6px 9px;
+  border:1px solid var(--border); border-radius:7px; background:var(--surface-2);
+  color:var(--text-2); font-size:12px; cursor:pointer; transition:.15s;
 }
-.sev-toggle .sev-pill .dot{width:7px;height:7px;border-radius:50%}
-.sev-toggle .sev-pill.on{color:var(--ink);border-color:var(--acc)}
+.iconbtn:hover{border-color:var(--accent); color:var(--text)}
+
+input[type=text],select,textarea{
+  background:var(--bg-2); border:1px solid var(--border); border-radius:var(--radius-sm);
+  padding:9px 12px; outline:none; color:var(--text); font-size:14px; width:100%;
+  transition:border-color .15s,box-shadow .15s;
+}
+input[type=text]:focus,select:focus,textarea:focus{
+  border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-soft);
+}
+input::placeholder,textarea::placeholder{color:var(--text-3)}
+
+/* ---------- topbar ---------- */
+.topbar{
+  position:sticky; top:0; z-index:60; height:var(--topbar-h);
+  display:flex; align-items:center; gap:12px; padding:0 16px;
+  background:color-mix(in srgb,var(--bg) 86%,transparent);
+  backdrop-filter:blur(12px); border-bottom:1px solid var(--border);
+}
+.brand{display:flex; align-items:center; gap:10px; flex-shrink:0}
+.brand .logo{width:30px;height:30px;flex-shrink:0}
+.brand .name{font-size:16px;font-weight:700;letter-spacing:.2px}
+.brand .name span{color:var(--accent)}
+.brand .tag{font-size:11px;color:var(--text-3);margin-top:-2px}
+@media (max-width:760px){.brand .meta{display:none}}
+
+.topbar .target-wrap{display:flex; align-items:center; gap:8px; flex:1 1 260px; min-width:0; max-width:440px}
+.topbar .target-wrap .lbl{font-size:12px;color:var(--text-3);flex-shrink:0}
+.topbar .filter-wrap{flex:1 1 220px; min-width:0; max-width:380px; position:relative}
+.topbar .filter-wrap .slash{
+  position:absolute; right:10px; top:50%; transform:translateY(-50%);
+  font-size:11px; color:var(--text-3); border:1px solid var(--border); border-radius:5px;
+  padding:1px 6px; pointer-events:none; font-family:var(--font-mono);
+}
+.topbar .spacer{flex:1 1 auto}
+.topbar .tb-actions{display:flex; align-items:center; gap:8px; flex-shrink:0}
+@media (max-width:980px){
+  .topbar{flex-wrap:wrap; height:auto; padding:10px 14px; gap:8px}
+  .topbar .target-wrap,.topbar .filter-wrap{max-width:none}
+  .topbar .filter-wrap{order:5; flex-basis:100%}
+}
+
+/* ---------- layout ---------- */
+.layout{display:grid; grid-template-columns:264px 1fr; align-items:start}
+.sidebar{
+  position:sticky; top:var(--topbar-h); align-self:start;
+  height:calc(100vh - var(--topbar-h)); overflow-y:auto;
+  border-right:1px solid var(--border); background:var(--bg-2);
+  padding:14px 12px 28px;
+}
+.content{min-width:0; padding:16px 18px 90px}
+@media (max-width:900px){
+  .layout{grid-template-columns:1fr}
+  .sidebar{
+    position:fixed; top:0; left:0; bottom:0; z-index:70; width:280px; height:100%;
+    transform:translateX(-100%); transition:transform .2s ease; box-shadow:var(--shadow);
+    padding-top:16px;
+  }
+  body.nav-open .sidebar{transform:translateX(0)}
+  .nav-backdrop{position:fixed; inset:0; z-index:65; background:rgba(0,0,0,.5); display:none}
+  body.nav-open .nav-backdrop{display:block}
+}
+@media (min-width:901px){.nav-toggle{display:none}}
+
+/* ---------- sidebar sections ---------- */
+.side-h{
+  font-size:11px; text-transform:uppercase; letter-spacing:.8px; color:var(--text-3);
+  font-weight:700; margin:16px 6px 7px;
+}
+.side-h:first-child{margin-top:2px}
+.category-nav{display:flex; flex-direction:column; gap:2px}
+.nav-item{
+  display:flex; align-items:center; gap:9px; width:100%; text-align:left;
+  padding:8px 10px; border:1px solid transparent; border-radius:8px;
+  background:transparent; color:var(--text-2); font-size:13.5px; font-weight:500; cursor:pointer;
+  transition:background .12s,color .12s;
+}
+.nav-item:hover{background:var(--surface-2); color:var(--text)}
+.nav-item.active{background:var(--accent-soft); color:var(--text); border-color:color-mix(in srgb,var(--accent) 40%,transparent); font-weight:600}
+.nav-item .ic{font-size:15px; width:18px; text-align:center; flex-shrink:0}
+.nav-item .nm{flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+.nav-item .ct{font-size:11px; color:var(--text-3); font-family:var(--font-mono)}
+.nav-item.active .ct{color:var(--accent)}
+
+/* severity filter */
+.sev-toggle{display:flex; flex-wrap:wrap; gap:6px; padding:0 6px}
+.sev-pill{
+  display:inline-flex; align-items:center; gap:6px; padding:5px 9px; cursor:pointer;
+  border:1px solid var(--border); border-radius:999px; background:var(--surface-2);
+  font-size:11.5px; font-weight:600; color:var(--text-3); text-transform:uppercase; letter-spacing:.3px;
+  transition:.12s; user-select:none;
+}
+.sev-pill .dot{width:8px;height:8px;border-radius:50%;background:var(--text-3)}
 .sev-pill[data-sev=info] .dot{background:var(--sev-info)}
 .sev-pill[data-sev=low] .dot{background:var(--sev-low)}
 .sev-pill[data-sev=med] .dot{background:var(--sev-med)}
 .sev-pill[data-sev=high] .dot{background:var(--sev-high)}
 .sev-pill[data-sev=crit] .dot{background:var(--sev-crit)}
-select.recipe{padding:9px 10px;border:1px solid #0e2344;background:#050912;color:var(--ink);border-radius:7px;font-size:12px}
-.opsec{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted);user-select:none;cursor:pointer}
-.opsec input{accent-color:var(--err)}
-body.opsec-on{--bg:#0a0306}
-body.opsec-on header{box-shadow:inset 0 -2px 0 rgba(255,92,122,.4)}
+.sev-pill.on{color:var(--text); border-color:var(--border-2); background:var(--surface)}
+.sev-pill:not(.on){opacity:.5}
 
-/* Category nav */
-.category-nav{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:6px;margin-bottom:6px}
-.cat-btn{
-  padding:9px 10px;border:1px solid var(--line);background:#050912;color:#9fb7ff;
-  border-radius:6px;text-align:center;font-size:10.5px;text-transform:uppercase;
-  letter-spacing:.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
-  display:flex;align-items:center;justify-content:center;gap:6px;
-  transition:all .15s;
+.side-field{padding:0 6px; margin-top:4px}
+.side-field .opsec{
+  display:flex; align-items:center; gap:8px; font-size:13px; color:var(--text-2);
+  cursor:pointer; padding:7px 4px; user-select:none;
 }
-.cat-btn:hover{border-color:var(--acc);background:#081226}
-.cat-btn.active{border-color:#3ea1ff;color:#fff;background:#0a2d66;box-shadow:0 2px 10px rgba(62,161,255,.25)}
-.cat-btn .icon{font-size:13px}
-.cat-btn .count{color:var(--muted);font-size:9.5px;font-weight:600}
+.side-field .opsec input{accent-color:var(--danger); width:15px; height:15px}
+body.opsec-on{--accent:#ff5d6c; --accent-soft:#2a1014}
 
-/* Top secret patterns rail */
-.patterns{
-  display:flex;gap:6px;align-items:center;overflow-x:auto;
-  margin-top:8px;padding-bottom:4px;
-  scrollbar-width:thin;scrollbar-color:#16335f transparent;
-}
-.patterns .label{color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.5px;white-space:nowrap}
+/* patterns rail */
+.patterns{display:flex; flex-wrap:wrap; gap:5px; padding:2px 6px}
+.patterns .label{display:none}
 .patterns .pat{
-  padding:5px 9px;border:1px solid #16335f;border-radius:5px;font-size:11px;
-  color:#9fc3ff;background:rgba(5,9,18,.6);white-space:nowrap;cursor:pointer;
-  font-family:var(--mono);transition:all .15s;
+  padding:4px 8px; border:1px solid var(--border); border-radius:6px; cursor:pointer;
+  background:var(--surface-2); color:var(--text-2); font-family:var(--font-mono); font-size:11px;
+  transition:.12s;
 }
-.patterns .pat:hover{border-color:var(--acc2);color:#cfffff;box-shadow:0 0 8px rgba(0,255,255,.2)}
+.patterns .pat:hover{border-color:var(--accent); color:var(--text)}
 
-/* Creative modules drawer */
-.drawer-toggle{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
-.drawer-toggle .dt{
-  padding:6px 10px;border:1px solid var(--line);background:#050912;color:#9fb7ff;
-  border-radius:5px;font-size:10.5px;text-transform:uppercase;letter-spacing:.5px;cursor:pointer;
-}
-.drawer-toggle .dt:hover{border-color:var(--acc);color:#cfe3ff}
-.drawer-toggle .dt.on{border-color:var(--acc2);color:#cfffff;background:#031a26}
-.drawer{display:none;margin-top:8px;padding:12px;border:1px solid var(--line);background:var(--panel);border-radius:8px}
-.drawer.open{display:block}
-.drawer h3{margin:0 0 8px;font-size:12px;color:#cfe3ff;text-transform:uppercase;letter-spacing:.5px}
-.drawer p.help{color:var(--muted);font-size:11px;margin:0 0 10px}
-.drawer .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-.drawer .row input[type=text],.drawer .row textarea{
-  padding:8px 10px;border:1px solid #0e2344;background:#030711;color:var(--ink);
-  border-radius:6px;font-size:12px;font-family:var(--mono);outline:none;flex:1;min-width:240px;
-}
-.drawer .row textarea{min-height:80px;resize:vertical}
-.drawer .out{
-  margin-top:10px;padding:10px;background:#030711;border:1px solid var(--line);border-radius:6px;
-  font-size:11px;color:#cfe3ff;max-height:240px;overflow:auto;white-space:pre-wrap;word-break:break-all;
-}
-.drawer .chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px}
-.drawer .chip{
-  padding:4px 8px;border:1px solid #16335f;border-radius:4px;background:rgba(5,9,18,.6);
-  color:#cfe3ff;font-size:11px;cursor:pointer;font-family:var(--mono);
-}
-.drawer .chip:hover{border-color:var(--acc2);color:#cfffff}
+.side-stats{padding:10px 8px 0; margin-top:14px; border-top:1px solid var(--border); color:var(--text-3); font-size:11.5px; line-height:1.7}
+.side-stats b{color:var(--text-2); font-weight:700}
 
-/* Main grid */
-main{padding:14px 16px 96px}
-.section-title{margin:18px 0 10px;font-size:12px;color:#9fb7ff;text-transform:uppercase;letter-spacing:1px;display:flex;gap:8px;align-items:center}
-.section-title .icon{font-size:16px}
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(var(--grid),1fr));gap:12px}
-.card{
-  position:relative;padding:14px 14px 12px;border:1px solid var(--line);
-  background:linear-gradient(180deg,var(--panel),var(--panel2));border-radius:10px;
-  overflow:hidden;transition:all .15s;
+/* ---------- content header ---------- */
+.content-head{
+  display:flex; align-items:flex-start; gap:14px; flex-wrap:wrap;
+  margin-bottom:16px; padding-bottom:14px; border-bottom:1px solid var(--border);
 }
-.card:hover{border-color:#1c3868;transform:translateY(-1px);box-shadow:0 8px 22px rgba(0,0,0,.4)}
-.card .sev-ring{position:absolute;left:0;top:0;bottom:0;width:3px}
-.card[data-sev=info] .sev-ring{background:var(--sev-info)}
-.card[data-sev=low]  .sev-ring{background:var(--sev-low);box-shadow:0 0 8px var(--sev-low)}
-.card[data-sev=med]  .sev-ring{background:var(--sev-med);box-shadow:0 0 8px var(--sev-med)}
-.card[data-sev=high] .sev-ring{background:var(--sev-high);box-shadow:0 0 10px var(--sev-high)}
-.card[data-sev=crit] .sev-ring{background:var(--sev-crit);box-shadow:0 0 12px var(--sev-crit)}
-.card h3{margin:0 0 4px 6px;font-size:14px;color:#d8e9ff;font-weight:600;display:flex;align-items:center;gap:6px}
-.card .sev-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
-.card[data-sev=info] .sev-dot{background:var(--sev-info)}
-.card[data-sev=low]  .sev-dot{background:var(--sev-low)}
-.card[data-sev=med]  .sev-dot{background:var(--sev-med)}
-.card[data-sev=high] .sev-dot{background:var(--sev-high)}
-.card[data-sev=crit] .sev-dot{background:var(--sev-crit)}
-.card p.desc{margin:4px 0 8px 6px;color:var(--muted);font-size:11.5px;line-height:1.5}
-.card .tags{display:flex;flex-wrap:wrap;gap:4px;margin:0 0 8px 6px}
-.card .tag{
-  padding:1px 6px;border:1px solid var(--line);border-radius:3px;
-  font-size:9.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;cursor:pointer;
+.content-head .ch-title{font-size:20px; font-weight:700; display:flex; align-items:center; gap:9px; margin:0}
+.content-head .ch-desc{font-size:13.5px; color:var(--text-2); margin:5px 0 0; max-width:62ch}
+.content-head .ch-count{font-size:12px; color:var(--text-3); font-family:var(--font-mono); margin-top:7px; display:inline-flex; align-items:center; gap:8px}
+.recipe-badge{
+  display:none; align-items:center; gap:6px; padding:2px 8px; border-radius:999px;
+  background:var(--accent-soft); color:var(--accent); font-size:11px; font-weight:600; font-family:var(--font-ui);
 }
-.card .tag:hover{color:#cfe3ff;border-color:var(--acc)}
-.card .links{display:flex;flex-direction:column;gap:6px;margin-left:6px}
-.card .link{
-  display:flex;flex-direction:column;gap:4px;
-  padding:9px 11px;border:1px solid #16335f;border-radius:6px;
-  background:rgba(5,9,18,.6);text-decoration:none;color:#cfe3ff;
-  transition:all .15s;
-}
-.card .link:hover{background:#081226;border-color:var(--acc);text-decoration:none}
-.card .link .head{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
-.card .engine-tag{
-  display:inline-block;padding:1px 6px;border-radius:3px;font-size:9.5px;
-  font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:#0b1020;
-}
-.card .engine-tag.dark{color:#cfe3ff}
-.card .lock{font-size:10px;color:var(--warn)}
-.card .q{font-size:10.5px;color:#9fb7ff;font-family:var(--mono);word-break:break-all;line-height:1.4}
-.card .actions{position:absolute;top:10px;right:10px;display:flex;gap:4px}
-.card .ico-btn{
-  padding:4px 7px;background:rgba(5,9,18,.85);border:1px solid var(--line);
-  border-radius:5px;font-size:10px;color:var(--muted);transition:all .15s;
-}
-.card .ico-btn:hover{border-color:var(--acc);color:#cfe3ff}
+.recipe-badge.on{display:inline-flex}
+.ch-actions{display:flex; gap:8px; flex-wrap:wrap; margin-left:auto; align-items:center}
+.ch-actions .group{display:flex; gap:6px; align-items:center; padding-left:8px; border-left:1px solid var(--border)}
+.ch-actions .group:first-child{border-left:none; padding-left:0}
 
-/* Footer */
-footer{
-  position:fixed;left:0;right:0;bottom:0;padding:10px 16px;z-index:90;
-  background:linear-gradient(0deg,#05060af8,#05060a00);border-top:1px solid var(--line);
-  backdrop-filter:blur(8px);
-  display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;
+/* ---------- card grid ---------- */
+.grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(330px,1fr)); gap:14px}
+.section-title{
+  grid-column:1/-1; display:flex; align-items:center; gap:10px; margin:22px 0 4px;
+  font-size:15px; font-weight:700; color:var(--text);
 }
-footer .left{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-footer .right{display:flex;gap:8px;align-items:center;flex-wrap:wrap;color:var(--muted);font-size:11px}
-footer .right a{color:var(--muted)}
-footer .right a:hover{color:var(--ink)}
-
-/* Disclaimer */
-.disclaimer{
-  position:fixed;left:16px;right:16px;bottom:60px;z-index:200;
-  padding:14px 18px;border:1px solid var(--warn);background:rgba(255,219,110,.08);
-  border-radius:10px;display:flex;gap:14px;align-items:center;justify-content:space-between;
-  backdrop-filter:blur(10px);
-}
-.disclaimer p{margin:0;font-size:12px;color:#ffe9b3;line-height:1.5}
-.disclaimer .actions{display:flex;gap:8px}
-
-/* Modal */
-.modal-bg{
-  position:fixed;inset:0;z-index:300;background:rgba(0,0,0,.6);
-  display:flex;align-items:center;justify-content:center;padding:20px;
-}
-.modal{
-  background:var(--panel);border:1px solid var(--line);border-radius:10px;
-  padding:18px 22px;max-width:560px;width:100%;max-height:85vh;overflow:auto;
-}
-.modal h2{margin:0 0 12px;font-size:16px;color:#cfe3ff}
-.modal table{width:100%;border-collapse:collapse;font-size:12px}
-.modal th,.modal td{padding:6px 8px;text-align:left;border-bottom:1px solid var(--line)}
-.modal th{color:var(--muted);font-weight:600;text-transform:uppercase;font-size:10px;letter-spacing:.5px}
-.modal kbd{
-  padding:2px 6px;background:#030711;border:1px solid var(--line);
-  border-radius:4px;font-family:var(--mono);font-size:10px;color:#cfe3ff;
-}
-.modal .actions{margin-top:14px;display:flex;gap:8px;justify-content:flex-end}
-
-/* Misc */
-@media (prefers-reduced-motion: reduce){
-  *,*::before,*::after{animation:none!important;transition:none!important}
-  .card:hover{transform:none}
-}
-.kbd-hint{display:inline-block;padding:1px 5px;background:#030711;border:1px solid var(--line);border-radius:3px;font-size:9.5px;color:var(--muted);font-family:var(--mono)}
-.noscript-fallback{padding:18px;color:var(--muted);font-size:13px;line-height:1.6}
-.noscript-fallback h2{color:#cfe3ff;font-size:14px;margin:14px 0 4px;text-transform:uppercase;letter-spacing:.5px}
-.noscript-fallback ul{margin:0;padding-left:18px}
-
-/* Brand glitch on hover */
-@media (prefers-reduced-motion: no-preference){
-  .brand h1{transition:text-shadow .15s}
-  .brand h1:hover{
-    text-shadow: 1px 0 0 rgba(255,92,122,.7), -1px 0 0 rgba(0,255,255,.7), 0 0 10px rgba(0,255,255,.25);
-    animation: ndo-glitch .3s steps(2) infinite;
-  }
-  @keyframes ndo-glitch{
-    0%   {transform:translateX(0)}
-    25%  {transform:translateX(-1px) skewX(-2deg)}
-    50%  {transform:translateX(1px)  skewX(2deg)}
-    75%  {transform:translateX(-1px)}
-    100% {transform:translateX(0)}
-  }
-}
-
-/* Empty-category section hide helper */
+.section-title:first-child{margin-top:0}
+.section-title .icon{font-size:18px}
 .section-title.empty{display:none}
 
-/* Bookmarklet draggable link */
-a.btn#bookmarklet{display:inline-flex;align-items:center;gap:6px;text-decoration:none}
-a.btn#bookmarklet:hover{text-decoration:none}
+.card{
+  position:relative; display:flex; flex-direction:column;
+  background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
+  padding:14px 15px 13px 17px; overflow:hidden; transition:border-color .15s,transform .08s,box-shadow .15s;
+}
+.card::before{content:""; position:absolute; left:0; top:0; bottom:0; width:4px; background:var(--text-3)}
+.card[data-sev=info]::before{background:var(--sev-info)}
+.card[data-sev=low]::before{background:var(--sev-low)}
+.card[data-sev=med]::before{background:var(--sev-med)}
+.card[data-sev=high]::before{background:var(--sev-high)}
+.card[data-sev=crit]::before{background:var(--sev-crit)}
+.card:hover{border-color:var(--border-2); transform:translateY(-1px); box-shadow:var(--shadow)}
+
+.card-top{display:flex; align-items:flex-start; gap:8px; margin-bottom:5px}
+.card-title{font-size:15px; font-weight:650; color:var(--text); line-height:1.35; flex:1; margin:0}
+.sev-badge{
+  flex-shrink:0; padding:2px 7px; border-radius:5px; font-size:10px; font-weight:800;
+  letter-spacing:.5px; text-transform:uppercase; color:#fff; margin-top:1px;
+}
+.card[data-sev=info] .sev-badge{background:var(--sev-info)}
+.card[data-sev=low] .sev-badge{background:var(--sev-low); color:#04101f}
+.card[data-sev=med] .sev-badge{background:var(--sev-med); color:#1a1500}
+.card[data-sev=high] .sev-badge{background:var(--sev-high); color:#180c00}
+.card[data-sev=crit] .sev-badge{background:var(--sev-crit)}
+
+.card-desc{font-size:13px; color:var(--text-2); line-height:1.5; margin:0 0 10px}
+.card-tags{display:flex; flex-wrap:wrap; gap:5px; margin-bottom:10px}
+.card-tags .tag{
+  padding:2px 7px; border:1px solid var(--border); border-radius:5px; cursor:pointer;
+  font-size:10.5px; color:var(--text-3); transition:.12s;
+}
+.card-tags .tag:hover{border-color:var(--accent); color:var(--accent)}
+.card-tags .tag::before{content:"#"; opacity:.5}
+
+.card-query{
+  background:var(--bg-2); border:1px solid var(--border); border-radius:8px;
+  padding:8px 10px; margin-bottom:11px; font-family:var(--font-mono); font-size:11.5px;
+  color:var(--text-2); line-height:1.45; word-break:break-word; white-space:pre-wrap;
+  max-height:96px; overflow:auto;
+}
+
+.card-foot{display:flex; align-items:center; gap:8px; margin-top:auto; flex-wrap:wrap}
+.card-engines{display:flex; gap:6px; flex-wrap:wrap; flex:1}
+.eng-btn{
+  display:inline-flex; align-items:center; gap:6px; padding:7px 12px; border-radius:8px;
+  font-size:12.5px; font-weight:600; cursor:pointer; border:1px solid var(--border-2);
+  background:var(--surface-2); color:var(--text); transition:.15s; text-decoration:none;
+}
+.eng-btn:hover{text-decoration:none; border-color:var(--accent); background:var(--surface)}
+.eng-btn .swatch{width:9px; height:9px; border-radius:2px; flex-shrink:0}
+.eng-btn .arr{color:var(--text-3); font-size:11px}
+.eng-btn .lock{font-size:10px}
+.card-actions{display:flex; gap:6px}
+
+/* ---------- tools slide-over ---------- */
+.tools-backdrop{position:fixed; inset:0; z-index:80; background:rgba(0,0,0,.5); display:none}
+body.tools-open .tools-backdrop{display:block}
+.tools-panel{
+  position:fixed; top:0; right:0; bottom:0; z-index:85; width:min(480px,94vw);
+  background:var(--bg-2); border-left:1px solid var(--border); box-shadow:var(--shadow);
+  transform:translateX(100%); transition:transform .22s ease; display:flex; flex-direction:column;
+}
+body.tools-open .tools-panel{transform:translateX(0)}
+.tools-head{
+  display:flex; align-items:center; justify-content:space-between; gap:10px;
+  padding:14px 16px; border-bottom:1px solid var(--border); flex-shrink:0;
+}
+.tools-head h2{margin:0; font-size:16px; font-weight:700}
+.tools-body{overflow-y:auto; padding:14px 16px 30px}
+.drawer-toggle{display:flex; flex-wrap:wrap; gap:6px; margin-bottom:14px}
+.drawer-toggle .dt{
+  padding:7px 11px; border:1px solid var(--border); border-radius:8px; background:var(--surface-2);
+  color:var(--text-2); font-size:12.5px; font-weight:600; cursor:pointer; transition:.12s;
+}
+.drawer-toggle .dt:hover{border-color:var(--accent); color:var(--text)}
+.drawer-toggle .dt.on{background:var(--accent-soft); color:var(--accent); border-color:color-mix(in srgb,var(--accent) 40%,transparent)}
+.drawer{display:none; background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:14px; margin-bottom:12px}
+.drawer.open{display:block}
+.drawer h3{margin:0 0 6px; font-size:14px; font-weight:700}
+.drawer p.help{margin:0 0 12px; font-size:12.5px; color:var(--text-2); line-height:1.5}
+.drawer .row{display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-bottom:8px}
+.drawer .row textarea{min-height:90px; resize:vertical; font-family:var(--font-mono); font-size:12px}
+.drawer .out{
+  margin-top:8px; padding:10px 12px; background:var(--bg-2); border:1px solid var(--border);
+  border-radius:8px; font-family:var(--font-mono); font-size:11.5px; color:var(--text-2);
+  white-space:pre-wrap; word-break:break-word; max-height:300px; overflow:auto; line-height:1.5;
+}
+.drawer .chips{display:flex; flex-wrap:wrap; gap:6px; margin-top:8px}
+.drawer .chip{
+  padding:5px 9px; border:1px solid var(--border); border-radius:6px; cursor:pointer;
+  background:var(--surface-2); color:var(--text-2); font-family:var(--font-mono); font-size:11.5px; transition:.12s;
+}
+.drawer .chip:hover{border-color:var(--accent); color:var(--text)}
+.drawer input[type=file]{font-size:12px; color:var(--text-2)}
+
+/* ---------- footer ---------- */
+footer{
+  position:fixed; left:0; right:0; bottom:0; z-index:55; height:44px;
+  display:flex; align-items:center; gap:14px; padding:0 16px;
+  background:color-mix(in srgb,var(--bg) 90%,transparent); backdrop-filter:blur(10px);
+  border-top:1px solid var(--border); font-size:12px; color:var(--text-3);
+}
+footer .left{display:flex; align-items:center; gap:10px}
+footer .right{display:flex; align-items:center; gap:14px; margin-left:auto}
+footer a{color:var(--text-3)}
+footer a:hover{color:var(--text)}
+@media (max-width:900px){.content{padding-bottom:120px}}
+@media (max-width:620px){footer .legal{display:none}}
+
+/* ---------- modal / help ---------- */
+.modal-bg{position:fixed; inset:0; z-index:120; background:rgba(0,0,0,.6); display:flex; align-items:center; justify-content:center; padding:20px}
+.modal{background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:20px 22px; max-width:600px; width:100%; max-height:85vh; overflow:auto; box-shadow:var(--shadow)}
+.modal h2{margin:0 0 12px; font-size:17px}
+.modal table{width:100%; border-collapse:collapse; font-size:13px}
+.modal th,.modal td{padding:6px 8px; text-align:left; border-bottom:1px solid var(--border)}
+.modal th{color:var(--text-3); font-size:10.5px; text-transform:uppercase; letter-spacing:.5px}
+kbd{padding:2px 7px; background:var(--bg-2); border:1px solid var(--border); border-radius:5px; font-family:var(--font-mono); font-size:11px; color:var(--text)}
+.modal .actions{margin-top:16px; display:flex; gap:8px; justify-content:flex-end}
+.engine-tag{display:inline-block; padding:2px 7px; border-radius:5px; font-size:11px; font-weight:600}
+
+/* ---------- disclaimer ---------- */
+.disclaimer{
+  position:fixed; left:16px; right:16px; bottom:56px; z-index:110; max-width:760px; margin:0 auto;
+  padding:14px 18px; border:1px solid var(--warn); border-radius:var(--radius);
+  background:var(--surface); box-shadow:var(--shadow);
+  display:flex; gap:14px; align-items:center; justify-content:space-between; flex-wrap:wrap;
+}
+.disclaimer p{margin:0; font-size:13px; color:var(--text-2); line-height:1.55}
+
+/* ---------- misc ---------- */
+.kbd-hint{font-family:var(--font-mono); font-size:11px; color:var(--text-3)}
+.empty-state{grid-column:1/-1; padding:48px 20px; text-align:center; color:var(--text-3); font-size:14px}
+.noscript-fallback{padding:24px; max-width:900px; margin:0 auto}
+.noscript-fallback h2{font-size:15px; margin:16px 0 6px}
+.noscript-fallback ul{padding-left:18px; line-height:1.7; color:var(--text-2)}
+@media (prefers-reduced-motion:reduce){*{animation:none!important; transition:none!important}.card:hover{transform:none}}
+.sidebar::-webkit-scrollbar,.tools-body::-webkit-scrollbar,.card-query::-webkit-scrollbar,.drawer .out::-webkit-scrollbar{width:9px;height:9px}
+.sidebar::-webkit-scrollbar-thumb,.tools-body::-webkit-scrollbar-thumb,.card-query::-webkit-scrollbar-thumb,.drawer .out::-webkit-scrollbar-thumb{background:var(--border-2); border-radius:5px}
 </style>
 </head>
 <body>
 
-<header role="banner">
+<header class="topbar" role="banner">
+  <button class="iconbtn nav-toggle" id="navBtn" title="Categories" aria-label="Toggle categories">☰</button>
   <div class="brand">
-    <svg class="logo" width="28" height="28" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path d="M2 12l6.5 6.5L22 5" stroke="#0ff" stroke-width="2.5" stroke-linecap="round"/>
+    <svg class="logo" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <rect width="24" height="24" rx="6" fill="none"/>
+      <path d="M2 12l6.5 6.5L22 5" stroke="#5aa2ff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
     </svg>
-    <div>
-      <h1>Night Dork Ops</h1>
-      <div class="sub">Modern OSINT dork &amp; recon toolkit · authorized testing only</div>
+    <div class="meta">
+      <div class="name">Night<span>Dork</span>Ops</div>
+      <div class="tag">OSINT recon toolkit</div>
     </div>
-    <div class="stats" id="stats" aria-live="polite">loading…</div>
   </div>
 
-  <div class="controls">
-    <input id="target" type="text" placeholder="target domain (e.g., example.com)" value="example.com" autocomplete="off" list="targetHistory" aria-label="Target domain">
+  <div class="target-wrap">
+    <span class="lbl">Target</span>
+    <input id="target" type="text" placeholder="example.com" value="example.com" autocomplete="off" spellcheck="false" list="targetHistory" aria-label="Target domain">
     <datalist id="targetHistory"></datalist>
-    <input id="filter" type="text" placeholder="/ filter dorks (name, desc, query, tag)" autocomplete="off" aria-label="Filter">
-    <button class="btn" id="normalize" title="Normalize host (strip protocol, path)">Normalize</button>
-    <button class="btn ok" id="openCat" title="Open all visible dorks in tabs (with confirm)">Open Visible</button>
-    <button class="btn warn" id="crownJewels" title="Open the 10 highest-ROI dorks">🎯 Crown Jewels</button>
+    <button class="iconbtn" id="normalize" title="Normalize host (strip scheme/path)">⤵</button>
   </div>
 
-  <div class="toolbar">
-    <div class="sev-toggle" id="sevToggle" aria-label="Severity filter">
-      <span class="sev-pill on" data-sev="info"><span class="dot"></span>info</span>
-      <span class="sev-pill on" data-sev="low"><span class="dot"></span>low</span>
-      <span class="sev-pill on" data-sev="med"><span class="dot"></span>med</span>
-      <span class="sev-pill on" data-sev="high"><span class="dot"></span>high</span>
-      <span class="sev-pill on" data-sev="crit"><span class="dot"></span>crit</span>
-    </div>
-    <select class="recipe" id="recipe" title="Curated recon recipes">
-      <option value="">— Recon Recipe —</option>
-      <option value="firstPass">First Pass (light)</option>
-      <option value="bbTriage">Bug Bounty Triage (top 25)</option>
-      <option value="aiEra">AI Era (LLM + MCP + JS)</option>
-      <option value="shadowIT">Shadow IT (cert + perm)</option>
-      <option value="opsecSafe">OPSEC-safe</option>
-    </select>
-    <label class="opsec" title="Hides logging engines (Shodan, FOFA, Censys, urlscan), uses Wayback proxy where possible"><input type="checkbox" id="opsec"> OPSEC mode</label>
-    <span id="visibleCount" class="kbd-hint" style="margin-left:auto" aria-live="polite"></span>
-    <button class="btn ghost" id="recipeClear" title="Clear active recipe" style="display:none">✕ Recipe</button>
-    <button class="btn ghost" id="helpBtn" title="Keyboard shortcuts &amp; engine legend"><span class="kbd-hint">?</span></button>
+  <div class="filter-wrap">
+    <input id="filter" type="text" placeholder="Filter dorks by name, tag, query…" autocomplete="off" spellcheck="false" aria-label="Filter dorks">
+    <span class="slash">/</span>
   </div>
 
-  <nav id="categoryNav" class="category-nav" aria-label="Categories"></nav>
-
-  <div class="patterns" id="patterns" aria-label="Top secret patterns (one-click grep.app)">
-    <span class="label">🔥 Top secrets:</span>
+  <div class="spacer"></div>
+  <div class="tb-actions">
+    <button class="btn" id="toolsBtn" title="Recon tools (favicon hash, ASN, permutations, scope, JS recon, params, GHDB)">🧰 Tools</button>
+    <button class="iconbtn" id="themeBtn" title="Toggle light / dark">🌙</button>
+    <button class="iconbtn" id="helpBtn" title="Keyboard shortcuts & engine legend">?</button>
   </div>
-
-  <div class="drawer-toggle" aria-label="Creative modules">
-    <button class="dt" data-drawer="favicon">🧩 Favicon Hash</button>
-    <button class="dt" data-drawer="asn">🛰️ ASN Lab</button>
-    <button class="dt" data-drawer="perm">🧬 Permutations</button>
-    <button class="dt" data-drawer="scope">📜 Scope Importer</button>
-    <button class="dt" data-drawer="js">🔬 JS Recon</button>
-    <button class="dt" data-drawer="params">📅 Param Wordlist</button>
-    <button class="dt" data-drawer="ghdb">📚 GHDB</button>
-  </div>
-
-  <section class="drawer" id="drawer-favicon">
-    <h3>🧩 Favicon Hash Lab — Shodan / FOFA / ZoomEye pivot</h3>
-    <p class="help">Compute MurmurHash3 (Shodan) + MD5 (Censys) of a favicon. Two modes: <b>URL</b> (fetch — needs CORS-permissive origin) or <b>file upload</b> (always works, save the favicon locally first).</p>
-    <div class="row">
-      <input id="favUrl" type="text" placeholder="favicon URL (https://example.com/favicon.ico)">
-      <button class="btn" id="favCompute">Compute from URL</button>
-    </div>
-    <div class="row">
-      <input id="favFile" type="file" accept=".ico,.png,.jpg,.jpeg,.svg,image/*">
-      <span class="kbd-hint">file upload bypasses CORS</span>
-    </div>
-    <div class="out" id="favOut">Drop a favicon URL above OR select a local file. Hash and pivot links will appear here.</div>
-  </section>
-
-  <section class="drawer" id="drawer-asn">
-    <h3>🛰️ ASN Lab — discover the netblock</h3>
-    <p class="help">Click through to BGP / ASN explorers, then pivot Shodan / FOFA / Censys by ASN.</p>
-    <div class="row">
-      <input id="asnInput" type="text" placeholder="ASN (e.g., AS13335) or leave blank to use target">
-      <button class="btn" id="asnGo">Go</button>
-    </div>
-    <div class="out" id="asnOut">Enter target above (or ASN here) and click Go.</div>
-  </section>
-
-  <section class="drawer" id="drawer-perm">
-    <h3>🧬 Permutation Generator — AlterX-light</h3>
-    <p class="help">Generates dev/staging/typo permutations of the target. Click any to swap target.</p>
-    <div class="row"><button class="btn" id="permGo">Generate</button><button class="btn ghost" id="permCopy">Copy as wordlist</button></div>
-    <div class="chips" id="permChips"></div>
-  </section>
-
-  <section class="drawer" id="drawer-scope">
-    <h3>📜 Bug Bounty Scope Importer</h3>
-    <p class="help">Paste H1 <code>structured_scope</code> JSON, Bugcrowd asset list, or one domain per line. Out-of-scope items are skipped. Click a chip to set as target. <b>"Run on all"</b> opens the current category × every target (max 50 tabs, requires confirm).</p>
-    <div class="row"><textarea id="scopeIn" placeholder='{"data":[{"asset_identifier":"*.example.com","eligible_for_submission":true}]}  — or just one domain per line'></textarea></div>
-    <div class="row">
-      <button class="btn" id="scopeParse">Parse</button>
-      <button class="btn warn" id="scopeRunAll" title="For each parsed target × every visible item → open in tab (capped at 50)">🚀 Run on all (× current view)</button>
-      <button class="btn ghost" id="scopeClear">Clear</button>
-    </div>
-    <div class="chips" id="scopeChips"></div>
-  </section>
-
-  <section class="drawer" id="drawer-js">
-    <h3>🔬 JS Recon Pack — LinkFinder / SecretFinder client-side</h3>
-    <p class="help">Paste JS file content (or a URL — it will fetch). Extracts endpoints, secrets and revealing comments. 100% local regex.</p>
-    <div class="row"><input id="jsUrl" type="text" placeholder="JS file URL (optional, will fetch)"><button class="btn" id="jsFetch">Fetch</button></div>
-    <div class="row"><textarea id="jsIn" placeholder="…or paste JS content here"></textarea></div>
-    <div class="row"><button class="btn" id="jsScan">Scan</button></div>
-    <div class="out" id="jsOut">Awaiting input.</div>
-  </section>
-
-  <section class="drawer" id="drawer-params">
-    <h3>📅 Wayback Param Wordlist Generator</h3>
-    <p class="help">Fetches Wayback CDX for <code>*.{target}/*</code> with query strings since 2018, extracts unique parameter names, sorts by frequency, downloads as <code>params-{target}-{date}.txt</code> ready for ffuf/burp.</p>
-    <div class="row">
-      <button class="btn" id="paramGen">Generate &amp; Download</button>
-      <button class="btn ghost" id="paramOpen" title="Open Wayback CDX URL in browser instead">Open CDX in tab</button>
-    </div>
-    <div class="out" id="paramOut">Click "Generate" to fetch from web.archive.org and parse parameters client-side. May take 10-30 s for active domains.</div>
-  </section>
-
-  <section class="drawer" id="drawer-ghdb">
-    <h3>📚 Google Hacking Database (Exploit-DB) — curated live picks</h3>
-    <p class="help">Browse upstream GHDB by category, or run a curated still-working dork against your current target.</p>
-    <div class="row" id="ghdbCats"></div>
-    <div class="chips" id="ghdbList"></div>
-  </section>
 </header>
 
-<main role="main">
-  <div id="grid" class="grid" aria-live="polite"></div>
-  <noscript>
-    <div class="noscript-fallback">
-      <h2>Night Dork Ops — query catalog</h2>
-      <p>This is an interactive panel; JavaScript is required for the live UI. The full catalog of 16 categories and ~150 dorks is described below for reference (and for indexing).</p>
-      <h2>Categories</h2>
-      <ul>
-        <li><b>Raw GitHub (Google-indexed)</b> — `site:raw.githubusercontent.com` dorks: env files, AWS keys, Slack webhooks, Stripe live, OpenAI / Anthropic / GitHub PAT, kubeconfig, tfstate, Firebase config.</li>
-        <li><b>AI / LLM Leaks</b> — OpenAI/Anthropic/HuggingFace/Replicate/Cohere keys via grep.app regex; Pinecone/Weaviate endpoints; exposed Open WebUI, Ollama, LiteLLM.</li>
-        <li><b>Modern Secret Formats</b> — GitHub PAT (ghp_*, github_pat_*), GitLab PAT (glpat-), Slack (xox*), Stripe (sk_live_), SendGrid, Twilio, Telegram, AWS AKIA, GCP service accounts, Azure SAS, JWT, private keys.</li>
-        <li><b>DevOps / Cloud Native</b> — Terraform state, kubeconfig, Helm values, Vault, Sealed Secrets, Docker Compose, GH Actions, source maps, Sentry DSN, Firebase, Supabase, ArgoCD, Portainer, Rancher.</li>
-        <li><b>SaaS / Collaboration Leaks</b> — Notion, Trello, Airtable, Figma, Miro, Coda, Postman, Confluence, Jira, Loom, Slack archive, pastebins.</li>
-        <li><b>Network &amp; Service Intel</b> — Shodan/FOFA/ZoomEye/Censys/Hunter.how/Netlas/LeakIX/Onyphe/GreyNoise/BinaryEdge/urlscan pivots by org, cert, hostname.</li>
-        <li><b>DNS / Cert / Subdomain Recon</b> — crt.sh JSON wildcards, DNSDumpster, SecurityTrails, VirusTotal, Phonebook.cz, AlienVault OTX, Wayback, CommonCrawl.</li>
-        <li><b>Web Archive / Historical</b> — Wayback CDX URLs / sensitive ext / params / archived robots.txt &amp; .well-known &amp; .git, IntelX historical leaks.</li>
-        <li><b>Code Search Cross-Engine</b> — GitHub org enum, gists, grep.app, Sourcegraph, searchcode, PublicWWW (UA-/GTM-/ca-pub-), NerdyData, npm, PyPI, Docker Hub, RubyGems.</li>
-        <li><b>Attack Vectors</b> — Open Redirect, SSRF, LFI, XSS reflection, implicit OAuth, SAML metadata, OIDC well-known, webhook listeners, SQL errors, WordPress wp-json, Drupal, Magento, file upload, auth, Keycloak.</li>
-        <li><b>ICS / IoT / Niestandardowe</b> — Modbus, MQTT, BACnet, Siemens S7, RTSP cameras, Hikvision, Dahua, Elasticsearch, MongoDB, Redis, Memcached, Jenkins, Grafana, Prometheus, Kibana.</li>
-        <li><b>Cloud Storage</b> — S3 (multiple variants), GCS, Azure Blob, DO Spaces, R2, Backblaze B2, Wasabi, OVH.</li>
-        <li><b>People / Email OSINT</b> — Hunter.io, HIBP, LinkedIn, GitHub committer emails, Phonebook.cz.</li>
-        <li><b>Subdomain Takeover</b> — Heroku, GH Pages, Azure, Fastly, Shopify, Tumblr, Unbounce, S3 NoSuchBucket fingerprints.</li>
-        <li><b>MCP / AI Agent Leaks</b> — MCP servers, Claude Desktop config, AutoGPT/AgentGPT logs, browser-use traces, Cursor / Continue.dev configs, LangSmith / LangGraph leaks.</li>
-        <li><b>SBOM / Dependency Confusion</b> — exposed SBOM (CycloneDX, syft), npm/pypi internal package patterns, .npmrc registries, extra-index-url.</li>
-        <li><b>Job Ad Recon</b> — LinkedIn / Indeed / Greenhouse / Lever / Workable for tech-stack mining.</li>
-        <li><b>CDN Origin Discovery</b> — FOFA / Censys / Shodan / urlscan pivots ruling out Cloudflare cert.</li>
-      </ul>
+<div class="nav-backdrop" id="navBackdrop"></div>
+
+<div class="layout">
+  <aside class="sidebar" id="sidebar" aria-label="Filters and navigation">
+    <div class="side-h">Categories</div>
+    <nav id="categoryNav" class="category-nav" aria-label="Categories"></nav>
+
+    <div class="side-h">Severity</div>
+    <div class="sev-toggle" id="sevToggle" aria-label="Severity filter">
+      <span class="sev-pill on" data-sev="crit"><span class="dot"></span>crit</span>
+      <span class="sev-pill on" data-sev="high"><span class="dot"></span>high</span>
+      <span class="sev-pill on" data-sev="med"><span class="dot"></span>med</span>
+      <span class="sev-pill on" data-sev="low"><span class="dot"></span>low</span>
+      <span class="sev-pill on" data-sev="info"><span class="dot"></span>info</span>
     </div>
-  </noscript>
-</main>
+
+    <div class="side-h">Recon recipe</div>
+    <div class="side-field">
+      <select id="recipe" title="Curated recon recipes">
+        <option value="">— pick a recipe —</option>
+        <option value="firstPass">First Pass (light)</option>
+        <option value="bbTriage">Bug Bounty Triage</option>
+        <option value="aiEra">AI Era (LLM + MCP + JS)</option>
+        <option value="shadowIT">Shadow IT (cert + perm)</option>
+        <option value="opsecSafe">OPSEC-safe</option>
+      </select>
+      <button class="btn ghost sm" id="recipeClear" title="Clear active recipe" style="display:none; margin-top:6px">✕ Clear recipe</button>
+    </div>
+
+    <div class="side-field">
+      <label class="opsec" title="Hides engines that log the operator/target (Shodan, FOFA, Censys, urlscan)">
+        <input type="checkbox" id="opsec"> OPSEC mode
+      </label>
+    </div>
+
+    <div class="side-h">Quick: secret patterns</div>
+    <div class="patterns" id="patterns" aria-label="Top secret patterns (one-click grep.app)">
+      <span class="label">🔥 Top secrets:</span>
+    </div>
+
+    <div class="side-stats" id="stats" aria-live="polite">loading…</div>
+  </aside>
+
+  <main class="content" role="main">
+    <div class="content-head">
+      <div class="ch-info">
+        <h1 class="ch-title" id="catTitle">All categories</h1>
+        <p class="ch-desc" id="catDesc"></p>
+        <div class="ch-count"><span id="visibleCount"></span><span class="recipe-badge" id="recipeBadge"></span></div>
+      </div>
+      <div class="ch-actions">
+        <div class="group">
+          <button class="btn primary" id="openCat" title="Open all visible dorks in tabs (confirms above 5)">Open visible ↗</button>
+          <button class="btn warn" id="crownJewels" title="Open the 10 highest-ROI dorks">🎯 Crown Jewels</button>
+        </div>
+        <div class="group">
+          <button class="btn ok sm" id="exportJson" title="Export visible as JSON">JSON</button>
+          <button class="btn ok sm" id="exportMd" title="Export visible as Markdown">MD</button>
+          <button class="btn ok sm" id="exportCsv" title="Export visible as CSV">CSV</button>
+          <button class="iconbtn" id="copyMd" title="Copy all visible as Markdown checklist">📋</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="grid" class="grid" aria-live="polite"></div>
+
+    <noscript>
+      <div class="noscript-fallback">
+        <h2>Night Dork Ops — query catalog</h2>
+        <p>This is an interactive panel; JavaScript is required for the live UI. The full catalog of 18 categories and 230+ dorks is described below for reference (and for indexing).</p>
+        <h2>Categories</h2>
+        <ul>
+          <li><b>Raw GitHub (Google-indexed)</b> — site:raw.githubusercontent.com dorks: env files, AWS keys, Slack webhooks, Stripe live, OpenAI / Anthropic / GitHub PAT, kubeconfig, tfstate, Firebase config.</li>
+          <li><b>AI / LLM Leaks</b> — OpenAI/Anthropic/HuggingFace/Replicate/Cohere keys via grep.app regex; Pinecone/Weaviate endpoints; exposed Open WebUI, Ollama, LiteLLM.</li>
+          <li><b>Modern Secret Formats</b> — GitHub PAT (ghp_*, github_pat_*), GitLab PAT (glpat-), Slack (xox*), Stripe (sk_live_), SendGrid, Twilio, Telegram, AWS AKIA, GCP service accounts, Azure SAS, JWT, private keys.</li>
+          <li><b>DevOps / Cloud Native</b> — Terraform state, kubeconfig, Helm values, Vault, Sealed Secrets, Docker Compose, GH Actions, source maps, Sentry DSN, Firebase, Supabase, ArgoCD, Portainer, Rancher.</li>
+          <li><b>SaaS / Collaboration Leaks</b> — Notion, Trello, Airtable, Figma, Miro, Coda, Postman, Confluence, Jira, Loom, Slack archive, pastebins.</li>
+          <li><b>Network &amp; Service Intel</b> — Shodan/FOFA/ZoomEye/Censys/Hunter.how/Netlas/LeakIX/Onyphe/GreyNoise/BinaryEdge/urlscan pivots by org, cert, hostname.</li>
+          <li><b>DNS / Cert / Subdomain Recon</b> — crt.sh JSON wildcards, DNSDumpster, SecurityTrails, VirusTotal, Phonebook.cz, AlienVault OTX, Wayback, CommonCrawl.</li>
+          <li><b>Web Archive / Historical</b> — Wayback CDX URLs / sensitive ext / params / archived robots.txt &amp; .well-known &amp; .git, IntelX historical leaks.</li>
+          <li><b>Code Search Cross-Engine</b> — GitHub org enum, gists, grep.app, Sourcegraph, searchcode, PublicWWW (UA-/GTM-/ca-pub-), NerdyData, npm, PyPI, Docker Hub, RubyGems.</li>
+          <li><b>Attack Vectors</b> — Open Redirect, SSRF, LFI, XSS reflection, implicit OAuth, SAML metadata, OIDC well-known, webhook listeners, SQL errors, WordPress wp-json, Drupal, Magento, file upload, auth, Keycloak.</li>
+          <li><b>ICS / IoT / Datastores</b> — Modbus, MQTT, BACnet, Siemens S7, RTSP cameras, Hikvision, Dahua, Elasticsearch, MongoDB, Redis, Memcached, Jenkins, Grafana, Prometheus, Kibana.</li>
+          <li><b>Cloud Storage</b> — S3 (multiple variants), GCS, Azure Blob, DO Spaces, R2, Backblaze B2, Wasabi, OVH.</li>
+          <li><b>People / Email OSINT</b> — Hunter.io, HIBP, LinkedIn, GitHub committer emails, Phonebook.cz.</li>
+          <li><b>Subdomain Takeover</b> — Heroku, GH Pages, Azure, Fastly, Shopify, Tumblr, Unbounce, S3 NoSuchBucket fingerprints.</li>
+          <li><b>MCP / AI Agent Leaks</b> — MCP servers, Claude Desktop config, AutoGPT/AgentGPT logs, browser-use traces, Cursor / Continue.dev configs, LangSmith / LangGraph leaks.</li>
+          <li><b>SBOM / Dependency Confusion</b> — exposed SBOM (CycloneDX, syft), npm/pypi internal package patterns, .npmrc registries, extra-index-url.</li>
+          <li><b>Job Ad Recon</b> — LinkedIn / Indeed / Greenhouse / Lever / Workable for tech-stack mining.</li>
+          <li><b>CDN Origin Discovery</b> — FOFA / Censys / Shodan / urlscan pivots ruling out Cloudflare cert.</li>
+        </ul>
+      </div>
+    </noscript>
+  </main>
+</div>
+
+<!-- Recon tools slide-over -->
+<div class="tools-backdrop" id="toolsBackdrop"></div>
+<aside class="tools-panel" id="toolsPanel" aria-label="Recon tools">
+  <div class="tools-head">
+    <h2>🧰 Recon Tools</h2>
+    <button class="iconbtn" id="toolsClose" title="Close (Esc)">✕ Close</button>
+  </div>
+  <div class="tools-body">
+    <div class="drawer-toggle" aria-label="Tool tabs">
+      <button class="dt" data-drawer="favicon">🧩 Favicon Hash</button>
+      <button class="dt" data-drawer="asn">🛰️ ASN Lab</button>
+      <button class="dt" data-drawer="perm">🧬 Permutations</button>
+      <button class="dt" data-drawer="scope">📜 Scope Importer</button>
+      <button class="dt" data-drawer="js">🔬 JS Recon</button>
+      <button class="dt" data-drawer="params">📅 Param Wordlist</button>
+      <button class="dt" data-drawer="ghdb">📚 GHDB</button>
+    </div>
+
+    <section class="drawer" id="drawer-favicon">
+      <h3>🧩 Favicon Hash Lab — Shodan / FOFA / ZoomEye pivot</h3>
+      <p class="help">Compute MurmurHash3 (Shodan) + MD5 (Censys) of a favicon. Two modes: <b>URL</b> (fetch — needs CORS-permissive origin) or <b>file upload</b> (always works, save the favicon locally first).</p>
+      <div class="row">
+        <input id="favUrl" type="text" placeholder="favicon URL (https://example.com/favicon.ico)">
+        <button class="btn" id="favCompute">Compute from URL</button>
+      </div>
+      <div class="row">
+        <input id="favFile" type="file" accept=".ico,.png,.jpg,.jpeg,.svg,image/*">
+        <span class="kbd-hint">file upload bypasses CORS</span>
+      </div>
+      <div class="out" id="favOut">Drop a favicon URL above OR select a local file. Hash and pivot links will appear here.</div>
+    </section>
+
+    <section class="drawer" id="drawer-asn">
+      <h3>🛰️ ASN Lab — discover the netblock</h3>
+      <p class="help">Click through to BGP / ASN explorers, then pivot Shodan / FOFA / Censys by ASN.</p>
+      <div class="row">
+        <input id="asnInput" type="text" placeholder="ASN (e.g., AS13335) or leave blank to use target">
+        <button class="btn" id="asnGo">Go</button>
+      </div>
+      <div class="out" id="asnOut">Enter target above (or ASN here) and click Go.</div>
+    </section>
+
+    <section class="drawer" id="drawer-perm">
+      <h3>🧬 Permutation Generator — AlterX-light</h3>
+      <p class="help">Generates dev/staging/typo permutations of the target. Click any to swap target.</p>
+      <div class="row"><button class="btn" id="permGo">Generate</button><button class="btn ghost" id="permCopy">Copy as wordlist</button></div>
+      <div class="chips" id="permChips"></div>
+    </section>
+
+    <section class="drawer" id="drawer-scope">
+      <h3>📜 Bug Bounty Scope Importer</h3>
+      <p class="help">Paste H1 <code>structured_scope</code> JSON, Bugcrowd asset list, or one domain per line. Out-of-scope items are skipped. Click a chip to set as target. <b>"Run on all"</b> opens the current view × every target (max 50 tabs, requires confirm).</p>
+      <div class="row"><textarea id="scopeIn" placeholder='{"data":[{"asset_identifier":"*.example.com","eligible_for_submission":true}]}  — or just one domain per line'></textarea></div>
+      <div class="row">
+        <button class="btn" id="scopeParse">Parse</button>
+        <button class="btn warn" id="scopeRunAll" title="For each parsed target × every visible item → open in tab (capped at 50)">🚀 Run on all</button>
+        <button class="btn ghost" id="scopeClear">Clear</button>
+      </div>
+      <div class="chips" id="scopeChips"></div>
+    </section>
+
+    <section class="drawer" id="drawer-js">
+      <h3>🔬 JS Recon Pack — LinkFinder / SecretFinder client-side</h3>
+      <p class="help">Paste JS file content (or a URL — it will fetch). Extracts endpoints, secrets and revealing comments. 100% local regex.</p>
+      <div class="row"><input id="jsUrl" type="text" placeholder="JS file URL (optional, will fetch)"><button class="btn" id="jsFetch">Fetch</button></div>
+      <div class="row"><textarea id="jsIn" placeholder="…or paste JS content here"></textarea></div>
+      <div class="row"><button class="btn" id="jsScan">Scan</button></div>
+      <div class="out" id="jsOut">Awaiting input.</div>
+    </section>
+
+    <section class="drawer" id="drawer-params">
+      <h3>📅 Wayback Param Wordlist Generator</h3>
+      <p class="help">Fetches Wayback CDX for <code>*.{target}/*</code> with query strings since 2018, extracts unique parameter names, sorts by frequency, downloads as <code>params-{target}-{date}.txt</code> ready for ffuf/burp.</p>
+      <div class="row">
+        <button class="btn" id="paramGen">Generate &amp; Download</button>
+        <button class="btn ghost" id="paramOpen" title="Open Wayback CDX URL in browser instead">Open CDX in tab</button>
+      </div>
+      <div class="out" id="paramOut">Click "Generate" to fetch from web.archive.org and parse parameters client-side. May take 10-30 s for active domains.</div>
+    </section>
+
+    <section class="drawer" id="drawer-ghdb">
+      <h3>📚 Google Hacking Database (Exploit-DB) — curated live picks</h3>
+      <p class="help">Browse upstream GHDB by category, or run a curated still-working dork against your current target.</p>
+      <div class="row" id="ghdbCats"></div>
+      <div class="chips" id="ghdbList"></div>
+    </section>
+  </div>
+</aside>
 
 <footer>
-  <div class="left">
-    <button class="btn ok" id="exportJson">Export JSON</button>
-    <button class="btn ok" id="exportMd">Export MD</button>
-    <button class="btn ok" id="exportCsv">Export CSV</button>
-    <button class="btn ghost" id="copyMd" title="Copy all visible queries to clipboard as Markdown checklist">📋 Copy MD</button>
-    <a class="btn ghost" id="bookmarklet" href="#" draggable="true" title="Drag to bookmarks bar — runs Night Dork Ops on whatever site you're on. Click to copy.">🔖 Bookmarklet</a>
-  </div>
+  <div class="left"><span class="legal">Passive recon · authorized targets only · queries run in your browser</span></div>
   <div class="right">
-    <span>Passive recon · authorized targets only</span>
+    <a id="bookmarklet" href="#" draggable="true" title="Drag to bookmarks bar — runs Night Dork Ops on whatever site you're on. Click to copy.">🔖 Bookmarklet</a>
     <a href="https://github.com/bersechub/dork-ops" target="_blank" rel="noopener noreferrer" referrerpolicy="no-referrer">Source</a>
     <a href="https://www.exploit-db.com/google-hacking-database" target="_blank" rel="noopener noreferrer" referrerpolicy="no-referrer">GHDB</a>
   </div>
@@ -1136,24 +1276,35 @@ function renderStats(){
   const { dorks, cats, engines } = totalCounts();
   $stats.innerHTML = `<b>${dorks}</b> dorks · <b>${cats}</b> categories · <b>${engines}</b> engines · <b>${TOP_PATTERNS.length}</b> top patterns · <b>${Object.keys(RECIPES).length}</b> recipes · <b>${GHDB_PICKS.length}</b> GHDB picks · <b>${CROWN.length}</b> crown jewels`;
 }
+function selectCategory(i){
+  state.cat = i; saveState(); writeHash();
+  document.body.classList.remove("nav-open");
+  render();
+}
 function renderCategories(){
   $catNav.innerHTML = "";
-  // "All" pseudo-tab first
-  const allBtn = document.createElement("button");
-  allBtn.className = "cat-btn" + (state.cat === -1 ? " active" : "");
-  allBtn.innerHTML = `<span class="icon">✶</span><span>All</span><span class="count">${totalCounts().dorks}</span>`;
-  allBtn.title = "Show all categories";
-  allBtn.onclick = () => { state.cat = -1; saveState(); writeHash(); render(); };
-  $catNav.appendChild(allBtn);
-
-  DATA.forEach((cat, i) => {
+  const mk = (i, icon, label, count, title) => {
     const btn = document.createElement("button");
-    btn.className = "cat-btn" + (i === state.cat ? " active" : "");
-    btn.innerHTML = `<span class="icon">${cat.icon}</span><span>${cat.label}</span><span class="count">${cat.items.length}</span>`;
-    btn.title = cat.description;
-    btn.onclick = () => { state.cat = i; saveState(); writeHash(); render(); };
-    $catNav.appendChild(btn);
-  });
+    btn.className = "nav-item" + (i === state.cat ? " active" : "");
+    btn.innerHTML = `<span class="ic">${icon}</span><span class="nm">${escHtml(label)}</span><span class="ct">${count}</span>`;
+    if (title) btn.title = title;
+    btn.onclick = () => selectCategory(i);
+    return btn;
+  };
+  $catNav.appendChild(mk(-1, "✶", "All categories", totalCounts().dorks, "Show every category"));
+  DATA.forEach((cat, i) => $catNav.appendChild(mk(i, cat.icon, cat.label, cat.items.length, cat.description)));
+}
+function renderContentHead(){
+  const tEl = $("#catTitle"), dEl = $("#catDesc");
+  if (!tEl) return;
+  if (state.cat === -1){
+    tEl.innerHTML = `<span>✶</span> All categories`;
+    dEl.textContent = "Every dork across all 18 categories. Narrow with the filter, severity toggles, or a recon recipe.";
+  } else {
+    const c = DATA[state.cat];
+    tEl.innerHTML = `<span>${c.icon}</span> ${escHtml(c.label)}`;
+    dEl.textContent = c.description;
+  }
 }
 function renderPatterns(){
   const root = $("#patterns");
@@ -1208,6 +1359,7 @@ function visibleCategories(){
   if (state.cat === -1) return DATA.map((c,i)=>({c,i}));
   return [{c:DATA[state.cat], i:state.cat}];
 }
+const SEV_LABEL = {info:"INFO", low:"LOW", med:"MED", high:"HIGH", crit:"CRIT"};
 function renderCards(){
   $grid.innerHTML = "";
   const t = currentTarget();
@@ -1218,11 +1370,11 @@ function renderCards(){
     if (state.cat === -1){
       header = document.createElement("h2");
       header.className = "section-title";
-      header.innerHTML = `<span class="icon">${c.icon}</span> ${c.label} <span style="color:var(--muted);font-weight:400;font-size:11px">— ${c.description}</span>`;
+      header.innerHTML = `<span class="icon">${c.icon}</span> ${escHtml(c.label)} <span style="color:var(--text-3);font-weight:500;font-size:12px">${c.items.length}</span>`;
       $grid.appendChild(header);
       subgrid = document.createElement("div");
       subgrid.className = "grid";
-      subgrid.style.marginBottom = "20px";
+      subgrid.style.cssText = "grid-column:1/-1; margin-bottom:8px";
       $grid.appendChild(subgrid);
     } else {
       subgrid = $grid;
@@ -1237,7 +1389,6 @@ function renderCards(){
       total++; catCount++;
       subgrid.appendChild(renderCard(it, t));
     });
-    // Hide empty category headers/grids when in "All" view + filter active
     if (state.cat === -1 && catCount === 0){
       if (header) header.classList.add("empty");
       subgrid.style.display = "none";
@@ -1245,16 +1396,18 @@ function renderCards(){
   });
   if (total === 0){
     const empty = document.createElement("div");
-    empty.style.cssText = "padding:30px;color:var(--muted);text-align:center;font-size:13px";
-    empty.textContent = "No dorks match the current filter.";
+    empty.className = "empty-state";
+    empty.textContent = "No dorks match the current filter / severity / recipe.";
     $grid.appendChild(empty);
   }
-  // Update visible count + recipe-clear button visibility
+  // Visible count + recipe badge + clear button
   const allTotal = totalCounts().dorks;
   const vc = $("#visibleCount");
-  if (vc){
-    const recipeNote = state.recipe ? ` · 🍱 ${RECIPES[state.recipe]?.label || state.recipe}` : "";
-    vc.textContent = `showing ${total}/${allTotal}${recipeNote}`;
+  if (vc) vc.textContent = `showing ${total} of ${allTotal} dorks for ${t}`;
+  const rb = $("#recipeBadge");
+  if (rb){
+    if (state.recipe){ rb.textContent = "🍱 " + (RECIPES[state.recipe]?.label || state.recipe); rb.classList.add("on"); }
+    else rb.classList.remove("on");
   }
   const rc = $("#recipeClear");
   if (rc) rc.style.display = state.recipe ? "" : "none";
@@ -1264,74 +1417,64 @@ function renderCard(it, t){
   card.className = "card";
   card.dataset.sev = it.sev || "info";
 
-  card.innerHTML = `<div class="sev-ring"></div>`;
-
-  const h3 = document.createElement("h3");
-  h3.innerHTML = `<span class="sev-dot" aria-hidden="true"></span>${escHtml(it.name)}`;
-  card.appendChild(h3);
+  const top = document.createElement("div"); top.className = "card-top";
+  const h3 = document.createElement("h3"); h3.className = "card-title"; h3.textContent = it.name;
+  const badge = document.createElement("span"); badge.className = "sev-badge"; badge.textContent = SEV_LABEL[it.sev||"info"]||"INFO";
+  top.appendChild(h3); top.appendChild(badge);
+  card.appendChild(top);
 
   if (it.desc){
-    const p = document.createElement("p");
-    p.className = "desc";
-    p.textContent = it.desc;
+    const p = document.createElement("p"); p.className = "card-desc"; p.textContent = it.desc;
     card.appendChild(p);
   }
 
   if (it.tags && it.tags.length){
-    const tags = document.createElement("div");
-    tags.className = "tags";
+    const tags = document.createElement("div"); tags.className = "card-tags";
     it.tags.forEach(tg => {
-      const span = document.createElement("span");
-      span.className = "tag";
-      span.textContent = tg;
+      const span = document.createElement("span"); span.className = "tag"; span.textContent = tg;
+      span.title = "Filter by #" + tg;
       span.onclick = () => { state.filter = tg; $filter.value = tg; saveState(); writeHash(); render(); };
       tags.appendChild(span);
     });
     card.appendChild(tags);
   }
 
-  const links = document.createElement("div");
-  links.className = "links";
+  const qBlock = document.createElement("div"); qBlock.className = "card-query";
+  qBlock.textContent = applyTemplate(it.q, t);
+  card.appendChild(qBlock);
+
+  const foot = document.createElement("div"); foot.className = "card-foot";
+  const engines = document.createElement("div"); engines.className = "card-engines";
   const allLinks = [{engine:it.engine, q:it.q}, ...((it.links)||[])];
   allLinks.forEach(L => {
     const e = ENGINES[L.engine]; if (!e) return;
-    const url = buildUrl(L.engine, L.q, t);
-    const a = document.createElement("a");
-    a.className = "link";
-    a.href = url;
-    a.target = "_blank";
-    a.rel = "noopener noreferrer";
-    a.referrerPolicy = "no-referrer";
-    const head = document.createElement("div"); head.className = "head";
-    const tag = document.createElement("span");
-    tag.className = "engine-tag" + (isDarkColor(e.color) ? " dark" : "");
-    tag.style.background = e.color;
-    tag.textContent = e.name;
-    head.appendChild(tag);
-    if (e.auth){ const lk = document.createElement("span"); lk.className = "lock"; lk.textContent = "🔒 login"; head.appendChild(lk); }
-    a.appendChild(head);
-    const q = document.createElement("div"); q.className = "q"; q.textContent = applyTemplate(L.q, t);
-    a.appendChild(q);
-    links.appendChild(a);
+    const a = document.createElement("a"); a.className = "eng-btn";
+    a.href = buildUrl(L.engine, L.q, t);
+    a.target = "_blank"; a.rel = "noopener noreferrer"; a.referrerPolicy = "no-referrer";
+    a.title = applyTemplate(L.q, t);
+    a.innerHTML = `<span class="swatch" style="background:${e.color}"></span>${escHtml(e.name)}${e.auth?'<span class="lock" title="needs login">🔒</span>':''}<span class="arr">↗</span>`;
+    engines.appendChild(a);
   });
-  card.appendChild(links);
+  foot.appendChild(engines);
 
-  const actions = document.createElement("div"); actions.className = "actions";
-  const cb = document.createElement("button"); cb.className = "ico-btn"; cb.textContent = "📋 Q";
-  cb.title = "Copy query";
-  cb.onclick = e => { e.preventDefault(); navigator.clipboard.writeText(applyTemplate(it.q, t)); cb.textContent = "✓"; setTimeout(()=>cb.textContent="📋 Q",900); };
-  const cu = document.createElement("button"); cu.className = "ico-btn"; cu.textContent = "🔗 URL";
-  cu.title = "Copy URL";
-  cu.onclick = e => { e.preventDefault(); navigator.clipboard.writeText(buildUrl(it.engine, it.q, t)); cu.textContent = "✓"; setTimeout(()=>cu.textContent="🔗 URL",900); };
+  const actions = document.createElement("div"); actions.className = "card-actions";
+  const cb = document.createElement("button"); cb.className = "iconbtn ico-btn"; cb.textContent = "⧉ Q";
+  cb.title = "Copy query to clipboard";
+  cb.onclick = e => { e.preventDefault(); navigator.clipboard.writeText(applyTemplate(it.q, t)); cb.textContent = "✓"; setTimeout(()=>cb.textContent="⧉ Q",900); };
+  const cu = document.createElement("button"); cu.className = "iconbtn"; cu.textContent = "⧉ URL";
+  cu.title = "Copy engine URL to clipboard";
+  cu.onclick = e => { e.preventDefault(); navigator.clipboard.writeText(buildUrl(it.engine, it.q, t)); cu.textContent = "✓"; setTimeout(()=>cu.textContent="⧉ URL",900); };
   actions.appendChild(cb); actions.appendChild(cu);
-  card.appendChild(actions);
+  foot.appendChild(actions);
 
+  card.appendChild(foot);
   return card;
 }
 function escHtml(s){ return String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
 
 function render(){
   renderCategories();
+  renderContentHead();
   renderCards();
 }
 
@@ -1766,7 +1909,8 @@ function applyRecipe(name){
   $$("#sevToggle .sev-pill").forEach(p => p.classList.add("on"));
   if ($filter) $filter.value = "";
   saveState(); writeHash(); render();
-  if (r && r.extraDrawers){
+  if (r && r.extraDrawers && r.extraDrawers.length){
+    openTools();
     r.extraDrawers.forEach(d => {
       const dt = $$('.drawer-toggle .dt').find(b => b.dataset.drawer===d);
       const drw = document.getElementById('drawer-'+d);
@@ -1788,6 +1932,33 @@ function makeBookmarklet(){
   const code = `(function(){var h=location.hostname;window.open('${origin}/#cat=raw-gh&target='+encodeURIComponent(h),'_blank');})();`;
   return "javascript:" + code;
 }
+
+/* ============================================================
+ * Theme, tools panel, mobile nav
+ * ============================================================ */
+function applyTheme(theme){
+  // theme: "dark" | "light"
+  document.documentElement.setAttribute("data-theme", theme);
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if (meta) meta.setAttribute("content", theme === "light" ? "#f5f8fc" : "#0b0e14");
+  const btn = $("#themeBtn");
+  if (btn) btn.textContent = theme === "light" ? "☀️" : "🌙";
+}
+function initTheme(){
+  let t = null;
+  try { t = localStorage.getItem("ndo_theme"); } catch(e){}
+  if (!t) t = (window.matchMedia && window.matchMedia("(prefers-color-scheme: light)").matches) ? "light" : "dark";
+  applyTheme(t);
+}
+function toggleTheme(){
+  const cur = document.documentElement.getAttribute("data-theme") === "light" ? "light" : "dark";
+  const next = cur === "light" ? "dark" : "light";
+  applyTheme(next);
+  try { localStorage.setItem("ndo_theme", next); } catch(e){}
+}
+function openTools(){ document.body.classList.add("tools-open"); }
+function closeTools(){ document.body.classList.remove("tools-open"); }
+function toggleTools(){ document.body.classList.toggle("tools-open"); }
 
 /* ============================================================
  * Wire-up
@@ -1857,6 +2028,19 @@ function wire(){
   $("#copyMd").onclick     = copyMdToClipboard;
   $("#helpBtn").onclick    = openHelp;
 
+  // Theme
+  initTheme();
+  $("#themeBtn").onclick = toggleTheme;
+
+  // Tools slide-over
+  $("#toolsBtn").onclick = toggleTools;
+  $("#toolsClose").onclick = closeTools;
+  $("#toolsBackdrop").onclick = closeTools;
+
+  // Mobile category nav
+  $("#navBtn").onclick = () => document.body.classList.toggle("nav-open");
+  $("#navBackdrop").onclick = () => document.body.classList.remove("nav-open");
+
   // Bookmarklet: draggable <a> link (drag to bookmarks bar) + click-to-copy fallback
   const $bm = $("#bookmarklet");
   const bmCode = makeBookmarklet();
@@ -1885,7 +2069,7 @@ function wire(){
   document.addEventListener("keydown", e => {
     const tag = (e.target && e.target.tagName) || "";
     const inForm = ["INPUT","TEXTAREA","SELECT"].includes(tag);
-    if (e.key === "Escape") { closeModal(); return; }
+    if (e.key === "Escape") { closeModal(); closeTools(); document.body.classList.remove("nav-open"); return; }
     if (inForm) return;
     if (e.key === "/") { e.preventDefault(); $filter.focus(); }
     else if (e.key === "?") { openHelp(); }
