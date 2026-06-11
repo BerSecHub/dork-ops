@@ -34,10 +34,10 @@
   </g>
 
   <!-- Title -->
-  <text x="60" y="510" fill="#cfe3ff" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="56" font-weight="700">Night Dork Ops</text>
+  <text x="60" y="510" fill="#e9eef7" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="64" font-weight="800" letter-spacing="-1">Dork<tspan fill="#5aa2ff">Ops</tspan></text>
 
   <!-- Subtitle -->
-  <text x="60" y="558" fill="#9fb7ff" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="22">Modern OSINT Dork &amp; Recon Toolkit</text>
+  <text x="60" y="556" fill="#abb7ca" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="22">OSINT Dork &amp; Recon Toolkit</text>
   <text x="60" y="588" fill="#7c8899" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="20">230+ dorks  ·  35+ engines  ·  18 categories  ·  single HTML file</text>
 
   <!-- Severity dots -->
