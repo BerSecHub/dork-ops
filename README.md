@@ -2,7 +2,7 @@
 
 # 🔍 DorkOps
 
-**A single-file OSINT dork & recon toolkit — 232 curated dorks across 38 search engines, zero dependencies, runs entirely in your browser.**
+**A single-file OSINT dork & recon toolkit — 232 curated dorks across 39 search engines, zero dependencies, runs entirely in your browser.**
 
 [**▶ Live app**](https://dorks.bersec.me/) · [Report an issue](https://github.com/bersechub/dork-ops/issues) · [Contributing](CONTRIBUTING.md)
 
@@ -23,13 +23,13 @@ The entire tool is **one `index.html` file** — no build step, no server, no tr
 ## Highlights
 
 - **232 curated dorks** in **18 categories**, each tagged with a **severity** (`crit` → `info`), a short description of *why it matters*, and the engine best suited to run it.
-- **38 search engines** wired in — web search, code search, internet-wide scanners, certificate transparency, passive DNS, and web archives — each dork links straight to the engine that answers it.
+- **39 search engines** wired in — web search, code search, internet-wide scanners, certificate transparency, passive DNS, and web archives — each dork links straight to the engine that answers it.
 - **Modern secret coverage (2025–2026):** `sk-ant-`, `sk-proj-`, `ghp_`/`github_pat_`, `glpat-`, `sk_live_`, `hf_`, `r8_`, `lsv2_`, AWS `AKIA`, GCP service accounts, Azure SAS — plus DevOps leaks (tfstate, kubeconfig, Helm, ArgoCD), SaaS exposure (Notion, Airtable, Postman, Confluence), and **MCP / AI-agent** leaks.
 - **Powerful search DSL** over the catalog: free text, `tag:`, `sev:`, `engine:`, `cat:`, quoted phrases, and `-exclusions`.
 - **Recon recipes** — one-click presets that filter the catalog for a specific workflow (First Pass, Bug Bounty Triage, AI Era, Shadow IT, OPSEC-safe).
 - **7 built-in recon tools:** favicon-hash lab (MurmurHash3 + MD5), ASN lab, permutation generator, bug-bounty scope importer, client-side JS secret scanner, Wayback parameter-wordlist generator, and a curated GHDB browser.
 - **Exports:** JSON, Markdown, CSV, and a Markdown checklist to clipboard.
-- **OPSEC mode** hides engines that log the operator or target (Shodan, FOFA, Censys, urlscan).
+- **OPSEC mode** hides authenticated internet-scan engines that log your query against your account (Shodan, FOFA, ZoomEye, Censys, Hunter.how, Netlas, Onyphe, BinaryEdge) plus urlscan.
 - **Deep-link routing, deep dark/light theming, full keyboard control, and a drag-to-install bookmarklet.**
 
 ## Quick start
@@ -163,6 +163,8 @@ Drag the **🔖 Bookmarklet** in the footer to your bookmarks bar. Click it on a
 - **Local state only.** Your target history, theme, and last view are stored in `localStorage` on your machine.
 - A strict **Content-Security-Policy** ships in the page `<meta>` and is reinforced by security headers in [`_headers`](_headers) (`X-Frame-Options: DENY`, `nosniff`, `Referrer-Policy: no-referrer`, HSTS, a restrictive `Permissions-Policy`).
 - All outbound links use `rel="noopener noreferrer"` and `referrerpolicy="no-referrer"` so your DorkOps URL never leaks to the destination engine.
+
+Found a security issue? Please report it privately — see **[SECURITY.md](SECURITY.md)**.
 
 ## Deployment
 
