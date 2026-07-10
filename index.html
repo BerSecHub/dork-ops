@@ -2,6 +2,10 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
+<!-- CSP first so it governs everything parsed after it. frame-ancestors is set as a real HTTP
+     header in _headers (it is ignored in <meta>); X-Frame-Options: DENY also blocks framing. -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; connect-src 'self' https:; form-action 'self'; base-uri 'self'; object-src 'none'">
+<meta name="referrer" content="no-referrer">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>DorkOps — OSINT Dork & Recon Toolkit · Google, GitHub, Shodan, FOFA, Censys, Wayback</title>
 <meta name="description" content="230+ modern OSINT dorks across 35+ engines for passive recon and bug bounty: Google, raw.githubusercontent.com, GitHub, grep.app, Shodan, FOFA, ZoomEye, Censys, urlscan, LeakIX, crt.sh, Wayback. Modern secret prefixes (sk-ant-, sk_live_, ghp_), DevOps leaks (tfstate, kubeconfig, helm, ArgoCD), SaaS (Notion, Airtable, Postman, Confluence), MCP / AI agent leaks. Single HTML file, zero deps. Authorized testing only.">
@@ -17,20 +21,19 @@
 <meta property="og:description" content="230+ modern OSINT dorks across 35+ engines (Google, raw.githubusercontent.com, GitHub, grep.app, Shodan, FOFA, ZoomEye, Censys, urlscan, LeakIX, crt.sh, Wayback). Built for bug bounty hunters and authorized red teams.">
 <meta property="og:url" content="https://dorks.bersec.me/">
 <meta property="og:site_name" content="DorkOps">
-<meta property="og:image" content="https://dorks.bersec.me/og-image.svg">
-<meta property="og:image:secure_url" content="https://dorks.bersec.me/og-image.svg">
-<meta property="og:image:type" content="image/svg+xml">
+<meta property="og:image" content="https://dorks.bersec.me/og-image.png">
+<meta property="og:image:secure_url" content="https://dorks.bersec.me/og-image.png">
+<meta property="og:image:type" content="image/png">
 <meta property="og:image:alt" content="DorkOps — modern OSINT dork toolkit">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="DorkOps — OSINT Dork & Recon Toolkit">
 <meta name="twitter:description" content="230+ modern OSINT dorks across 35+ engines. Single HTML file. Zero deps.">
-<meta name="twitter:image" content="https://dorks.bersec.me/og-image.svg">
+<meta name="twitter:image" content="https://dorks.bersec.me/og-image.png">
+<meta name="twitter:image:alt" content="DorkOps — modern OSINT dork toolkit">
 <link rel="icon" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M2 12l6.5 6.5L22 5' stroke='%2300ffff' stroke-width='2.5' fill='none' stroke-linecap='round'/></svg>">
 <link rel="apple-touch-icon" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><rect width='24' height='24' fill='%2305060a'/><path d='M2 12l6.5 6.5L22 5' stroke='%2300ffff' stroke-width='2.5' fill='none' stroke-linecap='round'/></svg>">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data: https:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; connect-src 'self' https:; form-action 'self'; base-uri 'self'; frame-ancestors 'none'">
-<meta http-equiv="Referrer-Policy" content="no-referrer">
 <script type="application/ld+json">
 {"@context":"https://schema.org","@type":"WebApplication","name":"DorkOps","applicationCategory":"SecurityApplication","operatingSystem":"Any","url":"https://dorks.bersec.me/","description":"230+ curated OSINT dorks across 35+ engines for passive reconnaissance, secrets discovery and attack-surface mapping.","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"featureList":["Google dorks","raw.githubusercontent.com dorks","GitHub code search","grep.app regex search","Shodan","FOFA","ZoomEye","Censys","urlscan","LeakIX","crt.sh","Wayback CDX","Severity tagging","Deep-link routing","Favicon hash lab","Permutation generator","Bug bounty scope importer","JS recon pack","Wayback param wordlist","OPSEC mode","Bookmarklet","Recon recipes","GHDB integration"]}
 </script>
@@ -47,6 +50,7 @@
   --accent:#5aa2ff; --accent-ink:#04101f; --accent-soft:#10243f;
   --ok:#46d39a; --warn:#ffb454; --danger:#ff5d6c;
   --sev-info:#8a94a6; --sev-low:#5aa2ff; --sev-med:#ffd166; --sev-high:#ff9f43; --sev-crit:#ff5d6c;
+  --sev-crit-ink:#2b0006; --sev-info-ink:#0e1119; /* dark ink so CRIT/INFO badges pass WCAG AA */
   --shadow:0 8px 28px rgba(0,0,0,.45);
   --radius:12px; --radius-sm:8px;
   --font-ui:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,"Apple Color Emoji","Segoe UI Emoji",sans-serif;
@@ -60,6 +64,7 @@ html[data-theme="light"]{
   --accent:#2f74e0; --accent-ink:#ffffff; --accent-soft:#e6effd;
   --ok:#0f9d6b; --warn:#c47a16; --danger:#d8324a;
   --sev-info:#8a94a6; --sev-low:#2f74e0; --sev-med:#c9961a; --sev-high:#e07f1f; --sev-crit:#d8324a;
+  --sev-crit-ink:#fff; --sev-info-ink:#0e1119; /* light theme: white ink passes on the darker crit red */
   --shadow:0 8px 24px rgba(20,40,80,.12);
 }
 
@@ -188,7 +193,7 @@ input::placeholder,textarea::placeholder{color:var(--text-3)}
 .sev-pill{
   display:inline-flex; align-items:center; gap:6px; padding:5px 9px; cursor:pointer;
   border:1px solid var(--border); border-radius:999px; background:var(--surface-2);
-  font-size:11.5px; font-weight:600; color:var(--text-3); text-transform:uppercase; letter-spacing:.3px;
+  font-family:inherit; font-size:11.5px; font-weight:600; color:var(--text-3); text-transform:uppercase; letter-spacing:.3px;
   transition:.12s; user-select:none;
 }
 .sev-pill .dot{width:8px;height:8px;border-radius:50%;background:var(--text-3)}
@@ -267,17 +272,18 @@ body.opsec-on{--accent:#ff5d6c; --accent-soft:#2a1014}
   flex-shrink:0; padding:2px 7px; border-radius:5px; font-size:10px; font-weight:800;
   letter-spacing:.5px; text-transform:uppercase; color:#fff; margin-top:1px;
 }
-.card[data-sev=info] .sev-badge{background:var(--sev-info)}
+.card[data-sev=info] .sev-badge{background:var(--sev-info); color:var(--sev-info-ink)}
 .card[data-sev=low] .sev-badge{background:var(--sev-low); color:#04101f}
 .card[data-sev=med] .sev-badge{background:var(--sev-med); color:#1a1500}
 .card[data-sev=high] .sev-badge{background:var(--sev-high); color:#180c00}
-.card[data-sev=crit] .sev-badge{background:var(--sev-crit)}
+.card[data-sev=crit] .sev-badge{background:var(--sev-crit); color:var(--sev-crit-ink)}
 
 .card-desc{font-size:13px; color:var(--text-2); line-height:1.5; margin:0 0 10px}
 .card-tags{display:flex; flex-wrap:wrap; gap:5px; margin-bottom:10px}
 .card-tags .tag{
-  padding:2px 7px; border:1px solid var(--border); border-radius:5px; cursor:pointer;
-  font-size:10.5px; color:var(--text-3); transition:.12s;
+  display:inline-flex; align-items:center; min-height:24px; padding:3px 9px; cursor:pointer;
+  border:1px solid var(--border); border-radius:5px; background:transparent;
+  font-family:var(--font-ui); font-size:10.5px; line-height:1; color:var(--text-3); transition:.12s;
 }
 .card-tags .tag:hover{border-color:var(--accent); color:var(--accent)}
 .card-tags .tag::before{content:"#"; opacity:.5}
@@ -317,6 +323,7 @@ body.tools-open .tools-panel{transform:translateX(0)}
 }
 .tools-head h2{margin:0; font-size:16px; font-weight:700}
 .tools-body{overflow-y:auto; padding:14px 16px 30px}
+.tools-intro{margin:0 0 12px; font-size:12.5px; color:var(--text-3)}
 .drawer-toggle{display:flex; flex-wrap:wrap; gap:6px; margin-bottom:14px}
 .drawer-toggle .dt{
   padding:7px 11px; border:1px solid var(--border); border-radius:8px; background:var(--surface-2);
@@ -384,6 +391,14 @@ kbd{padding:2px 7px; background:var(--bg-2); border:1px solid var(--border); bor
 .noscript-fallback h2{font-size:15px; margin:16px 0 6px}
 .noscript-fallback ul{padding-left:18px; line-height:1.7; color:var(--text-2)}
 @media (prefers-reduced-motion:reduce){*{animation:none!important; transition:none!important}.card:hover{transform:none}}
+/* Keyboard focus ring for all interactive controls (mouse users are unaffected via :focus-visible) */
+.btn:focus-visible,.iconbtn:focus-visible,.nav-item:focus-visible,.eng-btn:focus-visible,.cat-pill:focus-visible,
+.sev-pill:focus-visible,.card-tags .tag:focus-visible,.patterns .pat:focus-visible,.drawer-toggle .dt:focus-visible,
+.chip:focus-visible,.pat:focus-visible,a:focus-visible,select:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
+@media (prefers-contrast:more){
+  :root{--border:#3a4a63; --border-2:#4a5d7a; --text-3:#9aa7bd}
+  html[data-theme="light"]{--border:#b7c4d6; --border-2:#94a6bd; --text-3:#4a586e}
+}
 .sidebar::-webkit-scrollbar,.tools-body::-webkit-scrollbar,.card-query::-webkit-scrollbar,.drawer .out::-webkit-scrollbar{width:9px;height:9px}
 .sidebar::-webkit-scrollbar-thumb,.tools-body::-webkit-scrollbar-thumb,.card-query::-webkit-scrollbar-thumb,.drawer .out::-webkit-scrollbar-thumb{background:var(--border-2); border-radius:5px}
 
@@ -403,11 +418,14 @@ mark{background:color-mix(in srgb,var(--accent) 30%,transparent); color:inherit;
   background:var(--accent-soft); color:var(--accent); font-size:11.5px; font-weight:600;
   font-family:var(--font-mono); border:1px solid color-mix(in srgb,var(--accent) 30%,transparent);
 }
-.search-ops .op .x{cursor:pointer; opacity:.65; font-family:var(--font-ui)}
-.search-ops .op .x:hover{opacity:1}
+.search-ops .op .x{
+  display:inline-flex; align-items:center; justify-content:center; width:20px; height:20px;
+  margin:-3px -5px -3px 0; border-radius:5px; cursor:pointer; opacity:.65; font-family:var(--font-ui);
+}
+.search-ops .op .x:hover{opacity:1; background:color-mix(in srgb,var(--accent) 18%,transparent)}
 .topbar .filter-wrap .clear{
   position:absolute; right:7px; top:50%; transform:translateY(-50%);
-  width:21px; height:21px; border:none; border-radius:6px; cursor:pointer;
+  width:24px; height:24px; border:none; border-radius:6px; cursor:pointer;
   background:var(--surface-2); color:var(--text-2); font-size:12px; line-height:1;
   display:none; align-items:center; justify-content:center;
 }
@@ -435,11 +453,11 @@ mark{background:color-mix(in srgb,var(--accent) 30%,transparent); color:inherit;
     <span class="lbl">Target</span>
     <input id="target" type="text" placeholder="example.com" value="example.com" autocomplete="off" spellcheck="false" list="targetHistory" aria-label="Target domain">
     <datalist id="targetHistory"></datalist>
-    <button class="iconbtn" id="normalize" title="Normalize host (strip scheme/path)">⤵</button>
+    <button class="iconbtn" id="normalize" title="Normalize host (strip scheme/path)" aria-label="Normalize host">⤵</button>
   </div>
 
   <div class="filter-wrap" id="filterWrap">
-    <input id="filter" type="text" placeholder="Search 232 dorks — try: stripe · tag:aws · sev:crit · engine:gh · -wayback" autocomplete="off" spellcheck="false" aria-label="Search dorks">
+    <input id="filter" type="text" placeholder="Search dorks — try: stripe · tag:aws · sev:crit · engine:gh · -wayback" autocomplete="off" spellcheck="false" aria-label="Search dorks">
     <span class="slash">/</span>
     <button class="clear" id="filterClear" title="Clear search (Esc)" aria-label="Clear search">✕</button>
   </div>
@@ -447,8 +465,8 @@ mark{background:color-mix(in srgb,var(--accent) 30%,transparent); color:inherit;
   <div class="spacer"></div>
   <div class="tb-actions">
     <button class="btn" id="toolsBtn" title="Recon tools (favicon hash, ASN, permutations, scope, JS recon, params, GHDB)">🧰 Tools</button>
-    <button class="iconbtn" id="themeBtn" title="Toggle light / dark">🌙</button>
-    <button class="iconbtn" id="helpBtn" title="Keyboard shortcuts & engine legend">?</button>
+    <button class="iconbtn" id="themeBtn" title="Toggle light / dark" aria-label="Switch to light theme">🌙</button>
+    <button class="iconbtn" id="helpBtn" title="Keyboard shortcuts & engine legend" aria-label="Keyboard shortcuts and engine legend">?</button>
   </div>
 </header>
 
@@ -460,17 +478,17 @@ mark{background:color-mix(in srgb,var(--accent) 30%,transparent); color:inherit;
     <nav id="categoryNav" class="category-nav" aria-label="Categories"></nav>
 
     <div class="side-h">Severity</div>
-    <div class="sev-toggle" id="sevToggle" aria-label="Severity filter">
-      <span class="sev-pill on" data-sev="crit"><span class="dot"></span>crit</span>
-      <span class="sev-pill on" data-sev="high"><span class="dot"></span>high</span>
-      <span class="sev-pill on" data-sev="med"><span class="dot"></span>med</span>
-      <span class="sev-pill on" data-sev="low"><span class="dot"></span>low</span>
-      <span class="sev-pill on" data-sev="info"><span class="dot"></span>info</span>
+    <div class="sev-toggle" id="sevToggle" role="group" aria-label="Severity filter">
+      <button type="button" class="sev-pill on" data-sev="crit" aria-pressed="true"><span class="dot"></span>crit</button>
+      <button type="button" class="sev-pill on" data-sev="high" aria-pressed="true"><span class="dot"></span>high</button>
+      <button type="button" class="sev-pill on" data-sev="med" aria-pressed="true"><span class="dot"></span>med</button>
+      <button type="button" class="sev-pill on" data-sev="low" aria-pressed="true"><span class="dot"></span>low</button>
+      <button type="button" class="sev-pill on" data-sev="info" aria-pressed="true"><span class="dot"></span>info</button>
     </div>
 
-    <div class="side-h">Recon recipe</div>
+    <div class="side-h" id="recipeHead">Recon recipe</div>
     <div class="side-field">
-      <select id="recipe" title="Curated recon recipes">
+      <select id="recipe" aria-labelledby="recipeHead" title="Curated recon recipes">
         <option value="">— pick a recipe —</option>
         <option value="firstPass">First Pass (light)</option>
         <option value="bbTriage">Bug Bounty Triage</option>
@@ -482,7 +500,7 @@ mark{background:color-mix(in srgb,var(--accent) 30%,transparent); color:inherit;
     </div>
 
     <div class="side-field">
-      <label class="opsec" title="Hides engines that log the operator/target (Shodan, FOFA, Censys, urlscan)">
+      <label class="opsec" title="Hides authenticated internet-scan engines that log your query against your account (Shodan, FOFA, ZoomEye, Censys, Hunter.how, Netlas, Onyphe, BinaryEdge), plus urlscan">
         <input type="checkbox" id="opsec"> OPSEC mode
       </label>
     </div>
@@ -500,7 +518,7 @@ mark{background:color-mix(in srgb,var(--accent) 30%,transparent); color:inherit;
       <div class="ch-info">
         <h1 class="ch-title" id="catTitle">All categories</h1>
         <p class="ch-desc" id="catDesc"></p>
-        <div class="ch-count"><span id="visibleCount"></span><span class="recipe-badge" id="recipeBadge"></span></div>
+        <div class="ch-count"><span id="visibleCount" aria-live="polite" aria-atomic="true"></span><span class="recipe-badge" id="recipeBadge"></span></div>
         <div class="search-ops" id="searchOps" style="display:none"></div>
       </div>
       <div class="ch-actions">
@@ -517,7 +535,7 @@ mark{background:color-mix(in srgb,var(--accent) 30%,transparent); color:inherit;
       </div>
     </div>
 
-    <div id="grid" class="grid" aria-live="polite"></div>
+    <div id="grid" class="grid"></div>
 
     <noscript>
       <div class="noscript-fallback">
@@ -551,13 +569,14 @@ mark{background:color-mix(in srgb,var(--accent) 30%,transparent); color:inherit;
 
 <!-- Recon tools slide-over -->
 <div class="tools-backdrop" id="toolsBackdrop"></div>
-<aside class="tools-panel" id="toolsPanel" aria-label="Recon tools">
+<aside class="tools-panel" id="toolsPanel" role="dialog" aria-modal="true" aria-label="Recon tools" inert>
   <div class="tools-head">
     <h2>🧰 Recon Tools</h2>
     <button class="iconbtn" id="toolsClose" title="Close (Esc)">✕ Close</button>
   </div>
   <div class="tools-body">
-    <div class="drawer-toggle" aria-label="Tool tabs">
+    <p class="tools-intro">Pick a tool below — each expands its own panel. Everything runs locally in your browser.</p>
+    <div class="drawer-toggle" aria-label="Recon tool sections">
       <button class="dt" data-drawer="favicon">🧩 Favicon Hash</button>
       <button class="dt" data-drawer="asn">🛰️ ASN Lab</button>
       <button class="dt" data-drawer="perm">🧬 Permutations</button>
@@ -653,6 +672,27 @@ mark{background:color-mix(in srgb,var(--accent) 30%,transparent); color:inherit;
 "use strict";
 
 /* ============================================================
+ *  DorkOps — application script (single file, zero deps)
+ * ------------------------------------------------------------
+ *  How this file is organised (search a banner to jump):
+ *    • Utilities .............. $/$$, host normalisation, base64
+ *    • MurmurHash3 / MD5 ...... favicon-hash math (Shodan/Censys)
+ *    • Engine registry ........ ENGINES: key -> {name, colour, url(q)}
+ *    • DATA ................... the dork catalog (categories -> items)
+ *    • TOP_PATTERNS/CROWN/GHDB. curated shortcuts + presets (RECIPES)
+ *    • State + storage ........ localStorage-backed `state`, hash routing
+ *    • Search DSL ............. parseQuery / scoreItem / serializeQuery
+ *    • Render ................. categories, cards, stats, search chips
+ *    • Actions ............... open-in-tabs, Crown Jewels, exports
+ *    • Recon tools ............ setupDrawers(): favicon, ASN, perms, …
+ *    • Wire-up ................ wire(): event binding + initial render
+ *
+ *  Data model: see CONTRIBUTING.md. Each dork item is
+ *    {name, desc, sev, tags[], engine, q}  where `q` is templated with
+ *    {t} (host), {t_no_tld} (org label) and {date} at render time.
+ * ============================================================ */
+
+/* ============================================================
  * Utilities
  * ============================================================ */
 const $ = (s, r) => (r||document).querySelector(s);
@@ -661,6 +701,21 @@ const enc = encodeURIComponent;
 const fmtDate = () => new Date().toISOString().slice(0,10);
 const b64 = s => { try { return btoa(unescape(encodeURIComponent(s))); } catch(e){ return btoa(s); } };
 const debounce = (fn, ms) => { let t; return (...a) => { clearTimeout(t); t = setTimeout(()=>fn(...a), ms); }; };
+// Copy with a fallback for insecure contexts (file://, bookmarklet, locked-down browsers)
+// where navigator.clipboard is unavailable. Always returns a promise so callers can .then/.catch.
+function copyText(t){
+  if (navigator.clipboard && navigator.clipboard.writeText) return navigator.clipboard.writeText(t);
+  return new Promise((res, rej) => {
+    try {
+      const ta = document.createElement("textarea");
+      ta.value = t; ta.style.position = "fixed"; ta.style.opacity = "0";
+      document.body.appendChild(ta); ta.focus(); ta.select();
+      const ok = document.execCommand("copy");
+      document.body.removeChild(ta);
+      ok ? res() : rej(new Error("copy failed"));
+    } catch (e) { rej(e); }
+  });
+}
 
 function normHost(v){
   v = (v||'').trim();
@@ -719,12 +774,8 @@ function shodanFaviconHash(arrayBuffer){
   for (let i=0;i<b.length;i+=76) out += b.substr(i,76) + "\n";
   return mmh3_32(out, 0);
 }
-async function md5Hex(arrayBuffer){
-  if (window.crypto && crypto.subtle && crypto.subtle.digest){
-    try {
-      // No SHA1 fallback exists for md5 in webcrypto; use simple JS impl.
-    } catch(e){}
-  }
+// WebCrypto has no MD5, so use the compact JS implementation below.
+function md5Hex(arrayBuffer){
   return jsMd5(new Uint8Array(arrayBuffer));
 }
 // Tiny MD5 (RFC 1321). Public-domain compact impl.
@@ -787,6 +838,9 @@ function jsMd5(bytes){
 /* ============================================================
  * Engine registry
  * ============================================================ */
+// CommonCrawl publishes a new monthly crawl id; resolve the newest at load
+// (see resolveLatestCommonCrawl), falling back to this known-good pinned id.
+let CC_LATEST = "CC-MAIN-2025-30";
 const ENGINES = {
   g:   { name:"Google",        color:"#4285F4", url: q => `https://www.google.com/search?q=${enc(q)}` },
   gnp: { name:"Google (no PWS)",color:"#4285F4",url: q => `https://www.google.com/search?q=${enc(q)}&pws=0&gl=us&hl=en` },
@@ -796,6 +850,7 @@ const ENGINES = {
   bd:  { name:"Baidu",         color:"#2932E1", url: q => `https://www.baidu.com/s?wd=${enc(q)}` },
   gh:  { name:"GitHub",        color:"#444",    url: q => `https://github.com/search?q=${enc(q)}&type=code` },
   gho: { name:"GH Issues",     color:"#444",    url: q => `https://github.com/search?q=${enc(q)}&type=issues` },
+  ghr: { name:"GitHub Repos",  color:"#444",    url: q => `https://github.com/search?q=${enc(q)}&type=repositories` },
   gra: { name:"grep.app",      color:"#0aa",    url: q => `https://grep.app/search?q=${enc(q)}&regexp=true` },
   sg:  { name:"Sourcegraph",   color:"#7048e8", url: q => `https://sourcegraph.com/search?q=${enc(q)}&patternType=regexp` },
   sc:  { name:"searchcode",    color:"#3a8",    url: q => `https://searchcode.com/?q=${enc(q)}` },
@@ -803,34 +858,47 @@ const ENGINES = {
   nd:  { name:"NerdyData",     color:"#0c8",    url: q => `https://nerdydata.com/search?query=${enc(q)}` },
   sh:  { name:"Shodan",        color:"#c00",    url: q => `https://www.shodan.io/search?query=${enc(q)}`, auth:true, opsec:false },
   fo:  { name:"FOFA",          color:"#e44",    url: q => `https://en.fofa.info/result?qbase64=${enc(b64(q))}`, auth:true, opsec:false },
-  ze:  { name:"ZoomEye",       color:"#36c",    url: q => `https://www.zoomeye.org/searchResult?q=${enc(q)}`, auth:true, opsec:false },
-  cen: { name:"Censys",        color:"#3a3",    url: q => `https://search.censys.io/search?resource=hosts&q=${enc(q)}`, auth:true, opsec:false },
-  hh:  { name:"Hunter.how",    color:"#e60",    url: q => `https://hunter.how/search?searchValue=${enc(q)}`, auth:true },
-  nl:  { name:"Netlas",        color:"#26a",    url: q => `https://app.netlas.io/responses/?q=${enc(q)}`, auth:true },
-  oy:  { name:"Onyphe",        color:"#024",    url: q => `https://www.onyphe.io/search?q=${enc(q)}`, auth:true },
-  be:  { name:"BinaryEdge",    color:"#222",    url: q => `https://app.binaryedge.io/services/query?query=${enc(q)}`, auth:true },
-  gn:  { name:"GreyNoise",     color:"#2a2",    url: q => `https://viz.greynoise.io/query/?gnql=${enc(q)}` },
-  lx:  { name:"LeakIX",        color:"#e22",    url: q => `https://leakix.net/search?q=${enc(q)}` },
+  ze:  { name:"ZoomEye",       color:"#36c",    url: q => `https://www.zoomeye.ai/searchResult?q=${enc(q)}`, auth:true, opsec:false },
+  // Censys is retiring Legacy Search (search.censys.io): disabled for free accounts, full deprecation ~Sep 2026.
+  // Paid/legacy logins still resolve the host queries below; the label flags the caveat until CenQL migration.
+  cen: { name:"Censys (legacy)", color:"#3a3",  url: q => `https://search.censys.io/search?resource=hosts&q=${enc(q)}`, auth:true, opsec:false },
+  hh:  { name:"Hunter.how",    color:"#e60",    url: q => `https://hunter.how/search?searchValue=${enc(q)}`, auth:true, opsec:false },
+  nl:  { name:"Netlas",        color:"#26a",    url: q => `https://app.netlas.io/responses/?q=${enc(q)}`, auth:true, opsec:false },
+  oy:  { name:"Onyphe",        color:"#024",    url: q => `https://www.onyphe.io/search?q=${enc(q)}`, auth:true, opsec:false },
+  be:  { name:"BinaryEdge",    color:"#222",    url: q => `https://app.binaryedge.io/services/query?query=${enc(q)}`, auth:true, opsec:false },
+  gn:  { name:"GreyNoise",     color:"#2a2",    url: q => `https://viz.greynoise.io/query/?gnql=${enc(q)}`, auth:true },
+  lx:  { name:"LeakIX",        color:"#e22",    url: q => `https://leakix.net/search?q=${enc(q)}`, auth:true },
   crt: { name:"crt.sh",        color:"#36c",    url: q => `https://crt.sh/?q=${enc(q)}&output=json` },
   dd:  { name:"DNSDumpster",   color:"#643",    url: q => `https://dnsdumpster.com/?target=${enc(q)}`, auth:true },
   st:  { name:"SecurityTrails",color:"#06c",    url: q => `https://securitytrails.com/list/apex_domain/${enc(q)}`, auth:true },
-  vt:  { name:"VirusTotal",    color:"#306",    url: q => `https://www.virustotal.com/gui/domain/${enc(q)}/relations` },
+  vt:  { name:"VirusTotal",    color:"#306",    url: q => `https://www.virustotal.com/gui/domain/${enc(q)}/relations`, auth:true },
   pb:  { name:"Phonebook.cz",  color:"#a40",    url: q => `https://phonebook.cz/?q=${enc(q)}`, auth:true },
   us:  { name:"urlscan",       color:"#26b",    url: q => `https://urlscan.io/search/#${enc(q)}`, opsec:false },
   ot:  { name:"AlienVault OTX",color:"#06c",    url: q => `https://otx.alienvault.com/indicator/domain/${enc(q)}` },
   wa:  { name:"Wayback",       color:"#888",    url: q => q },
-  cc:  { name:"CommonCrawl",   color:"#666",    url: q => `https://index.commoncrawl.org/CC-MAIN-2025-30-index?url=${enc(q)}&output=json` },
+  cc:  { name:"CommonCrawl",   color:"#666",    url: q => `https://index.commoncrawl.org/${CC_LATEST}-index?url=${enc(q)}&output=json` },
   ix:  { name:"IntelX",        color:"#900",    url: q => `https://intelx.io/?s=${enc(q)}`, auth:true },
   hi:  { name:"HIBP",          color:"#222",    url: q => `https://haveibeenpwned.com/DomainSearch`, auth:true },
   hu:  { name:"Hunter.io",     color:"#fa3",    url: q => `https://hunter.io/search/${enc(q)}`, auth:true },
   li:  { name:"LinkedIn",      color:"#0a66c2", url: q => `https://www.google.com/search?q=site%3Alinkedin.com%2Fin+%22${enc(q)}%22` },
   wig: { name:"WiGLE",         color:"#2c2",    url: q => `https://wigle.net/search?ssid=${enc(q)}`, auth:true },
-  ghdb:{ name:"Exploit-DB GHDB",color:"#900",   url: q => `https://www.exploit-db.com/ghdb/${enc(q)}` },
+  // /ghdb/<id> resolves a single entry by numeric id; the browsable/searchable DB is the list page.
+  ghdb:{ name:"Exploit-DB GHDB",color:"#900",   url: () => `https://www.exploit-db.com/google-hacking-database` },
 };
 function isDarkColor(hex){
   const c = hex.replace('#',''); const n = c.length===3 ? c.split('').map(x=>x+x).join('') : c;
   const r=parseInt(n.slice(0,2),16), g=parseInt(n.slice(2,4),16), b=parseInt(n.slice(4,6),16);
   return (r*0.299+g*0.587+b*0.114) < 140;
+}
+// Point the CommonCrawl engine at the newest monthly crawl. collinfo.json is sorted newest-first;
+// on any failure we keep the pinned CC_LATEST fallback so the engine always builds a valid URL.
+async function resolveLatestCommonCrawl(){
+  try{
+    const r = await fetch("https://index.commoncrawl.org/collinfo.json", {mode:"cors"});
+    if(!r.ok) return;
+    const list = await r.json();
+    if(Array.isArray(list) && list[0] && /^CC-MAIN-\d{4}-\d{2}$/.test(list[0].id)) CC_LATEST = list[0].id;
+  }catch(e){ /* offline / rate-limited — keep the pinned fallback */ }
 }
 
 /* ============================================================
@@ -840,7 +908,7 @@ const DATA = [
 
 { id:"raw-gh", label:"Raw GitHub", icon:"🐙", description:"site:raw.githubusercontent.com — Google indexes raw file content; bypasses GH UI rate-limit and finds private forks of public repos.", items:[
   {name:"Env files w/ password / api_key",      desc:".env files mentioning the target with password / secret / api_key, excluding obvious samples.",                           sev:"crit", tags:["secret","raw-gh"], engine:"g", q:'site:raw.githubusercontent.com "{t}" filetype:env (intext:"password" OR intext:"secret" OR intext:"api_key") -intext:"sample" -intext:"example"'},
-  {name:"YAML configs w/ token",                desc:"YAML configs mentioning the target with password / token / apiKey.",                                                       sev:"crit", tags:["secret","raw-gh"], engine:"g", q:'site:raw.githubusercontent.com "{t}" filetype:yaml (intext:"password" OR intext:"token" OR intext:"apiKey")'},
+  {name:"YAML configs w/ token",                desc:"YAML/YML configs mentioning the target with password / token / apiKey.",                                                   sev:"crit", tags:["secret","raw-gh"], engine:"g", q:'site:raw.githubusercontent.com "{t}" (filetype:yaml OR filetype:yml) (intext:"password" OR intext:"token" OR intext:"apiKey")'},
   {name:"JSON tokens / client_secret",          desc:"JSON files exposing token / client_secret / api_key for the target.",                                                      sev:"crit", tags:["secret","raw-gh"], engine:"g", q:'site:raw.githubusercontent.com "{t}" filetype:json (intext:"token" OR intext:"client_secret" OR intext:"api_key")'},
   {name:"Authorization: Bearer in raw files",   desc:"Hardcoded Bearer tokens in any raw GH file referencing the target.",                                                       sev:"crit", tags:["jwt","raw-gh"],    engine:"g", q:'site:raw.githubusercontent.com "{t}" intext:"Authorization: Bearer"'},
   {name:"AWS access keys (AKIA)",               desc:"AWS Access Key IDs (AKIA*) in raw GH files referencing the target.",                                                       sev:"crit", tags:["aws","raw-gh"],    engine:"g", q:'site:raw.githubusercontent.com "{t}" intext:"AKIA"'},
@@ -949,7 +1017,7 @@ const DATA = [
   {name:"FOFA cert.subject (shadow IT)",       desc:"FOFA cert subject match — finds hosts not pointed by target DNS.",                                                            sev:"high", tags:["cert","shadow-it"], engine:"fo", q:'cert.subject="{t_no_tld}"'},
   {name:"FOFA cert SAN match",                 desc:'cert="{t}" — finds hosts with target in SAN (subdomains too).',                                                               sev:"high", tags:["cert","shadow-it"], engine:"fo", q:'cert="{t}"'},
   {name:"Censys cert subject_dn",              desc:"Censys cert subject DN match — different dataset, often distinct from FOFA.",                                                 sev:"high", tags:["cert","shadow-it"], engine:"cen", q:'services.tls.certificates.leaf_data.subject_dn: "{t}"'},
-  {name:"Shodan org",                          desc:'org:"{t}" — primary Shodan attribute lookup.',                                                                                sev:"med",  tags:["shodan"], engine:"sh", q:'org:"{t}"'},
+  {name:"Shodan org",                          desc:'org:"{t_no_tld}" — Shodan matches the WHOIS/ASN org name, not a domain.',                                                    sev:"med",  tags:["shodan"], engine:"sh", q:'org:"{t_no_tld}"'},
   {name:"Shodan SSL cert",                     desc:'ssl:"{t}" — TLS cert text match.',                                                                                            sev:"med",  tags:["shodan","cert"], engine:"sh", q:'ssl:"{t}"'},
   {name:"Shodan HTTP title",                   desc:'http.title:"{t}" — HTTP page title match.',                                                                                   sev:"low",  tags:["shodan"], engine:"sh", q:'http.title:"{t}"'},
   {name:"FOFA host org",                       desc:'org="{t_no_tld}" — FOFA org attribute.',                                                                                      sev:"med",  tags:["fofa"], engine:"fo", q:'org="{t_no_tld}"'},
@@ -977,7 +1045,7 @@ const DATA = [
   {name:"AlienVault OTX",                      desc:"OTX passive DNS / IOC.",                                                                                                       sev:"low",  tags:["otx"], engine:"ot", q:'{t}'},
   {name:"urlscan host captures",               desc:"urlscan.io historical scans + screenshots for the domain (subdomain discovery).",                                            sev:"low",  tags:["urlscan","subdomain"], engine:"us", q:'domain:{t}'},
   {name:"Wayback subdomain extract",           desc:"CDX URL list collapsed by urlkey for subdomain hint.",                                                                        sev:"med",  tags:["wayback"], engine:"wa", q:'https://web.archive.org/cdx/search/cdx?url=*.{t}/*&output=text&fl=original&collapse=urlkey&from=20180101&limit=2000'},
-  {name:"CommonCrawl host index",              desc:"CommonCrawl 2025-30 index for *.{t}/* — JSON.",                                                                                sev:"low",  tags:["cc"], engine:"cc", q:'*.{t}/*'}
+  {name:"CommonCrawl host index",              desc:"Newest CommonCrawl monthly index for *.{t}/* — JSON.",                                                                                sev:"low",  tags:["cc"], engine:"cc", q:'*.{t}/*'}
 ]},
 
 { id:"wayback", label:"Web Archive", icon:"📚", description:"Wayback Machine CDX queries with from=20180101 — historical URLs, sensitive ext, params, archived robots/.git.", items:[
@@ -992,11 +1060,11 @@ const DATA = [
 ]},
 
 { id:"code", label:"Code Search", icon:"🐙", description:"Cross-engine source-code search — GitHub, grep.app, Sourcegraph, searchcode, PublicWWW (analytics IDs), NerdyData.", items:[
-  {name:"GitHub org enum",                     desc:"org:{t_no_tld} fork:false — first thing to do on a new target.",                                                              sev:"med",  tags:["github"], engine:"gh", q:'org:{t_no_tld} fork:false'},
+  {name:"GitHub org enum",                     desc:"org:{t_no_tld} fork:false — enumerate the org's non-fork repositories (first thing to do on a new target).",              sev:"med",  tags:["github"], engine:"ghr", q:'org:{t_no_tld} fork:false'},
   {name:"GH Issues w/ secrets keywords",       desc:"Issue tracker often discloses creds in stack traces.",                                                                       sev:"med",  tags:["github"], engine:"gho", q:'org:{t_no_tld} (password OR secret OR key OR token)'},
   {name:"Public Gists",                        desc:"site:gist.github.com — devs paste throwaway scripts with creds.",                                                             sev:"med",  tags:["github"], engine:"g", q:'site:gist.github.com "{t}"'},
   {name:"GitHub .env files",                   desc:"GitHub code search for .env files that mention the target (path:.env + domain literal).",                                       sev:"high", tags:["github"], engine:"gh", q:'"{t}" path:.env'},
-  {name:"Sourcegraph multi-lang",              desc:"Sourcegraph context:global with target match.",                                                                              sev:"med",  tags:["sourcegraph"], engine:"sg", q:'context:global "{t}" lang:env OR lang:yaml'},
+  {name:"Sourcegraph multi-lang",              desc:"Sourcegraph global search: target literal in YAML / dotenv files.",                                                         sev:"med",  tags:["sourcegraph"], engine:"sg", q:'context:global "{t}" (lang:yaml OR lang:dotenv)'},
   {name:"searchcode.com",                      desc:"Older but still useful for SourceForge / Bitbucket coverage.",                                                                sev:"low",  tags:["searchcode"], engine:"sc", q:'"{t}" password'},
   {name:"PublicWWW: Google Analytics ID",      desc:"Find sister sites by UA-/G- analytics ID.",                                                                                   sev:"med",  tags:["publicwww","pivot"], engine:"pw", q:'"UA-" "{t_no_tld}"'},
   {name:"PublicWWW: GTM ID",                   desc:"GTM- container reuse pivot.",                                                                                                  sev:"med",  tags:["publicwww","pivot"], engine:"pw", q:'"GTM-" "{t_no_tld}"'},
@@ -1018,7 +1086,7 @@ const DATA = [
   {name:"LFI candidates",                      desc:"Local-file-include parameters.",                                                                                             sev:"high", tags:["lfi"], engine:"g", q:'site:{t} (inurl:"file=" OR inurl:"page=" OR inurl:"document=" OR inurl:"include=")'},
   {name:"XSS reflection points",               desc:"Common reflection params.",                                                                                                  sev:"med",  tags:["xss"], engine:"g", q:'site:{t} (inurl:"q=" OR inurl:"search=" OR inurl:"query=" OR inurl:"keyword=")'},
   {name:"Implicit OAuth (legacy)",             desc:"response_type=token — implicit flow leaks tokens via Referer / browser history.",                                            sev:"high", tags:["oauth"], engine:"g", q:'site:{t} inurl:"response_type=token"'},
-  {name:"SAML metadata exposed",               desc:"/saml/metadata or EntityDescriptor XML.",                                                                                    sev:"med",  tags:["saml"], engine:"g", q:'site:{t} (inurl:"/saml/metadata" OR (ext:xml "EntityDescriptor"))'},
+  {name:"SAML metadata exposed",               desc:"/saml/metadata path or EntityDescriptor XML marker.",                                                                       sev:"med",  tags:["saml"], engine:"g", q:'site:{t} (inurl:"/saml/metadata" OR "EntityDescriptor")'},
   {name:"OIDC well-known config",              desc:".well-known/openid-configuration — identity provider discovery.",                                                            sev:"info", tags:["oidc"], engine:"g", q:'site:{t} inurl:".well-known/openid-configuration"'},
   {name:"Webhook listeners (n8n, Zapier)",     desc:"Public webhook endpoints (often unauth).",                                                                                   sev:"high", tags:["webhook"], engine:"g", q:'site:{t} (inurl:"/webhook/" OR inurl:"hooks.zapier.com" OR inurl:"webhook.site")'},
   {name:"SQL error leaks",                     desc:"Pages echoing DB errors — SQLi smoke signals.",                                                                              sev:"high", tags:["sqli"], engine:"g", q:'site:{t} ("sql syntax" OR "mysql_fetch" OR "ORA-" OR "PostgreSQL" OR "Microsoft OLE DB")'},
@@ -1052,7 +1120,7 @@ const DATA = [
 ]},
 
 { id:"cloud", label:"Cloud Storage", icon:"📦", description:"S3 (multiple variants), GCS, Azure Blob, DO Spaces, R2, Backblaze, Wasabi, OVH.", items:[
-  {name:"S3 by bucket name",                   desc:'site:s3.amazonaws.com with org name and common bucket suffixes.',                                                            sev:"high", tags:["s3"], engine:"g", q:'site:s3.amazonaws.com "{t_no_tld}" (-backup OR -prod OR -dev OR -static OR -uploads OR -media OR -assets OR -logs)'},
+  {name:"S3 by bucket name",                   desc:'site:s3.amazonaws.com matching common org-prefixed bucket names.',                                                           sev:"high", tags:["s3"], engine:"g", q:'site:s3.amazonaws.com ("{t_no_tld}-backup" OR "{t_no_tld}-prod" OR "{t_no_tld}-dev" OR "{t_no_tld}-static" OR "{t_no_tld}-uploads" OR "{t_no_tld}-media" OR "{t_no_tld}-assets" OR "{t_no_tld}-logs")'},
   {name:"S3 virtual host URL",                 desc:"inurl:{org}. site:s3.amazonaws.com — virtual-hosted bucket URLs.",                                                            sev:"high", tags:["s3"], engine:"g", q:'inurl:"{t_no_tld}." site:s3.amazonaws.com'},
   {name:"S3 ListBucketResult XML",             desc:"Public bucket listing XML on the open web.",                                                                                 sev:"high", tags:["s3"], engine:"g", q:'intext:"<ListBucketResult" "{t_no_tld}"'},
   {name:"Google Cloud Storage",                desc:"site:storage.googleapis.com.",                                                                                                sev:"high", tags:["gcs"], engine:"g", q:'site:storage.googleapis.com "{t}"'},
@@ -1183,7 +1251,7 @@ const GHDB_CATS = [
   {label:"Files w/ Passwords",   url:"https://www.exploit-db.com/google-hacking-database?category=4"},
   {label:"Files w/ Juicy Info",  url:"https://www.exploit-db.com/google-hacking-database?category=8"},
   {label:"Sensitive Directories",url:"https://www.exploit-db.com/google-hacking-database?category=2"},
-  {label:"Login Portals",        url:"https://www.exploit-db.com/google-hacking-database?category=8"},
+  {label:"Login Portals",        url:"https://www.exploit-db.com/google-hacking-database?category=12"},
   {label:"Vulnerable Servers",   url:"https://www.exploit-db.com/google-hacking-database?category=10"},
   {label:"Network/Vuln Data",    url:"https://www.exploit-db.com/google-hacking-database?category=3"}
 ];
@@ -1196,7 +1264,7 @@ const RECIPES = {
   bbTriage:  { label:"BB Triage",  filterTags:["raw-gh","postman","secret","terraform","airtable","notion","s3","aws","github","slack","stripe"], maxPerCat:4 },
   aiEra:     { label:"AI Era",     onlyCats:["ai-llm","mcp"], extraDrawers:["js"] },
   shadowIT:  { label:"Shadow IT",  filterTags:["shadow-it","cert","ct","dns","subdomain"], extraDrawers:["perm"] },
-  opsecSafe: { label:"OPSEC Safe", onlyEngines:["g","ddg","gra","wa","crt","gh","gho","st","vt","pb","ot"] }
+  opsecSafe: { label:"OPSEC Safe", onlyEngines:["g","ddg","gra","wa","crt","gh","gho","ghr","st","vt","pb","ot"] }
 };
 
 /* ============================================================
@@ -1209,12 +1277,15 @@ let state = {
   sevs: new Set(["info","low","med","high","crit"]),
   opsec: false,
   recipe: null,       // active recipe key (string) or null
+  shortcutsOff: false, // disable single-character keyboard shortcuts (WCAG 2.1.4)
   history: []
 };
 function loadState(){
   try{
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw){ const s = JSON.parse(raw); Object.assign(state, s); state.sevs = new Set(s.sevs||["info","low","med","high","crit"]); }
+    // Clamp a stale/tampered category index so a shrunk catalog can't blank the page.
+    if (state.cat !== -1 && !DATA[state.cat]) state.cat = -1;
   }catch(e){}
 }
 function saveState(){
@@ -1252,7 +1323,9 @@ function buildUrl(engineKey, q, t){
 /* ============================================================
  * Hash routing
  * ============================================================ */
-function readHash(){
+// fromNav=true (back/forward) also resets params that writeHash omits when empty,
+// so navigating to an unfiltered state actually clears the old filter/recipe.
+function readHash(fromNav){
   const h = location.hash.replace(/^#/, "");
   const params = new URLSearchParams(h);
   const cat = params.get("cat");
@@ -1261,7 +1334,7 @@ function readHash(){
     const idx = DATA.findIndex(c => c.id === cat);
     if (idx >= 0) state.cat = idx;
   }
-  if (params.has("filter")) state.filter = params.get("filter") || "";
+  if (fromNav || params.has("filter")) state.filter = params.get("filter") || "";
   if (params.has("sev")){
     state.sevs = new Set((params.get("sev")||"").split(",").filter(Boolean));
     if (state.sevs.size === 0) state.sevs = new Set(["info","low","med","high","crit"]);
@@ -1272,8 +1345,21 @@ function readHash(){
   }
   if (params.has("recipe")){
     const rk = params.get("recipe");
-    if (RECIPES[rk]) state.recipe = rk;
-  }
+    state.recipe = RECIPES[rk] ? rk : null;
+  } else if (fromNav) state.recipe = null;
+}
+// Re-sync the standing DOM controls (search box, severity pills, OPSEC) to state
+// after a navigation, since wire() only sets them once on load.
+function syncControls(){
+  if (typeof $filter !== "undefined" && $filter) $filter.value = state.filter || "";
+  syncFilterClear();
+  $$("#sevToggle .sev-pill").forEach(p => {
+    const on = state.sevs.has(p.dataset.sev);
+    p.classList.toggle("on", on);
+    p.setAttribute("aria-pressed", String(on));
+  });
+  const op = $("#opsec");
+  if (op){ op.checked = !!state.opsec; document.body.classList.toggle("opsec-on", state.opsec); }
 }
 function writeHash(){
   const params = new URLSearchParams();
@@ -1295,12 +1381,9 @@ const $filter = $("#filter");
 
 function totalCounts(){
   const dorks = DATA.reduce((a,c)=>a+c.items.length,0);
-  const engines = new Set();
-  DATA.forEach(c => c.items.forEach(i => {
-    engines.add(i.engine);
-    (i.links||[]).forEach(l => engines.add(l.engine));
-  }));
-  return { dorks, cats: DATA.length, engines: engines.size };
+  // Count the full engine registry (matches the engine legend in Help), not just
+  // the engines auto-linked by a dork — the rest are still selectable/available.
+  return { dorks, cats: DATA.length, engines: Object.keys(ENGINES).length };
 }
 function renderStats(){
   const { dorks, cats, engines } = totalCounts();
@@ -1316,6 +1399,7 @@ function renderCategories(){
   const mk = (i, icon, label, count, title) => {
     const btn = document.createElement("button");
     btn.className = "nav-item" + (i === state.cat ? " active" : "");
+    if (i === state.cat) btn.setAttribute("aria-current", "page");
     btn.innerHTML = `<span class="ic">${icon}</span><span class="nm">${escHtml(label)}</span><span class="ct">${count}</span>`;
     if (title) btn.title = title;
     btn.onclick = () => selectCategory(i);
@@ -1414,7 +1498,8 @@ function scoreItem(it, cat, parsed){
   if(parsed.tags){ for(const tg of parsed.tags){ if(!tags.includes(tg)) return 0; } }
   if(parsed.engines){
     let ok = false;
-    for(const v of parsed.engines){ if(eng.keys.includes(v) || eng.names.some(n=>n.includes(v))) { ok = true; break; } }
+    // Match engine keys exactly and names by whole token, so engine:g means Google — not GitHub/Bing/grep.app.
+    for(const v of parsed.engines){ if(eng.keys.includes(v) || eng.names.some(n=>n===v || n.split(/[^a-z0-9]+/).includes(v))) { ok = true; break; } }
     if(!ok) return 0;
   }
   if(parsed.cats){
@@ -1464,14 +1549,23 @@ function serializeQuery(p){
   return parts.join(" ");
 }
 function highlightHTML(text, parsed){
-  const esc = escHtml(text);
-  if(!parsed || (!parsed.terms.length && !parsed.phrases.length)) return esc;
+  const raw = String(text);
+  if(!parsed || (!parsed.terms.length && !parsed.phrases.length)) return escHtml(raw);
   const needles = [...parsed.phrases, ...parsed.terms].filter(Boolean).sort((a,b)=>b.length-a.length)
     .map(n => n.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'));
-  if(!needles.length) return esc;
-  try{
-    return esc.replace(new RegExp("("+needles.join("|")+")","gi"), "<mark>$1</mark>");
-  }catch(e){ return esc; }
+  if(!needles.length) return escHtml(raw);
+  let re; try{ re = new RegExp("("+needles.join("|")+")","gi"); }catch(e){ return escHtml(raw); }
+  // Match against the RAW text and escape each slice, so <mark> can never split an HTML entity
+  // (searching "quot"/"amp") and phrases containing < & " still highlight.
+  let out="", last=0, m;
+  while((m = re.exec(raw)) !== null){
+    if(m.index > last) out += escHtml(raw.slice(last, m.index));
+    out += "<mark>" + escHtml(m[0]) + "</mark>";
+    last = m.index + m[0].length;
+    if(m[0].length === 0) re.lastIndex++;
+  }
+  out += escHtml(raw.slice(last));
+  return out;
 }
 function itemMatchesSev(it){
   return state.sevs.has(it.sev || "info");
@@ -1563,10 +1657,12 @@ function renderCards(){
         $grid.appendChild(subgrid);
       } else { subgrid = $grid; }
       let catCount = 0;
+      const cap = state.recipe && RECIPES[state.recipe] && RECIPES[state.recipe].maxPerCat;
       c.items.forEach(it => {
         if (!itemMatchesRecipe(it, c.id)) return;
         if (!itemMatchesSev(it)) return;
         if (!itemMatchesOpsec(it)) return;
+        if (cap && catCount >= cap) return;   // per-category cap for "light" recipes
         total++; catCount++;
         subgrid.appendChild(renderCard(it, t));
       });
@@ -1585,7 +1681,7 @@ function renderCards(){
 
   // Visible count + recipe badge + clear button + search-ops chips
   const allTotal = totalCounts().dorks;
-  const scopeNote = searching ? (state.cat === -1 ? "all categories" : DATA[state.cat].label) : (state.cat === -1 ? "all categories" : DATA[state.cat].label);
+  const scopeNote = state.cat === -1 ? "all categories" : DATA[state.cat].label;
   const vc = $("#visibleCount");
   if (vc) vc.textContent = searching
     ? `${total} result${total===1?"":"s"} in ${scopeNote} for ${t}`
@@ -1660,10 +1756,10 @@ function renderCard(it, t, opts){
   if (it.tags && it.tags.length){
     const tags = document.createElement("div"); tags.className = "card-tags";
     it.tags.forEach(tg => {
-      const span = document.createElement("span"); span.className = "tag"; span.textContent = tg;
-      span.title = "Filter by tag:" + tg;
-      span.onclick = () => setFilter("tag:" + tg);
-      tags.appendChild(span);
+      const btn = document.createElement("button"); btn.type = "button"; btn.className = "tag"; btn.textContent = tg;
+      btn.title = "Filter by tag:" + tg;
+      btn.onclick = () => setFilter("tag:" + tg);
+      tags.appendChild(btn);
     });
     card.appendChild(tags);
   }
@@ -1689,10 +1785,10 @@ function renderCard(it, t, opts){
   const actions = document.createElement("div"); actions.className = "card-actions";
   const cb = document.createElement("button"); cb.className = "iconbtn ico-btn"; cb.textContent = "⧉ Q";
   cb.title = "Copy query to clipboard";
-  cb.onclick = e => { e.preventDefault(); navigator.clipboard.writeText(applyTemplate(it.q, t)); cb.textContent = "✓"; setTimeout(()=>cb.textContent="⧉ Q",900); };
+  cb.onclick = e => { e.preventDefault(); copyText(applyTemplate(it.q, t)).then(()=>cb.textContent="✓").catch(()=>cb.textContent="✗").finally(()=>setTimeout(()=>cb.textContent="⧉ Q",900)); };
   const cu = document.createElement("button"); cu.className = "iconbtn"; cu.textContent = "⧉ URL";
   cu.title = "Copy engine URL to clipboard";
-  cu.onclick = e => { e.preventDefault(); navigator.clipboard.writeText(buildUrl(it.engine, it.q, t)); cu.textContent = "✓"; setTimeout(()=>cu.textContent="⧉ URL",900); };
+  cu.onclick = e => { e.preventDefault(); copyText(buildUrl(it.engine, it.q, t)).then(()=>cu.textContent="✓").catch(()=>cu.textContent="✗").finally(()=>setTimeout(()=>cu.textContent="⧉ URL",900)); };
   actions.appendChild(cb); actions.appendChild(cu);
   foot.appendChild(actions);
 
@@ -1753,8 +1849,10 @@ function maybeShowDisclaimer(){
 /* ============================================================
  * Help modal
  * ============================================================ */
+let lastFocus = null;
 function openHelp(){
   const root = $("#modalRoot");
+  lastFocus = document.activeElement;
   root.innerHTML = `<div class="modal-bg"><div class="modal" role="dialog" aria-modal="true" aria-labelledby="hm">
     <h2 id="hm">Search, shortcuts &amp; engine legend</h2>
     <h2 style="margin-top:0; font-size:14px">Search operators</h2>
@@ -1778,6 +1876,7 @@ function openHelp(){
       <tr><td><kbd>?</kbd></td><td>this help</td></tr>
       <tr><td><kbd>esc</kbd></td><td>clear search / close panels</td></tr>
     </table>
+    <label class="opsec" style="margin-top:10px"><input type="checkbox" id="hmShortcuts"${state.shortcutsOff?"":" checked"}> Single-key shortcuts (j / k / c / /)</label>
     <h2 style="margin-top:16px; font-size:14px">Engines (🔒 needs login)</h2>
     <table id="engTable"><tr><th>key</th><th>engine</th><th>auth</th></tr></table>
     <div class="actions"><button class="btn" id="hmClose">Close</button></div>
@@ -1790,8 +1889,25 @@ function openHelp(){
   });
   $("#hmClose").onclick = closeModal;
   $(".modal-bg").onclick = e => { if (e.target.classList.contains("modal-bg")) closeModal(); };
+  const sc = $("#hmShortcuts");
+  if (sc) sc.onchange = () => { state.shortcutsOff = !sc.checked; saveState(); };
+  // Focus management: move focus into the dialog and trap Tab within it.
+  const dialog = $(".modal");
+  const focusables = () => $$('button, a[href], input, select, [tabindex]:not([tabindex="-1"])', dialog);
+  $("#hmClose").focus();
+  dialog.addEventListener("keydown", e => {
+    if (e.key !== "Tab") return;
+    const f = focusables(); if (!f.length) return;
+    const first = f[0], last = f[f.length-1];
+    if (e.shiftKey && document.activeElement === first){ e.preventDefault(); last.focus(); }
+    else if (!e.shiftKey && document.activeElement === last){ e.preventDefault(); first.focus(); }
+  });
 }
-function closeModal(){ $("#modalRoot").innerHTML = ""; }
+function closeModal(){
+  const wasOpen = !!$("#modalRoot").innerHTML;
+  $("#modalRoot").innerHTML = "";
+  if (wasOpen && lastFocus && lastFocus.focus){ lastFocus.focus(); lastFocus = null; }
+}
 
 /* ============================================================
  * Export — JSON / Markdown / CSV
@@ -1841,12 +1957,13 @@ function exportMd(){
 }
 function copyMdToClipboard(){
   const md = buildMd();
-  navigator.clipboard.writeText(md).then(() => {
-    const b = $("#copyMd");
-    const orig = b.textContent;
+  const b = $("#copyMd");
+  const orig = b.textContent;
+  copyText(md).then(() => {
     b.textContent = `✓ copied (${md.length} bytes)`;
-    setTimeout(()=> b.textContent = orig, 1400);
-  });
+  }).catch(() => {
+    b.textContent = "✗ copy failed";
+  }).finally(() => setTimeout(()=> b.textContent = orig, 1400));
 }
 function exportCsv(){
   const data = buildExportData();
@@ -1863,11 +1980,15 @@ function exportCsv(){
  * ============================================================ */
 function setupDrawers(){
   $$(".drawer-toggle .dt").forEach(b => {
+    const id = "drawer-" + b.dataset.drawer;
+    b.setAttribute("aria-controls", id);
+    b.setAttribute("aria-expanded", document.getElementById(id).classList.contains("open") ? "true" : "false");
     b.onclick = () => {
-      const id = "drawer-" + b.dataset.drawer;
       const d = document.getElementById(id);
       d.classList.toggle("open");
-      b.classList.toggle("on", d.classList.contains("open"));
+      const open = d.classList.contains("open");
+      b.classList.toggle("on", open);
+      b.setAttribute("aria-expanded", String(open));
     };
   });
 
@@ -1937,9 +2058,12 @@ function setupDrawers(){
   $("#permGo").onclick = () => {
     const t = currentTarget();
     const org = hostOrg(t);
-    const tld = t.slice(org.length+1);
+    // Derive the suffix by label position, not string offset, so subdomain targets
+    // (app.example.com) and multi-level TLDs (example.co.uk) resolve correctly.
+    const parts = t.split(".");
+    const tld = parts.slice(parts.lastIndexOf(org) + 1).join(".") || parts.slice(1).join(".");
     const ENV = ["dev","staging","prod","qa","uat","internal","corp","api","admin","test","stage","int","beta","alpha","sandbox"];
-    const TLDS = ["io","app","dev","cloud","ai","sh","co","net","org","xyz","tech","tools","app","run","fyi","io"];
+    const TLDS = ["io","app","dev","cloud","ai","sh","co","net","org","xyz","tech","tools","run","fyi"];
     const TLD_TYPOS = {com:["con","cm","xom","ney","cmo","om","co"], net:["nte","ent","et","new","mt"], org:["ogr","rg","or","irg"], io:["o","i0","oi","im"]};
     const set = new Set();
     ENV.forEach(p => { set.add(`${org}-${p}.${tld}`); set.add(`${p}-${org}.${tld}`); set.add(`${org}.${p}.${tld}`); });
@@ -1972,7 +2096,7 @@ function setupDrawers(){
   };
   $("#permCopy").onclick = () => {
     const txt = [...$$("#permChips .chip")].map(c=>c.textContent).join("\n");
-    if (txt) navigator.clipboard.writeText(txt);
+    if (txt) copyText(txt).catch(()=>{});
   };
 
   // Scope importer
@@ -1985,10 +2109,14 @@ function setupDrawers(){
       // HackerOne: data[].asset_identifier + eligible_for_submission, asset_type=URL/DOMAIN/WILDCARD
       const arr = j.data || j.assets || [];
       arr.forEach(a => {
-        if (a.eligible_for_submission === false || a.in_scope === false) return;
-        const id = a.asset_identifier || a.target || a.uri;
+        const at = a.attributes || a;                 // HackerOne JSON:API nests fields under attributes
+        if (at.eligible_for_submission === false || at.in_scope === false) return;
+        const type = String(at.asset_type || "").toUpperCase();
+        // Keep host/IP-like assets; drop mobile packages, source repos, hardware, etc.
+        if (type && !["URL","WILDCARD","DOMAIN","CIDR","IP_RANGE"].includes(type)) return;
+        const id = at.asset_identifier || at.target || at.uri;
         if (!id) return;
-        const norm = normHost(id.replace(/^\*\.?/,""));
+        const norm = normHost(String(id).replace(/^\*\.?/,""));
         if (norm) out.add(norm);
       });
     } catch(e){
@@ -2068,7 +2196,7 @@ function setupDrawers(){
       ["Private key block",/-----BEGIN [A-Z ]+PRIVATE KEY-----/g]
     ];
     const ENDPOINT_REGEX = /(['"`])((?:https?:\/\/[^'"`\s]{4,})|(?:\/[a-zA-Z0-9_\-?&=\/.%]{2,}))\1/g;
-    const COMMENT_REGEX  = /\/\*\*?[\s\S]*?\*\/|\/\/[^\n]{4,}/g;
+    const COMMENT_REGEX  = /\/\*\*?[\s\S]*?\*\/|(?<![:'"])\/\/[^\n]{4,}/g;
     const findings = {Secrets:[], Endpoints:[], Comments:[]};
     SECRET_REGEXES.forEach(([name, rx]) => { (txt.match(rx)||[]).forEach(m => findings.Secrets.push(`[${name}] ${m}`)); });
     let m; while ((m = ENDPOINT_REGEX.exec(txt))) findings.Endpoints.push(m[2]);
@@ -2107,7 +2235,9 @@ function setupDrawers(){
         for (const pair of qs.split(/[&;]/)){
           const eq = pair.indexOf("=");
           if (eq <= 0) continue;
-          const k = decodeURIComponent(pair.slice(0,eq)).replace(/[^A-Za-z0-9_\-.\[\]]/g,"");
+          let k;
+          try { k = decodeURIComponent(pair.slice(0,eq)); } catch { k = pair.slice(0,eq); }
+          k = k.replace(/[^A-Za-z0-9_\-.\[\]]/g,"");
           if (!k || k.length > 64) continue;
           counts.set(k, (counts.get(k)||0)+1);
         }
@@ -2148,7 +2278,7 @@ function applyRecipe(name){
   state.cat = -1;
   state.filter = "";
   state.sevs = new Set(["info","low","med","high","crit"]);
-  $$("#sevToggle .sev-pill").forEach(p => p.classList.add("on"));
+  $$("#sevToggle .sev-pill").forEach(p => { p.classList.add("on"); p.setAttribute("aria-pressed","true"); });
   if ($filter) $filter.value = "";
   saveState(); writeHash(); render();
   if (r && r.extraDrawers && r.extraDrawers.length){
@@ -2184,7 +2314,10 @@ function applyTheme(theme){
   const meta = document.querySelector('meta[name="theme-color"]');
   if (meta) meta.setAttribute("content", theme === "light" ? "#f5f8fc" : "#0b0e14");
   const btn = $("#themeBtn");
-  if (btn) btn.textContent = theme === "light" ? "☀️" : "🌙";
+  if (btn){
+    btn.textContent = theme === "light" ? "☀️" : "🌙";
+    btn.setAttribute("aria-label", theme === "light" ? "Switch to dark theme" : "Switch to light theme");
+  }
 }
 function initTheme(){
   let t = null;
@@ -2198,9 +2331,26 @@ function toggleTheme(){
   applyTheme(next);
   try { localStorage.setItem("ndo_theme", next); } catch(e){}
 }
-function openTools(){ document.body.classList.add("tools-open"); }
-function closeTools(){ document.body.classList.remove("tools-open"); }
-function toggleTools(){ document.body.classList.toggle("tools-open"); }
+let toolsLastFocus = null;
+// Treat the recon panel as a modal dialog: move focus in, make the app behind inert
+// (which also traps Tab), and restore focus on close.
+function openTools(){
+  toolsLastFocus = document.activeElement;
+  document.body.classList.add("tools-open");
+  const panel = $("#toolsPanel");
+  if (panel) panel.removeAttribute("inert");
+  [".topbar",".layout","footer"].forEach(s => { const el = $(s); if (el) el.setAttribute("inert",""); });
+  const c = $("#toolsClose"); if (c) c.focus();
+}
+function closeTools(){
+  if (!document.body.classList.contains("tools-open")) return;
+  document.body.classList.remove("tools-open");
+  const panel = $("#toolsPanel");
+  if (panel) panel.setAttribute("inert","");
+  [".topbar",".layout","footer"].forEach(s => { const el = $(s); if (el) el.removeAttribute("inert"); });
+  if (toolsLastFocus && toolsLastFocus.focus){ toolsLastFocus.focus(); toolsLastFocus = null; }
+}
+function toggleTools(){ document.body.classList.contains("tools-open") ? closeTools() : openTools(); }
 function syncFilterClear(){
   const w = $("#filterWrap");
   if (w) w.classList.toggle("has-text", !!($filter && $filter.value));
@@ -2220,7 +2370,8 @@ function wire(){
   // Patterns rail
   renderPatterns();
 
-  // Filter / search input
+  // Filter / search input — inject the live dork count so the placeholder never goes stale
+  $filter.placeholder = `Search ${totalCounts().dorks} dorks — try: stripe · tag:aws · sev:crit · engine:gh · -wayback`;
   const onFilter = debounce(()=>{ state.filter = $filter.value || ""; saveState(); writeHash(); render(); }, 80);
   $filter.value = state.filter;
   $filter.addEventListener("input", () => { syncFilterClear(); onFilter(); });
@@ -2233,14 +2384,15 @@ function wire(){
   $("#filterClear").onclick = () => { setFilter(""); $filter.focus(); };
   syncFilterClear();
 
-  // Sev toggles
+  // Sev toggles (native buttons; keep .on class and aria-pressed in sync)
+  const syncSevPill = x => { const on = state.sevs.has(x.dataset.sev); x.classList.toggle("on", on); x.setAttribute("aria-pressed", String(on)); };
   $$("#sevToggle .sev-pill").forEach(p => {
-    p.classList.toggle("on", state.sevs.has(p.dataset.sev));
+    syncSevPill(p);
     p.onclick = () => {
       const k = p.dataset.sev;
       if (state.sevs.has(k)) state.sevs.delete(k); else state.sevs.add(k);
       if (state.sevs.size === 0) { state.sevs = new Set(["info","low","med","high","crit"]); }
-      $$("#sevToggle .sev-pill").forEach(x => x.classList.toggle("on", state.sevs.has(x.dataset.sev)));
+      $$("#sevToggle .sev-pill").forEach(syncSevPill);
       saveState(); writeHash(); render();
     };
   });
@@ -2249,6 +2401,8 @@ function wire(){
   $("#opsec").checked = !!state.opsec;
   document.body.classList.toggle("opsec-on", state.opsec);
   $("#opsec").onchange = () => {
+    // OPSEC is a per-operator safety setting, so it's kept machine-local (like theme) and
+    // intentionally not written to the shareable URL hash — a shared link must never disable it.
     state.opsec = $("#opsec").checked; document.body.classList.toggle("opsec-on", state.opsec);
     saveState(); render();
   };
@@ -2307,10 +2461,11 @@ function wire(){
   });
   $bm.addEventListener("click", (e) => {
     e.preventDefault();
-    navigator.clipboard.writeText(bmCode);
     const orig = $bm.textContent;
-    $bm.textContent = "✓ copied (or drag me)";
-    setTimeout(()=> $bm.textContent = orig, 1400);
+    copyText(bmCode)
+      .then(()=> $bm.textContent = "✓ copied (or drag me)")
+      .catch(()=> $bm.textContent = "drag me to your bookmarks bar")
+      .finally(()=> setTimeout(()=> $bm.textContent = orig, 1400));
   });
 
   // Drawers
@@ -2325,6 +2480,7 @@ function wire(){
     const inForm = ["INPUT","TEXTAREA","SELECT"].includes(tag);
     if (e.key === "Escape") { closeModal(); closeTools(); document.body.classList.remove("nav-open"); return; }
     if (inForm) return;
+    if (state.shortcutsOff) return;   // WCAG 2.1.4 — user can disable single-key shortcuts
     if (e.key === "/") { e.preventDefault(); $filter.focus(); }
     else if (e.key === "?") { openHelp(); }
     else if (e.key === "j") {
@@ -2341,7 +2497,7 @@ function wire(){
   });
 
   // Hash change (back/forward)
-  window.addEventListener("hashchange", () => { readHash(); render(); });
+  window.addEventListener("hashchange", () => { readHash(true); syncControls(); render(); });
 
   render();
 }
