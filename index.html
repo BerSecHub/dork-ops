@@ -653,6 +653,27 @@ mark{background:color-mix(in srgb,var(--accent) 30%,transparent); color:inherit;
 "use strict";
 
 /* ============================================================
+ *  DorkOps — application script (single file, zero deps)
+ * ------------------------------------------------------------
+ *  How this file is organised (search a banner to jump):
+ *    • Utilities .............. $/$$, host normalisation, base64
+ *    • MurmurHash3 / MD5 ...... favicon-hash math (Shodan/Censys)
+ *    • Engine registry ........ ENGINES: key -> {name, colour, url(q)}
+ *    • DATA ................... the dork catalog (categories -> items)
+ *    • TOP_PATTERNS/CROWN/GHDB. curated shortcuts + presets (RECIPES)
+ *    • State + storage ........ localStorage-backed `state`, hash routing
+ *    • Search DSL ............. parseQuery / scoreItem / serializeQuery
+ *    • Render ................. categories, cards, stats, search chips
+ *    • Actions ............... open-in-tabs, Crown Jewels, exports
+ *    • Recon tools ............ setupDrawers(): favicon, ASN, perms, …
+ *    • Wire-up ................ wire(): event binding + initial render
+ *
+ *  Data model: see CONTRIBUTING.md. Each dork item is
+ *    {name, desc, sev, tags[], engine, q}  where `q` is templated with
+ *    {t} (host), {t_no_tld} (org label) and {date} at render time.
+ * ============================================================ */
+
+/* ============================================================
  * Utilities
  * ============================================================ */
 const $ = (s, r) => (r||document).querySelector(s);
