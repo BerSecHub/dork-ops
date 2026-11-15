@@ -1,0 +1,74 @@
+name: Suggest a dork
+description: Propose a new dork for the catalog
+title: "[dork] "
+labels: [dork]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks! A good dork is **high-signal**, **scoped to the target** and **works on the engine's current syntax**.
+        Use `example.com` as the target — never a real organisation — and no real secrets.
+  - type: input
+    id: name
+    attributes:
+      label: Name
+      description: Short title shown on the card.
+      placeholder: Terraform state files
+    validations:
+      required: true
+  - type: input
+    id: engine
+    attributes:
+      label: Engine
+      description: Where it runs (Google, GitHub, Shodan, FOFA, Censys, …).
+      placeholder: GitHub
+    validations:
+      required: true
+  - type: textarea
+    id: query
+    attributes:
+      label: Query
+      description: In the engine's own syntax. `{t}` is the target domain, `{t_no_tld}` its first label.
+      render: text
+      placeholder: 'path:*.tfstate "{t}"'
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: Why it matters
+      description: What does a hit tell an authorized tester or a defender?
+    validations:
+      required: true
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Severity if it hits
+      options:
+        - crit — direct credential or takeover
+        - high — strong secret or asset exposure
+        - med — useful intel or attack surface
+        - low — context and enrichment
+        - info — purely informational
+    validations:
+      required: true
+  - type: input
+    id: category
+    attributes:
+      label: Category
+      description: Which category does it belong to?
+      placeholder: DevOps / Cloud Native
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence that it works today
+      description: A link to the engine's documentation for the operators used, or a description of what the search returned for example.com.
+  - type: checkboxes
+    id: rules
+    attributes:
+      label: Ground rules
+      options:
+        - label: The query is passive — it goes to a third-party search engine, not to the target.
+          required: true
+        - label: It contains no real organisation, live credential or personal data.
+          required: true

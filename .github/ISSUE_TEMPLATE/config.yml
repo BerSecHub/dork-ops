@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Report a security issue in DorkOps itself
+    url: https://github.com/bersechub/dork-ops/security/advisories/new
+    about: Please report vulnerabilities privately — see SECURITY.md.

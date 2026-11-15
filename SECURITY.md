@@ -19,7 +19,8 @@ We aim to acknowledge reports within a few days. As a static single-file app, fi
 
 ## In scope
 
-- Cross-site scripting (XSS) or HTML injection in the app via any user-controlled input: the target domain, pasted bug-bounty scope JSON, pasted/fetched JS in the JS-recon tool, or the URL hash.
+- Cross-site scripting (XSS) or HTML injection in the app via any user-controlled input: the target domain, pasted bug-bounty scope JSON, pasted/fetched JS in the JS-recon tool, your own dorks (typed in, or imported from a "My dorks" pack someone shared with you), or the URL hash.
+- Any way a dork — from the catalog, typed in or imported — produces a link that is not a plain `https://` URL.
 - Content-Security-Policy bypasses or weaknesses.
 - Any way the page leaks the user's data or DorkOps URL to a third party without their action (e.g. a referrer or beacon leak).
 - Incorrect or unsafe outbound links (missing `rel="noopener"`, unexpected auto-navigation).

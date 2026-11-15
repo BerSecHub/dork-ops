@@ -43,7 +43,7 @@
 </script>
 <style>
 /* ============================================================
- *  DorkOps — design system (v0.5)
+ *  DorkOps — design system (v0.6)
  *  UI text = system sans · queries / code = monospace
  *
  *   1 tokens        2 base          3 controls      4 topbar
@@ -1249,7 +1249,7 @@ const ENGINES = {
   shf: { name:"Shodan · facets", color:"#c00",  url: q => { const m = /^facet:(\S+)\s+(.+)$/.exec(q) || [0, "port", q]; return `https://www.shodan.io/search/facet?query=${enc(m[2])}&facet=${enc(m[1])}`; }, auth:true, opsec:false },
   fo:  { name:"FOFA",          color:"#e44",    url: q => `https://en.fofa.info/result?qbase64=${enc(b64(q))}`, auth:true, opsec:false },
   ze:  { name:"ZoomEye",       color:"#36c",    url: q => `https://www.zoomeye.ai/searchResult?q=${enc(b64(q))}`, auth:true, opsec:false },   // the site expects q base64-encoded
-  // Censys Platform (CenQL: host.* / web.* / cert.* fields). Legacy Search — search.censys.io, services.* fields — was retired in 2026.
+  // Censys Platform (CenQL: host.* / web.* / cert.* fields). Legacy Search — search.censys.io, services.* fields — was deprecated in 2026.
   cen: { name:"Censys",        color:"#3a3",    url: q => `https://platform.censys.io/search?q=${enc(q)}`, auth:true, opsec:false },
   hh:  { name:"Hunter.how",    color:"#e60",    url: q => `https://hunter.how/list?searchValue=${enc(q)}`, auth:true, opsec:false },
   nl:  { name:"Netlas",        color:"#26a",    url: q => `https://app.netlas.io/responses/?q=${enc(q)}`, auth:true, opsec:false },
@@ -1463,7 +1463,7 @@ const DATA = [
   key("Google OAuth client secrets (GOCSPX-)", "OAuth client secrets for Google sign-in and Workspace APIs.",                                                                       "high", ["gcp","oauth"], "GOCSPX-[A-Za-z0-9_-]{28}"),
   {name:"Azure Blob SAS tokens",               desc:"sv= sig= se= signatures on blob.core.windows.net URLs.",                                                                       sev:"high", tags:["azure","cloud"], engine:"gh", q:'"{t}" "sv=" "sig=" "se=" "blob.core.windows.net"'},
   key("Azure storage connection strings",      "DefaultEndpointsProtocol=…;AccountKey=… — the account key opens every container in the storage account.",                          "crit", ["azure","cloud"], "DefaultEndpointsProtocol=https;AccountName=[a-z0-9]+;AccountKey=[A-Za-z0-9+/=]{60,}"),
-  key("Cloud tokens (DigitalOcean, Cloudflare, Vercel, Supabase)", "DigitalOcean dop_v1_, plus the prefixed formats introduced in 2026: Cloudflare cfut_ / cfat_ / cfk_, Vercel vcp_ / vci_ / vca_ / vcr_ / vck_ and Supabase sb_secret_ — still missing from most secret scanners.", "crit", ["cloud","2026"], "(dop_v1_[a-f0-9]{64}|cf(ut|at|k)_[A-Za-z0-9_-]{40,}|vc[piark]_[A-Za-z0-9]{20,}|sb_secret_[A-Za-z0-9_-]{20,})"),
+  key("Cloud tokens (DigitalOcean, Cloudflare, Vercel, Supabase)", "DigitalOcean dop_v1_, plus the newer prefixed formats that many scanner rule sets do not cover yet: Cloudflare cfut_ / cfat_ / cfk_ and Vercel vcp_ / vci_ / vca_ / vcr_ / vck_ (both 2026), and Supabase sb_secret_.", "crit", ["cloud","2026"], "(dop_v1_[a-f0-9]{64}|cf(ut|at|k)_[A-Za-z0-9_-]{40,}|vc[piark]_[A-Za-z0-9]{20,}|sb_secret_[A-Za-z0-9_-]{20,})"),
   key("Package registry tokens (npm, PyPI, Docker Hub)", "Publish tokens for npm, PyPI and Docker Hub — a supply-chain foothold.",                                                 "crit", ["npm","pypi","docker","supply-chain"], "(npm_[A-Za-z0-9]{36}|pypi-AgEIcHlwaS5vcmc[A-Za-z0-9_-]{50,}|dckr_pat_[A-Za-z0-9_-]{27})"),
   key("Vault, Terraform Cloud & Doppler tokens", "Tokens for the systems that hold all the other secrets.",                                                                         "crit", ["vault","terraform"], "(hvs\\.[A-Za-z0-9_-]{90,}|[A-Za-z0-9]{14}\\.atlasv1\\.[A-Za-z0-9_=-]{60,}|dp\\.pt\\.[A-Za-z0-9]{43})"),
   key("Database URLs with credentials",        "Connection strings with an inline user and password: postgres, mysql, mongodb, redis, amqp.",                                      "crit", ["database"], "(postgres(ql)?|mysql|mongodb(\\+srv)?|redis|amqp)://[^\\s:@/]+:[^\\s:@/]+@[^\\s/]+"),

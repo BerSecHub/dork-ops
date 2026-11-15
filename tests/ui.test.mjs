@@ -1,6 +1,6 @@
 // DorkOps UI regression suite — drives the real page in headless Chromium.
 //
-//   npm i -D playwright && npx playwright install chromium     (once)
+//   npm install --no-save playwright && npx playwright install chromium     (once)
 //   node tests/ui.test.mjs                                     (exit code 1 on any failure)
 //
 // Playwright is only needed here; the app itself has no dependencies. If Playwright lives outside
@@ -12,7 +12,7 @@ import { fileURLToPath } from 'node:url';
 
 let chromium;
 try { ({ chromium } = await import(process.env.PLAYWRIGHT_MODULE || 'playwright')); }
-catch (e) { console.error('Playwright is not installed: run  npm i -D playwright && npx playwright install chromium'); process.exit(2); }
+catch (e) { console.error('Playwright is not installed: run  npm install --no-save playwright && npx playwright install chromium'); process.exit(2); }
 
 // Serve the repo over HTTP like production does (file:// localStorage is flaky across reloads in headless Chromium).
 const ROOT = fileURLToPath(new URL('..', import.meta.url));
