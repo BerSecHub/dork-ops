@@ -1,0 +1,31 @@
+name: Report a broken dork or engine
+description: A dork no longer works, an engine changed its syntax or its link is dead
+title: "[broken] "
+labels: [bug, catalog]
+body:
+  - type: input
+    id: dork
+    attributes:
+      label: Dork or engine
+      description: The card's name and category, or the engine.
+      placeholder: Network & Service Intel / Censys — hosts by certificate & DNS
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What happens
+      description: Dead link, error page, syntax rejected, results unrelated to the query, …
+    validations:
+      required: true
+  - type: textarea
+    id: fix
+    attributes:
+      label: What it should be (if you know)
+      description: The corrected query or URL, ideally with a link to the engine's current documentation.
+      render: text
+  - type: input
+    id: date
+    attributes:
+      label: When did you check?
+      placeholder: "2026-11-15"
