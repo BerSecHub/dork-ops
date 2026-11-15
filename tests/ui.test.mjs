@@ -533,6 +533,86 @@ const settle = p => p.waitForTimeout(180);
   await p.context().close();
 }
 
+/* ───────────── 4d. hardening (findings from an independent code review) ───────────── */
+{
+  const p = await newPage();
+  const nh = await p.evaluate(() => ['example.com:8443', 'https://user:pw@example.com:8443/a?x=1', 'münchen.de', 'example.com?x=1', 'ftp://files.example.com/pub', 'example.com.', '*.Example.COM', '  HTTPS://WWW.Example.com/path  ', '', 'x'.repeat(300), null, {}].map(normHost));
+  check('target: hosts are parsed, not stripped (ports, credentials, queries, IDNs, trailing dots)',
+    JSON.stringify(nh.slice(0, 9)) === JSON.stringify(['example.com', 'example.com', 'xn--mnchen-3ya.de', 'example.com', 'files.example.com', 'example.com', 'example.com', 'www.example.com', '']) && nh[9].length === 253 && nh[10] === '' && nh[11] === '', nh);
+
+  const dsl = await p.evaluate(() => {
+    const run = q => { state.cat = -1; state.filter = q; render(); return [...document.querySelectorAll('.card')]; };
+    const engs = c => { const it = BY_KEY.get(c.dataset.key).it; return [it.engine, ...(it.links || []).map(l => l.engine)]; };
+    const chips = () => [...document.querySelectorAll('#searchOps .op')].map(o => o.textContent);
+    const total = run('').length, aws = run('tag:aws').length, notAws = run('-tag:aws').length;
+    const sh = run('engine:sh').map(engs), gh = run('engine:gh').map(engs);
+    run('sev:constructor'); const odd = chips();
+    const neg = run('-sev:crit -engine:g'); const negChips = chips();
+    let threw = false; try { run('x'.repeat(40000) + ' ' + 'y'.repeat(40000)); } catch (e) { threw = true; }
+    run('');
+    return { total, aws, notAws, sh: sh.length > 0 && sh.every(e => e.includes('sh')), gh: gh.length > 0 && gh.every(e => e.includes('gh')), odd, negChips, negCrit: neg.filter(c => c.dataset.sev === 'crit').length, negG: neg.filter(c => engs(c).includes('g')).length, negN: neg.length, threw };
+  });
+  check('search: -tag:aws negates the operator instead of dropping the minus', dsl.aws > 0 && dsl.aws + dsl.notAws === dsl.total, dsl);
+  check('search: an engine key matches exactly that engine (engine:sh is not crt.sh, engine:gh is not GH Issues)', dsl.sh && dsl.gh, dsl);
+  check('search: negated operators get their own chips; odd values stay text', dsl.odd.join() === 'sev:constructor' && dsl.negChips.join() === '−sev:crit,−engine:g' && dsl.negN > 0 && dsl.negCrit === 0 && dsl.negG === 0, dsl);
+  check('search: an absurdly long query cannot throw', dsl.threw === false);
+
+  // empty state names the cause
+  await p.evaluate(() => { state.cat = -1; state.opsec = true; state.filter = 'engine:sh'; syncControls(); render(); });
+  const es = await p.evaluate(() => ({ text: document.querySelector('.empty-state p').textContent, btns: [...document.querySelectorAll('.empty-state .btn')].map(b => b.textContent) }));
+  check('empty state: names the standing filter that hides the matches and offers to lift it', /OPSEC mode hides/.test(es.text) && es.btns.join('|') === 'Turn off OPSEC mode|Clear search', es);
+  await p.click('.empty-state .btn'); await settle(p);
+  check('empty state: lifting the filter shows the matches and moves focus to the view title', await p.evaluate(() => document.querySelectorAll('.card').length > 0 && !state.opsec && document.activeElement.id === 'catTitle'));
+
+  // focus never falls back to <body> after an action that replaces the list
+  await p.evaluate(() => { window.dl = () => {}; state.filter = ''; state.cat = DATA.findIndex(c => c.id === 'cloud'); syncControls(); render(); });
+  await p.click('#exportBtn'); await p.keyboard.press('Enter'); await settle(p);
+  const f1 = await p.evaluate(() => document.activeElement.id);
+  await p.click('.card .tag'); await settle(p);
+  const f2 = await p.evaluate(() => document.activeElement.id);
+  await p.click('#searchOps .op .x'); await settle(p);
+  const f3 = await p.evaluate(() => ({ id: document.activeElement.id, filter: state.filter }));
+  check('focus: stays on a real control after an Export item, a tag and a removed chip', f1 === 'exportBtn' && f2 === 'catTitle' && f3.id === 'catTitle' && f3.filter === '', { f1, f2, f3 });
+
+  // tools drawers are named regions; a copy is announced
+  const reg = await p.evaluate(() => [...document.querySelectorAll('.drawer')].map(d => { const n = document.getElementById(d.getAttribute('aria-labelledby') || ''); return n ? n.textContent.trim() : ''; }));
+  check('a11y: every tool drawer is a named region', reg.length >= 5 && reg.every(Boolean), reg);
+  await p.evaluate(() => { Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText: () => Promise.resolve() } }); });
+  await p.click('.card .q-copy'); await p.waitForTimeout(150);
+  check('a11y: a copy is announced to screen readers', await p.evaluate(() => document.getElementById('srStatus').textContent === 'Copied'));
+  const lbl = await p.evaluate(() => { document.activeElement.blur(); document.querySelector('#filterWrap > svg').dispatchEvent(new MouseEvent('click', { bubbles: true })); return [document.getElementById('filterWrap').tagName, document.activeElement.id]; });
+  check('search box: clicking anywhere in the field focuses the input', lbl[0] === 'LABEL' && lbl[1] === 'filter', lbl);
+
+  // a very long target cannot widen the page
+  await p.evaluate(() => { document.getElementById('target').value = ('a'.repeat(60) + '.').repeat(4) + 'example.com'; render(); });
+  check('layout: a 250-character target is cut with an ellipsis, not allowed to widen the page', await p.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth));
+  await p.context().close();
+
+  const hard = await newPage(undefined, { storage: { ndo_disclaimer_v1: '1', ndo_state_v1: JSON.stringify({ cat: 'length', history: [{}, 5, 'ok.example'], recipe: 'constructor', sevs: 'x', filter: 7, hideDone: 'yes' }), ndo_progress_v1: '{"a":1,"example.com":{"done":"x"}}', ndo_pins_v1: '{"x":1}', ndo_custom_v1: '[1,{"name":"n"},null]' } });
+  const hs = await hard.evaluate(() => ({ cat: state.cat, cards: document.querySelectorAll('.card').length, hist: state.history, recipe: state.recipe, own: MY_CAT.items.length, pins: pins.size }));
+  check('state: malformed stored data (state, progress, pins, own dorks) cannot break the app', hs.cat === -2 && hs.cards > 0 && hs.hist.join() === 'ok.example' && hs.recipe === null && hs.own === 0 && hs.pins === 0, hs);
+  await hard.context().close();
+
+  const hx = await newPage(undefined, { hash: '#cat=all&recipe=constructor&filter=' + 'z'.repeat(5000) });
+  check('routing: an unknown recipe in the hash is ignored and an oversized search is capped', await hx.evaluate(() => state.recipe === null && state.filter.length === 300 && document.getElementById('recipe').value === ''));
+  await hx.context().close();
+
+  const hr = await newPage(undefined, { hash: '#cat=essentials', storage: { ndo_disclaimer_v1: '1', ndo_state_v1: JSON.stringify({ cat: -1, recipe: 'aiEra', filter: 'stripe' }) } });
+  check('routing: a link to a view starts it clean — no recipe or search left over from the last session', await hr.evaluate(() => state.recipe === null && state.filter === '' && document.querySelectorAll('.card').length === ESSENTIALS.items.length));
+  await hr.context().close();
+
+  const ht = await newPage(undefined, { hash: '#cat=essentials&target=victim.example' });
+  const t1 = await ht.evaluate(() => ({ t: document.getElementById('target').value, hash: location.hash }));
+  await ht.fill('#target', 'other.example'); await ht.press('#target', 'Enter'); await settle(ht);
+  await ht.reload({ waitUntil: 'networkidle' }); await settle(ht);
+  check('routing: #target= is used once — a reload keeps the target you typed since', t1.t === 'victim.example' && !t1.hash.includes('target=') && (await ht.inputValue('#target')) === 'other.example', t1);
+  await ht.context().close();
+
+  const he = await newPage(undefined, { hash: '#cat=essentials&target=', storage: { ndo_disclaimer_v1: '1', ndo_state_v1: JSON.stringify({ history: ['real.example'] }) } });
+  check('routing: an empty #target= does not push example.com into the history', await he.evaluate(() => state.history[0] === 'real.example' && document.getElementById('target').value === 'real.example'));
+  await he.context().close();
+}
+
 /* ───────────── 5. persistence + first visit ───────────── */
 {
   const p = await newPage(undefined, { storage: { ndo_state_v1: JSON.stringify({ cat: 999, sevs: ['crit'], history: ['acme.io', 'old.example'] }) } });
@@ -559,7 +639,7 @@ const settle = p => p.waitForTimeout(180);
 }
 
 /* ───────────── 6. responsive + a11y sweep ───────────── */
-for (const [w, hgt] of [[390, 844], [360, 740], [768, 1024], [1024, 768], [1920, 1080]]) {
+for (const [w, hgt] of [[390, 844], [360, 740], [320, 640], [768, 1024], [1024, 768], [1920, 1080]]) {
   const p = await newPage({ width: w, height: hgt });
   const over = [];
   for (const hash of ['#cat=essentials', '#cat=all', '#cat=wayback', '#cat=essentials&filter=token']) {
