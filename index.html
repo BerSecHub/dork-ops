@@ -43,47 +43,49 @@
 </script>
 <style>
 /* ============================================================
- *  DorkOps — design system (v0.6)
+ *  DorkOps — design system (v0.7)
+ *  One readable column · neutral surfaces · one accent · line icons
  *  UI text = system sans · queries / code = monospace
  *
  *   1 tokens        2 base          3 controls      4 topbar
  *   5 layout        6 sidebar       7 view header   8 filter toolbar
- *   9 results      10 cards        11 tools panel  12 dialogs
- *  13 feedback     14 a11y / motion / scrollbars
+ *   9 results      10 dork rows    11 tools panel  12 dialogs
+ *  13 feedback     14 a11y / motion / scrollbars / responsive
  * ============================================================ */
 
 /* ---------- 1 · tokens ---------- */
 :root{
   color-scheme:dark;
-  --bg:#0a0d13; --bg-2:#0d1119; --surface:#131924; --surface-2:#1a2231; --surface-3:#232d40;
-  --border:#1e2838; --border-2:#2e3b52; --field:#56678a;   /* --field: input outlines, ≥3:1 against the page */
-  --text:#e8edf6; --text-2:#aab5c7; --text-3:#7d899d;
-  --accent:#5aa2ff; --accent-ink:#04101f; --accent-soft:#11243f;
-  --ok:#46d39a; --ok-ink:#04130c; --warn:#ffb454; --danger:#ff5d6c;
-  /* severity: a hue for stripes and dots, plus an ink that stays AA-readable on a tint of that hue */
-  --sev-info:#8a94a6; --sev-low:#5aa2ff; --sev-med:#ffd166; --sev-high:#ff9f43; --sev-crit:#ff5d6c;
-  --sev-info-ink:#a9b3c4; --sev-low-ink:#7ab5ff; --sev-med-ink:#ffd166; --sev-high-ink:#ffab5c; --sev-crit-ink:#ff7f8a;
+  --bg:#0c0e12; --bg-2:#101319; --surface:#151920; --surface-2:#1c212a; --surface-3:#272d38;
+  --border:#222831; --border-2:#323a48; --field:#606b7d;   /* --field: input outlines, ≥3:1 against the page */
+  --input:#101319;                                          /* the inside of a text input */
+  --text:#eef1f5; --text-2:#b6bec9; --text-3:#8a93a2;
+  --accent:#6aa8ff; --accent-ink:#07131f; --accent-soft:#14263d;
+  --ok:#3ecf8e; --ok-ink:#04140d; --warn:#f7b955; --danger:#ff6b78;
+  /* severity: a hue for dots, plus an ink that stays AA-readable as text */
+  --sev-info:#8a93a2; --sev-low:#6aa8ff; --sev-med:#f2c94c; --sev-high:#ff9d4d; --sev-crit:#ff6170;
+  --sev-info-ink:#aab2bf; --sev-low-ink:#85b8ff; --sev-med-ink:#f2c94c; --sev-high-ink:#ffab63; --sev-crit-ink:#ff8590;
   /* query syntax */
-  --syn-op:#7cc0ff; --syn-kw:#c9a8ff; --syn-str:#9fd8ab; --syn-re:#f2c58a;
-  --mark:rgba(255,209,102,.3);
-  --shadow:0 14px 36px rgba(0,0,0,.5); --shadow-sm:0 4px 14px rgba(0,0,0,.3);
-  --radius:12px; --radius-sm:8px;
-  --font-ui:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,"Apple Color Emoji","Segoe UI Emoji",sans-serif;
-  --font-mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,"Liberation Mono",monospace;
-  --topbar-h:58px; --side-w:264px;
+  --syn-op:#82bfff; --syn-kw:#c7a9ff; --syn-str:#a0dbb0; --syn-re:#f1c58d;
+  --mark:rgba(242,201,76,.3);
+  --shadow:0 18px 48px rgba(0,0,0,.55); --shadow-sm:0 6px 18px rgba(0,0,0,.32);
+  --radius:14px; --radius-sm:9px;
+  --font-ui:ui-sans-serif,system-ui,-apple-system,"Segoe UI Variable Text","Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --font-mono:ui-monospace,"SF Mono",SFMono-Regular,"Cascadia Code","JetBrains Mono",Menlo,Consolas,"Liberation Mono",monospace;
+  --topbar-h:58px; --side-w:276px; --col:1060px;      /* --col: the reading column */
 }
 html[data-theme="light"]{
   color-scheme:light;
-  --bg:#f6f8fb; --bg-2:#eef2f7; --surface:#ffffff; --surface-2:#f1f4f9; --surface-3:#e5eaf2;
-  --border:#e1e7ef; --border-2:#c8d2e0; --field:#7a8aa3;
-  --text:#101828; --text-2:#445267; --text-3:#5d6b83;
-  --accent:#1d5fd0; --accent-ink:#ffffff; --accent-soft:#e3edfc;
-  --ok:#086c46; --ok-ink:#ffffff; --warn:#a9640a; --danger:#cf2f47;
-  --sev-info:#8a94a6; --sev-low:#2f74e0; --sev-med:#d39e1b; --sev-high:#e07f1f; --sev-crit:#d8324a;
-  --sev-info-ink:#545f74; --sev-low-ink:#1c59bd; --sev-med-ink:#775500; --sev-high-ink:#9a4b00; --sev-crit-ink:#bd2037;
+  --bg:#f6f7f9; --bg-2:#eef0f4; --surface:#ffffff; --surface-2:#f2f4f7; --surface-3:#e4e8ee;
+  --border:#e2e5eb; --border-2:#cbd1db; --field:#7c8798; --input:#ffffff;
+  --text:#11151b; --text-2:#414b5a; --text-3:#5c6676;
+  --accent:#1f61d6; --accent-ink:#ffffff; --accent-soft:#e5edfc;
+  --ok:#0a7048; --ok-ink:#ffffff; --warn:#9c5d08; --danger:#cc2f45;
+  --sev-info:#8a93a2; --sev-low:#2f74e0; --sev-med:#d39e1b; --sev-high:#e07f1f; --sev-crit:#d8324a;
+  --sev-info-ink:#535d6d; --sev-low-ink:#1c59bd; --sev-med-ink:#775500; --sev-high-ink:#9a4b00; --sev-crit-ink:#bd2037;
   --syn-op:#1d63c9; --syn-kw:#7a3fd0; --syn-str:#1c7a41; --syn-re:#8f5309;
   --mark:rgba(255,196,60,.45);
-  --shadow:0 14px 36px rgba(20,40,80,.16); --shadow-sm:0 3px 12px rgba(20,40,80,.1);
+  --shadow:0 18px 48px rgba(22,34,56,.16); --shadow-sm:0 4px 14px rgba(22,34,56,.1);
 }
 
 /* ---------- 2 · base ---------- */
@@ -96,7 +98,7 @@ html.locked body{overflow:hidden; padding-right:var(--sbw,0px)}
 body{
   /* min-height, not height: a fixed-height body would end the sticky topbar's range after one screen */
   min-height:100vh; margin:0; background:var(--bg); color:var(--text);
-  font-family:var(--font-ui); font-size:15px; line-height:1.5;
+  font-family:var(--font-ui); font-size:15px; line-height:1.55;
   -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
 }
 a{color:var(--accent); text-decoration:none}
@@ -107,42 +109,41 @@ code,kbd{font-family:var(--font-mono)}
 ::selection{background:color-mix(in srgb,var(--accent) 35%,transparent)}
 [hidden]{display:none!important}
 .visually-hidden{position:absolute; width:1px; height:1px; margin:-1px; padding:0; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; border:0}
-.emo{display:inline-block; width:1.25em; text-align:center; font-style:normal; line-height:1}
 .sprite{position:absolute; width:0; height:0; overflow:hidden}
-.skip{      /* keyboard users: jump past the topbar and the 20-item nav */
+.skip{      /* keyboard users: jump past the topbar and the nav */
   position:absolute; left:12px; top:-60px; z-index:200; padding:9px 14px; border-radius:var(--radius-sm);
-  background:var(--accent); color:var(--accent-ink); font-size:13.5px; font-weight:650; transition:top .15s;
+  background:var(--accent); color:var(--accent-ink); font-size:14px; font-weight:650; transition:top .15s;
 }
 .skip:focus{top:10px; text-decoration:none}
 /* Anything scrolled or focused into view stops below the sticky topbar + filter bar instead of under them. */
-html{scroll-padding-top:calc(var(--topbar-h) + 62px)}
+html{scroll-padding-top:calc(var(--topbar-h) + 64px)}
 .results:focus,.ch-title:focus{outline:0}     /* programmatic focus targets, not controls */
 /* icons: 24px stroke glyphs from the sprite, coloured by the text colour of their parent */
-.ic{width:16px; height:16px; flex-shrink:0; fill:none; stroke:currentColor; stroke-width:1.9; stroke-linecap:round; stroke-linejoin:round}
+.ic{width:16px; height:16px; flex-shrink:0; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round}
 kbd{
-  padding:1px 6px; border:1px solid var(--border-2); border-bottom-width:2px; border-radius:5px;
-  background:var(--bg-2); font-size:11px; color:var(--text-2); white-space:nowrap;
+  padding:1px 6px; border:1px solid var(--border-2); border-bottom-width:2px; border-radius:6px;
+  background:var(--bg-2); font-size:12px; color:var(--text-2); white-space:nowrap;
 }
 
 /* ---------- 3 · controls ---------- */
 .btn{
-  display:inline-flex; align-items:center; justify-content:center; gap:7px; height:36px; padding:0 13px;
+  display:inline-flex; align-items:center; justify-content:center; gap:8px; height:36px; padding:0 14px;
   border:1px solid var(--border-2); border-radius:var(--radius-sm); background:var(--surface-2);
-  color:var(--text); font-size:13.5px; font-weight:600; white-space:nowrap; cursor:pointer; text-decoration:none;
+  color:var(--text); font-size:14px; font-weight:600; white-space:nowrap; cursor:pointer; text-decoration:none;
   transition:background .15s,border-color .15s,color .15s,filter .15s;
 }
 .btn:hover:not(:disabled){background:var(--surface-3); text-decoration:none}
 .btn:active:not(:disabled){transform:translateY(1px)}
 .btn:disabled{opacity:.45; cursor:not-allowed}
 .btn.primary{background:var(--accent); border-color:var(--accent); color:var(--accent-ink)}
-.btn.primary:hover:not(:disabled){background:var(--accent); filter:brightness(1.1)}
+.btn.primary:hover:not(:disabled){background:var(--accent); filter:brightness(1.08)}
 .btn.warn{border-color:color-mix(in srgb,var(--danger) 50%,var(--border-2)); color:var(--danger)}
 .btn.ghost{background:transparent; border-color:transparent; color:var(--text-2)}
 .btn.ghost:hover:not(:disabled){background:var(--surface-2); color:var(--text)}
-.btn.sm{height:30px; padding:0 10px; font-size:12.5px}
+.btn.sm{height:32px; padding:0 11px; font-size:13px}
 .btn .count{
-  min-width:22px; padding:1px 6px; border-radius:999px; font-size:11.5px; font-weight:700; text-align:center;
-  background:color-mix(in srgb,currentColor 18%,transparent);
+  min-width:22px; padding:1px 6px; border-radius:999px; font-size:12px; font-weight:650; text-align:center;
+  background:color-mix(in srgb,currentColor 16%,transparent); font-variant-numeric:tabular-nums;
 }
 .iconbtn{
   display:inline-grid; place-items:center; width:36px; height:36px; padding:0; flex-shrink:0;
@@ -150,12 +151,12 @@ kbd{
   cursor:pointer; transition:background .15s,color .15s,border-color .15s;
 }
 .iconbtn:hover{background:var(--surface-2); color:var(--text)}
-.iconbtn.sm{width:30px; height:30px}
+.iconbtn.sm{width:32px; height:32px}
 
 /* text inputs inside the tools panel and in dialog forms */
 .drawer input[type=text],.drawer textarea,.form input[type=text],.form textarea,.form select{
-  width:100%; padding:8px 11px; border:1px solid var(--field); border-radius:var(--radius-sm);
-  background:var(--bg-2); color:var(--text); font-size:13.5px; outline:none;
+  width:100%; padding:9px 12px; border:1px solid var(--field); border-radius:var(--radius-sm);
+  background:var(--input); color:var(--text); font-size:14px; outline:none;
   transition:border-color .15s,box-shadow .15s;
 }
 .drawer input[type=text]:focus,.drawer textarea:focus,.form input[type=text]:focus,.form textarea:focus,.form select:focus{
@@ -165,8 +166,8 @@ input::placeholder,textarea::placeholder{color:var(--text-3); opacity:1}
 
 /* field = an input with a leading label or icon (topbar) */
 .field{
-  display:flex; align-items:center; gap:9px; height:38px; min-width:0; padding:0 8px 0 12px;
-  border:1px solid var(--field); border-radius:10px; background:var(--bg-2);
+  display:flex; align-items:center; gap:10px; height:38px; min-width:0; padding:0 8px 0 12px;
+  border:1px solid var(--field); border-radius:10px; background:var(--surface);      /* an input's outline is what identifies it: ≥3:1 */
   transition:border-color .15s,box-shadow .15s; cursor:text;
 }
 .field:hover{border-color:var(--text-3)}
@@ -174,69 +175,71 @@ input::placeholder,textarea::placeholder{color:var(--text-3); opacity:1}
 .field > .ic{color:var(--text-3)}
 .field input{
   flex:1; min-width:0; height:100%; padding:0; border:0; outline:0; background:transparent;
-  font-size:14px; color:var(--text); text-overflow:ellipsis;
+  font-size:14.5px; color:var(--text); text-overflow:ellipsis;
 }
 .field-label{
-  flex-shrink:0; padding-right:9px; border-right:1px solid var(--border-2);
-  font-size:10.5px; font-weight:700; letter-spacing:.7px; text-transform:uppercase; color:var(--text-3);
+  flex-shrink:0; padding-right:10px; border-right:1px solid var(--border-2);
+  font-size:13px; font-weight:600; color:var(--text-3);
 }
 
-/* pill-shaped native select */
+/* a compact native select */
 .select{position:relative; display:inline-flex; align-items:center; flex-shrink:0}
 .select select{
-  -webkit-appearance:none; appearance:none; height:28px; max-width:210px; padding:0 28px 0 11px;
-  border:1px solid var(--border-2); border-radius:999px; background:var(--surface-2);
-  font-size:12.5px; font-weight:600; color:var(--text-2); cursor:pointer; text-overflow:ellipsis;
+  -webkit-appearance:none; appearance:none; height:30px; max-width:230px; padding:0 30px 0 11px;
+  border:1px solid var(--border-2); border-radius:8px; background:var(--surface);
+  font-size:13px; font-weight:550; color:var(--text-2); cursor:pointer; text-overflow:ellipsis;
 }
-.select select:hover{color:var(--text); border-color:var(--text-3)}
-.select .ic{position:absolute; right:9px; width:13px; height:13px; color:var(--text-3); pointer-events:none}
+.select select:hover{color:var(--text); border-color:var(--field)}
+.select .ic{position:absolute; right:9px; width:14px; height:14px; color:var(--text-3); pointer-events:none}
 .select.active select{border-color:var(--accent); background:var(--accent-soft); color:var(--accent)}
 .select.active .ic{color:var(--accent)}
 
 /* switch (OPSEC) */
 .switch{
-  position:relative; display:inline-flex; align-items:center; gap:7px; height:28px; padding:0 11px 0 7px; flex-shrink:0;
-  border:1px solid var(--border-2); border-radius:999px; background:var(--surface-2);
-  font-size:11px; font-weight:700; letter-spacing:.5px; color:var(--text-2); cursor:pointer; user-select:none;
+  position:relative; display:inline-flex; align-items:center; gap:8px; height:30px; padding:0 11px 0 8px; flex-shrink:0;
+  border:1px solid var(--border-2); border-radius:8px; background:var(--surface);
+  font-size:13px; font-weight:550; color:var(--text-2); cursor:pointer; user-select:none;
 }
-.switch:hover{color:var(--text); border-color:var(--text-3)}
+.switch:hover{color:var(--text); border-color:var(--field)}
 .switch input{position:absolute; inset:0; width:100%; height:100%; margin:0; opacity:0; cursor:pointer}
-.switch .track{position:relative; width:26px; height:16px; border-radius:999px; background:var(--border-2); transition:background .15s}
+.switch .track{position:relative; width:28px; height:16px; border-radius:999px; background:var(--border-2); transition:background .15s}
 .switch .track::after{
   content:""; position:absolute; top:2px; left:2px; width:12px; height:12px; border-radius:50%;
   background:var(--text-2); transition:transform .15s,background .15s;
 }
 .switch input:checked + .track{background:var(--ok)}
-.switch input:checked + .track::after{transform:translateX(10px); background:var(--bg)}
+.switch input:checked + .track::after{transform:translateX(12px); background:var(--bg)}
 body.opsec-on .switch{border-color:color-mix(in srgb,var(--ok) 55%,var(--border-2)); color:var(--ok)}
 
 /* ---------- 4 · topbar ---------- */
 .topbar{
   position:sticky; top:0; z-index:60; height:var(--topbar-h);
-  display:flex; align-items:center;
+  display:flex; align-items:center; container-type:inline-size;      /* cqw below = the bar's own width, scrollbar excluded */
   background:var(--bg); border-bottom:1px solid var(--border);
 }
-/* Translucent chrome and tinted badges need color-mix(). A second declaration is not a fallback here (one
-   that contains var() is only rejected at computed-value time), so the solid colours above stay the base. */
+/* Translucent chrome needs color-mix(). A second declaration is not a fallback here (one that contains
+   var() is only rejected at computed-value time), so the solid colours above stay the base. */
 @supports (background:color-mix(in srgb,red 50%,blue)){
-  .topbar{background:color-mix(in srgb,var(--bg) 86%,transparent); -webkit-backdrop-filter:blur(12px); backdrop-filter:blur(12px)}
-  .toolbar{background:color-mix(in srgb,var(--bg) 88%,transparent); -webkit-backdrop-filter:blur(10px); backdrop-filter:blur(10px)}
-  .sev-badge{background:color-mix(in srgb,var(--sev) 16%,transparent)}
+  .topbar{background:color-mix(in srgb,var(--bg) 84%,transparent); -webkit-backdrop-filter:blur(14px); backdrop-filter:blur(14px)}
+  .toolbar{background:color-mix(in srgb,var(--bg) 88%,transparent); -webkit-backdrop-filter:blur(12px); backdrop-filter:blur(12px)}
 }
 .brand{
-  display:flex; align-items:center; gap:10px; width:var(--side-w); padding-left:18px; flex-shrink:0;
+  display:flex; align-items:center; gap:10px; width:var(--side-w); padding-left:20px; flex-shrink:0;
   color:var(--text); border-radius:var(--radius-sm);
 }
 .brand:hover{text-decoration:none}
-.brand .logo{width:28px; height:28px; flex-shrink:0; color:var(--accent)}
-.brand .meta{display:flex; flex-direction:column; line-height:1.15}
-.brand .name{font-size:17px; font-weight:750; letter-spacing:-.3px}
+.brand .logo{width:26px; height:26px; flex-shrink:0; color:var(--accent)}
+.brand .meta{display:flex; flex-direction:column; line-height:1.2}
+.brand .name{font-size:17px; font-weight:700; letter-spacing:-.02em}
 .brand .name span{color:var(--accent)}
-.brand .tag{font-size:10.5px; color:var(--text-3); letter-spacing:.2px}
-.tb-fields{display:flex; align-items:center; gap:10px; flex:1; min-width:0; padding:0 20px}
-.field-target{flex:0 1 270px; min-width:150px}
+.brand .tag{font-size:12px; color:var(--text-3)}
+.tb-fields{display:flex; align-items:center; gap:10px; flex:1; min-width:0; padding:0 24px 0 32px}
+/* target and search start on the left edge of the reading column, wherever centring puts it */
+@supports (width:1cqw){ .tb-fields{padding-left:max(32px, calc((100cqw - var(--side-w) - var(--col)) / 2))} }
+.field-target{flex:0 1 280px; min-width:150px}
 .field-target > .ic{display:none}      /* the crosshair stands in for the "Target" label on phones */
-.field-search{flex:1 1 300px; max-width:560px}
+.field-target input{font-weight:600}
+.field-search{flex:1 1 320px; max-width:600px}
 .field-search .slash{flex-shrink:0}
 .field-search .clear{
   display:none; place-items:center; width:24px; height:24px; padding:0; flex-shrink:0;
@@ -246,14 +249,14 @@ body.opsec-on .switch{border-color:color-mix(in srgb,var(--ok) 55%,var(--border-
 .field-search .clear:hover{background:var(--surface-3); color:var(--text)}
 .field-search.has-text .clear{display:grid}
 .field-search.has-text .slash{display:none}
-.tb-actions{display:flex; align-items:center; gap:4px; flex-shrink:0; margin-left:auto; padding-right:14px}
+.tb-actions{display:flex; align-items:center; gap:4px; flex-shrink:0; margin-left:auto; padding-right:16px}
 .tb-actions .btn{margin-right:4px}
 .opsec-flag{
-  display:none; align-items:center; gap:6px; height:26px; margin-right:8px; padding:0 9px; border-radius:999px;
+  display:none; align-items:center; gap:6px; height:28px; margin-right:8px; padding:0 10px; border-radius:8px;
   background:color-mix(in srgb,var(--ok) 15%,transparent); color:var(--ok);
-  font-size:11px; font-weight:700; letter-spacing:.5px;
+  font-size:12.5px; font-weight:650;
 }
-.opsec-flag .ic{width:13px; height:13px}
+.opsec-flag .ic{width:14px; height:14px}
 body.opsec-on .opsec-flag{display:inline-flex}
 html[data-theme="light"] #themeBtn .i-moon,html:not([data-theme="light"]) #themeBtn .i-sun{display:none}
 .nav-toggle{display:none; margin-left:8px}
@@ -263,95 +266,102 @@ html[data-theme="light"] #themeBtn .i-moon,html:not([data-theme="light"]) #theme
 .sidebar{
   position:sticky; top:var(--topbar-h); align-self:start; display:flex; flex-direction:column;
   height:calc(100vh - var(--topbar-h)); height:calc(100dvh - var(--topbar-h)); overflow-y:auto;
-  padding:12px 10px 14px; border-right:1px solid var(--border); background:var(--bg-2);
+  padding:14px 12px 16px; border-right:1px solid var(--border); background:var(--bg-2);
 }
-.content{min-width:0; padding:24px 20px 64px}
+.content{min-width:0; padding:30px 32px 80px}
+/* everything in the content area shares one reading column, centred in the space beside the sidebar */
+.content > *{max-width:var(--col); margin-left:auto; margin-right:auto}
 .nav-backdrop{display:none}
 
 /* ---------- 6 · sidebar ---------- */
 .side-h{
-  margin:14px 10px 6px; font-size:10.5px; font-weight:700; letter-spacing:.9px;
+  margin:20px 10px 6px; font-size:12px; font-weight:600; letter-spacing:.05em;
   text-transform:uppercase; color:var(--text-3);
 }
-.category-nav{display:flex; flex-direction:column; gap:1px}
+.category-nav{display:flex; flex-direction:column; gap:2px}
 .nav-item{
-  display:flex; align-items:center; gap:10px; width:100%; min-height:33px; padding:0 10px; flex-shrink:0;
+  display:flex; align-items:center; gap:11px; width:100%; min-height:34px; padding:0 10px; flex-shrink:0;
   border:0; border-radius:8px; background:transparent; color:var(--text-2);
-  font-size:13.5px; font-weight:500; text-align:left; cursor:pointer; transition:background .12s,color .12s;
+  font-size:14px; font-weight:500; text-align:left; cursor:pointer; transition:background .12s,color .12s;
 }
+.nav-item .ic{width:17px; height:17px; color:var(--text-3); transition:color .12s}
 .nav-item:hover{background:var(--surface-2); color:var(--text)}
-.nav-item.active{background:var(--accent-soft); color:var(--text); font-weight:650}
-.nav-item .emo{font-size:15px}
+.nav-item:hover .ic{color:var(--text-2)}
+.nav-item.active{background:var(--surface-2); color:var(--text); font-weight:600}
+.nav-item.active .ic{color:var(--accent)}
 .nav-item .nm{flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
-.nav-item .ct{font-size:11px; font-variant-numeric:tabular-nums; color:var(--text-3)}
-.nav-item.active .ct{color:var(--accent); font-weight:700}
+.nav-item .ct{font-size:12px; font-variant-numeric:tabular-nums; color:var(--text-3)}
+.nav-item.active .ct{color:var(--text-2)}
 .nav-item .ct.part{color:var(--text-2)}                      /* some dorks done for this target */
-.nav-item .ct.all,.nav-item.active .ct.all{color:var(--ok); font-weight:700}   /* every dork done */
-.side-foot{margin-top:auto; padding:18px 10px 0; font-size:12px; line-height:1.6; color:var(--text-3)}
+.nav-item .ct.all,.nav-item.active .ct.all{color:var(--ok); font-weight:650}   /* every dork done */
+.side-foot{margin-top:auto; padding:22px 10px 0; font-size:12.5px; line-height:1.65; color:var(--text-3)}
 .side-foot .links{display:flex; flex-wrap:wrap; gap:2px 14px; margin-bottom:6px}
 .side-foot a{color:var(--text-2); font-weight:500}
 .side-foot a:hover{color:var(--accent)}
 .side-stats b{font-weight:650; color:var(--text-2)}
 
 /* ---------- 7 · view header ---------- */
-.content-head{display:flex; align-items:flex-start; gap:14px 20px; flex-wrap:wrap; margin-bottom:16px}
-.ch-info{flex:1 1 340px; min-width:0}
+.content-head{display:flex; align-items:flex-start; gap:16px 24px; flex-wrap:wrap; margin-bottom:20px}
+.ch-info{flex:1 1 360px; min-width:0}
 .ch-title{
-  display:flex; align-items:center; gap:10px; margin:0;
-  font-size:22px; font-weight:750; letter-spacing:-.4px; line-height:1.25;
+  display:flex; align-items:center; gap:12px; margin:0;
+  font-size:26px; font-weight:700; letter-spacing:-.02em; line-height:1.2;
 }
-.ch-title .ic{width:20px; height:20px; color:var(--text-3)}
-.ch-desc{margin:6px 0 0; max-width:70ch; font-size:14px; line-height:1.55; color:var(--text-2)}
-.ch-actions{display:flex; align-items:center; gap:8px; flex-shrink:0}
-.search-ops{display:flex; flex-wrap:wrap; gap:6px; margin-top:10px}
+/* the view's icon sits in a soft tile */
+.ch-title > .ic{width:36px; height:36px; padding:8px; border-radius:10px; background:var(--accent-soft); color:var(--accent)}
+.ch-desc{margin:10px 0 0; max-width:72ch; font-size:15px; line-height:1.6; color:var(--text-2); overflow-wrap:anywhere}
+.ch-actions{display:flex; align-items:center; gap:8px; flex-shrink:0; padding-top:1px}
+.search-ops{display:flex; flex-wrap:wrap; gap:6px; margin-top:12px}
 .search-ops .op{
-  display:inline-flex; align-items:center; gap:4px; height:26px; padding:0 3px 0 9px; border-radius:7px;
+  display:inline-flex; align-items:center; gap:4px; height:28px; padding:0 3px 0 10px; border-radius:8px;
   border:1px solid color-mix(in srgb,var(--accent) 30%,transparent); background:var(--accent-soft);
-  font-family:var(--font-mono); font-size:11.5px; font-weight:600; color:var(--accent);
+  font-family:var(--font-mono); font-size:12.5px; font-weight:600; color:var(--accent);
 }
 .search-ops .op .x{
-  display:grid; place-items:center; width:20px; height:20px; padding:0; border:0; border-radius:5px;
+  display:grid; place-items:center; width:24px; height:24px; padding:0; border:0; border-radius:6px;
   background:transparent; color:inherit; opacity:.7; cursor:pointer;
 }
-.search-ops .op .x .ic{width:11px; height:11px}
+.search-ops .op .x .ic{width:12px; height:12px}
 .search-ops .op .x:hover{opacity:1; background:color-mix(in srgb,var(--accent) 20%,transparent)}
 
-/* dropdown menu (export) */
+/* dropdown menu (export, progress) */
 .menu{position:relative}
-.menu .chev{width:13px; height:13px; margin:0 -3px 0 -1px; color:var(--text-3); transition:transform .15s}
+.menu .chev{width:14px; height:14px; margin:0 -3px 0 -1px; color:var(--text-3); transition:transform .15s}
 .menu [aria-expanded="true"] .chev{transform:rotate(180deg)}
 .menu-pop{
-  position:absolute; top:calc(100% + 6px); right:0; z-index:50; min-width:224px; padding:5px;
-  border:1px solid var(--border-2); border-radius:11px; background:var(--surface); box-shadow:var(--shadow);
+  position:absolute; top:calc(100% + 6px); right:0; z-index:50; min-width:236px; padding:6px;
+  border:1px solid var(--border-2); border-radius:12px; background:var(--surface); box-shadow:var(--shadow);
 }
 .menu-pop button{
-  display:flex; align-items:center; gap:10px; width:100%; height:34px; padding:0 10px;
-  border:0; border-radius:7px; background:transparent; color:var(--text);
-  font-size:13px; text-align:left; cursor:pointer;
+  display:flex; align-items:center; gap:10px; width:100%; height:36px; padding:0 10px;
+  border:0; border-radius:8px; background:transparent; color:var(--text);
+  font-size:14px; text-align:left; cursor:pointer;
 }
 .menu-pop button:hover,.menu-pop button:focus-visible{background:var(--surface-2)}
-.menu-pop small{margin-left:auto; font-family:var(--font-mono); font-size:11px; color:var(--text-3)}
+.menu-pop small{margin-left:auto; font-family:var(--font-mono); font-size:12px; color:var(--text-3)}
 
 /* ---------- 8 · filter toolbar ---------- */
 .toolbar{
-  position:sticky; top:calc(var(--topbar-h) - 1px); z-index:40;   /* -1px: its top hairline tucks under the topbar's */
-  display:flex; flex-wrap:wrap; align-items:center; gap:8px 10px; margin:0 -20px 20px; padding:9px 20px;
-  background:var(--bg); border-top:1px solid var(--border); border-bottom:1px solid var(--border);
+  position:sticky; top:calc(var(--topbar-h) - 1px); z-index:40;   /* -1px: its top edge tucks under the topbar's hairline */
+  display:flex; flex-wrap:wrap; align-items:center; gap:8px 10px; margin-bottom:22px; padding:10px 0;
+  background:var(--bg); border-bottom:1px solid var(--border);
 }
+/* the bar is as wide as the reading column; this lets its backdrop cover the focus rings of rows passing under it */
+.toolbar::before{content:""; position:absolute; top:0; bottom:0; left:-8px; right:-8px; z-index:-1; background:inherit}
 .tb-sep{width:1px; height:18px; flex-shrink:0; background:var(--border-2)}
-.tb-right{display:flex; align-items:center; gap:10px; margin-left:auto; min-width:0}
+.tb-right{display:flex; align-items:center; gap:12px; margin-left:auto; min-width:0}
 .tb-count{       /* a very long target is cut with an ellipsis instead of widening the page */
-  min-width:0; padding-left:2px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
-  font-size:12.5px; color:var(--text-3); font-variant-numeric:tabular-nums;
+  min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+  font-size:13px; color:var(--text-3); font-variant-numeric:tabular-nums;
 }
 /* progress for the current target: a small meter that opens a menu */
 .prog{
-  display:inline-flex; align-items:center; gap:8px; height:28px; padding:0 8px 0 10px; flex-shrink:0;
-  border:1px solid var(--border-2); border-radius:999px; background:var(--surface-2); color:var(--text-2);
-  font-size:12px; font-weight:650; font-variant-numeric:tabular-nums; white-space:nowrap; cursor:pointer;
+  display:inline-flex; align-items:center; gap:9px; height:30px; padding:0 8px 0 11px; flex-shrink:0;
+  border:1px solid var(--border-2); border-radius:8px; background:var(--surface); color:var(--text-2);
+  font-size:13px; font-weight:600; font-variant-numeric:tabular-nums; white-space:nowrap; cursor:pointer;
 }
-.prog:hover{color:var(--text); border-color:var(--text-3)}
-.prog-bar{width:44px; height:5px; flex-shrink:0; border-radius:99px; background:var(--border-2); overflow:hidden}
+.prog:hover{color:var(--text); border-color:var(--field)}
+.prog-bar{width:48px; height:5px; flex-shrink:0; border-radius:99px; background:var(--border-2); overflow:hidden}
 .prog-bar i{display:block; width:0; height:100%; border-radius:99px; background:var(--ok); transition:width .25s}
 .menu-pop [role=menuitemcheckbox]::before{
   content:""; width:14px; height:14px; flex-shrink:0; border:1.5px solid var(--field); border-radius:4px;
@@ -359,15 +369,15 @@ html[data-theme="light"] #themeBtn .i-moon,html:not([data-theme="light"]) #theme
 .menu-pop [role=menuitemcheckbox][aria-checked="true"]::before{
   border-color:var(--ok); background:var(--ok); box-shadow:inset 0 0 0 2px var(--surface);
 }
-.menu-pop hr{height:1px; margin:5px 4px; border:0; background:var(--border)}
-.sev-toggle{display:flex; flex-wrap:wrap; gap:5px; min-width:0}
+.menu-pop hr{height:1px; margin:6px 4px; border:0; background:var(--border)}
+.sev-toggle{display:flex; flex-wrap:wrap; gap:6px; min-width:0}
 .sev-pill{
-  display:inline-flex; align-items:center; gap:6px; height:28px; padding:0 10px;
-  border:1px solid var(--border-2); border-radius:999px; background:var(--surface-2); color:var(--text);
-  font-family:inherit; font-size:11px; font-weight:700; letter-spacing:.5px; text-transform:uppercase;
+  display:inline-flex; align-items:center; gap:7px; height:30px; padding:0 11px;
+  border:1px solid var(--border-2); border-radius:8px; background:var(--surface); color:var(--text);
+  font-family:inherit; font-size:13px; font-weight:550;
   cursor:pointer; user-select:none; transition:background .12s,color .12s,border-color .12s;
 }
-.sev-pill:hover{border-color:var(--text-3)}
+.sev-pill:hover{border-color:var(--field)}
 .sev-pill .dot{width:8px; height:8px; border-radius:50%; background:var(--sev); box-shadow:inset 0 0 0 1.5px var(--sev)}
 .sev-pill:not(.on){background:transparent; color:var(--text-3); border-style:dashed}
 .sev-pill:not(.on) .dot{background:transparent; box-shadow:inset 0 0 0 1.5px var(--text-3)}
@@ -378,49 +388,56 @@ html[data-theme="light"] #themeBtn .i-moon,html:not([data-theme="light"]) #theme
 [data-sev=crit]{--sev:var(--sev-crit); --sev-ink:var(--sev-crit-ink)}
 
 /* ---------- 9 · results ---------- */
-.group + .group{margin-top:34px}
-.group-head{display:flex; align-items:center; gap:10px; min-width:0; margin-bottom:12px}
-.group-head h2{display:flex; align-items:center; gap:9px; margin:0; flex-shrink:0; font-size:15.5px; font-weight:700; letter-spacing:-.1px}
+.group + .group{margin-top:38px}
+.group-head{display:flex; align-items:center; gap:12px; min-width:0; margin-bottom:14px}
+.group-head h2{display:flex; align-items:center; gap:10px; margin:0; flex-shrink:0; font-size:17px; font-weight:650; letter-spacing:-.01em}
 .group-head h2 button{
-  display:inline-flex; align-items:center; gap:9px; min-height:28px; padding:0; border:0; background:none;
+  display:inline-flex; align-items:center; gap:10px; min-height:28px; padding:0; border:0; background:none;
   font:inherit; color:inherit; cursor:pointer; border-radius:6px;
 }
+.group-head h2 button .ic{width:18px; height:18px; color:var(--text-3)}
 .group-head h2 button:hover{color:var(--accent)}
-.group-head .n{flex-shrink:0; padding:1px 8px; border-radius:999px; background:var(--surface-2); font-size:11.5px; font-weight:600; color:var(--text-3)}
-.group-head .d{flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:12.5px; color:var(--text-3)}
+.group-head h2 button:hover .ic{color:var(--accent)}
+.group-head .n{flex-shrink:0; padding:1px 9px; border-radius:999px; background:var(--surface-2); font-size:12.5px; font-weight:600; color:var(--text-2); font-variant-numeric:tabular-nums}
+.group-head .d{flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:13.5px; color:var(--text-3)}
 .group-head .step{
-  display:grid; place-items:center; width:24px; height:24px; flex-shrink:0; border-radius:50%;
-  background:var(--accent-soft); color:var(--accent); font-size:12.5px; font-weight:750;
+  display:grid; place-items:center; width:26px; height:26px; flex-shrink:0; border-radius:50%;
+  background:var(--accent-soft); color:var(--accent); font-size:13px; font-weight:700;
 }
-.group-head .gp{flex-shrink:0; font-size:12px; font-weight:650; font-variant-numeric:tabular-nums; color:var(--text-3)}
+.group-head .gp{flex-shrink:0; font-size:13px; font-weight:600; font-variant-numeric:tabular-nums; color:var(--text-3)}
 .group.complete .group-head .gp{color:var(--ok)}
 .group.complete .group-head .step{background:var(--ok); color:var(--ok-ink)}
 .group-head .acts{display:flex; gap:6px; margin-left:auto}
-.grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(min(100%,330px),1fr)); gap:14px}
+/* one column: a dork is a row you read left to right, and its query gets the full width */
+.grid{display:flex; flex-direction:column; gap:10px}
 
-/* ---------- 10 · cards ---------- */
+/* ---------- 10 · dork rows ---------- */
 .card{
-  position:relative; display:flex; flex-direction:column; gap:9px; min-width:0;
-  padding:14px 14px 12px 18px; border:1px solid var(--border); border-radius:var(--radius);
-  background:var(--surface); overflow:hidden; transition:border-color .15s,box-shadow .15s;
+  position:relative; display:grid; grid-template-columns:minmax(0,1fr) auto; gap:9px 16px; min-width:0;
+  padding:15px 18px 13px 16px; border:1px solid var(--border); border-radius:var(--radius);
+  background:var(--surface); transition:border-color .15s,background .15s;
 }
-.card::before{content:""; position:absolute; left:0; top:0; bottom:0; width:3px; background:var(--sev,var(--text-3))}
-.card:hover{border-color:var(--border-2); box-shadow:var(--shadow-sm)}
+.card > *{grid-column:1 / -1; min-width:0}
+.card > .card-top{grid-column:1; grid-row:1}
+.card > .cat-pill{grid-column:2; grid-row:1; align-self:start}
+.card:hover{border-color:var(--border-2)}
+/* everything under the title lines up with it, to the right of the tick */
+.card-desc,.card-query,.card-foot{margin-left:36px}
 .cat-pill{
-  align-self:flex-start; display:inline-flex; align-items:center; gap:6px; min-height:24px; padding:0 9px 0 6px;
-  border:1px solid var(--border); border-radius:999px; background:var(--surface-2);
-  font-family:var(--font-ui); font-size:11px; font-weight:600; color:var(--text-2); cursor:pointer;
+  display:inline-flex; align-items:center; gap:7px; min-height:24px; padding:0 2px; border:0; border-radius:6px;
+  background:none; font-family:var(--font-ui); font-size:13px; font-weight:500; color:var(--text-3); cursor:pointer;
 }
-.cat-pill:hover{border-color:var(--accent); color:var(--text)}
-.card-top{display:flex; align-items:flex-start; gap:10px}
-.card-title{flex:1; min-width:0; margin:0; font-size:14.5px; font-weight:650; line-height:1.35; color:var(--text)}
-/* tick-off control: a 24px target around an 18px ring that fills in when the dork is done for this target */
+.cat-pill .ic{width:15px; height:15px}
+.cat-pill:hover{color:var(--accent)}
+.card-top{display:flex; align-items:flex-start; gap:12px}
+.card-title{flex:0 1 auto; min-width:0; margin:0; font-size:15.5px; font-weight:600; line-height:1.45; color:var(--text); overflow-wrap:anywhere}
+/* tick-off control: a 24px target around a 19px ring that fills in when the dork is done for this target */
 .done-btn{
-  position:relative; display:grid; place-items:center; width:24px; height:24px; margin:-2px -4px 0 -5px; padding:0; flex-shrink:0;
+  position:relative; display:grid; place-items:center; width:24px; height:24px; margin:-1px 0 0; padding:0; flex-shrink:0;
   border:0; border-radius:50%; background:none; color:transparent; cursor:pointer;
 }
 .done-btn::before{
-  content:""; position:absolute; inset:3px; border:1.6px solid var(--field); border-radius:50%;
+  content:""; position:absolute; inset:2.5px; border:1.6px solid var(--field); border-radius:50%;
   transition:background .15s,border-color .15s;
 }
 .done-btn .ic{position:relative; width:11px; height:11px; stroke-width:3.2}
@@ -428,78 +445,82 @@ html[data-theme="light"] #themeBtn .i-moon,html:not([data-theme="light"]) #theme
 .done-btn:hover::before{border-color:var(--ok)}
 .card.done .done-btn{color:var(--ok-ink)}
 .card.done .done-btn::before{border-color:var(--ok); background:var(--ok)}
-.card.done{background:var(--bg-2)}
+.card.done{background:transparent}
 .card.done .card-title{color:var(--text-2)}
+.card.done .card-query code{color:var(--text-2)}
 .card.flash{animation:card-flash 1.4s ease-out}
 @keyframes card-flash{from{box-shadow:0 0 0 3px var(--accent)} to{box-shadow:0 0 0 3px transparent}}
-.scope-chip{
-  flex-shrink:0; margin-top:1px; padding:2px 7px; border:1px dashed var(--border-2); border-radius:5px;
-  font-size:10px; font-weight:700; letter-spacing:.5px; text-transform:uppercase; color:var(--text-3); cursor:help;
-}
-/* "add your own dork": a dashed tile that sits where the first card would */
-.add-card{
-  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; min-height:132px; padding:16px;
-  border:1.5px dashed var(--border-2); border-radius:var(--radius); background:transparent; color:var(--text-2);
-  font-size:13.5px; font-weight:650; text-align:center; cursor:pointer; transition:border-color .15s,color .15s,background .15s;
-}
-.add-card:hover{border-color:var(--accent); background:var(--accent-soft); color:var(--text)}
-.add-card .ic{width:20px; height:20px; color:var(--accent)}
-.add-card small{max-width:34ch; font-size:12px; font-weight:400; color:var(--text-3)}
+/* severity: a dot and a word beside the title */
 .sev-badge{
-  flex-shrink:0; margin-top:1px; padding:2px 7px; border-radius:5px;
-  background:var(--surface-2); color:var(--sev-ink);
-  font-size:10px; font-weight:750; letter-spacing:.6px; text-transform:uppercase;
+  display:inline-flex; align-items:center; gap:6px; flex-shrink:0; margin-top:2px;
+  font-size:13px; font-weight:600; line-height:1.45; color:var(--sev-ink); white-space:nowrap;
 }
-.card-desc{margin:-4px 0 0; font-size:13px; line-height:1.5; color:var(--text-2)}
+.sev-badge::before{content:""; width:7px; height:7px; border-radius:50%; background:var(--sev,var(--text-3))}
+.scope-chip{
+  flex-shrink:0; margin-top:1px; padding:1px 8px; border:1px dashed var(--border-2); border-radius:6px;
+  font-size:12px; font-weight:600; color:var(--text-3); cursor:help;
+}
+/* "add your own dork": a dashed row that sits where the first dork would */
+.add-card{
+  display:flex; align-items:center; gap:4px 12px; flex-wrap:wrap; min-height:60px; padding:14px 18px;
+  border:1.5px dashed var(--border-2); border-radius:var(--radius); background:transparent; color:var(--text);
+  font-size:14.5px; font-weight:600; text-align:left; cursor:pointer; transition:border-color .15s,color .15s,background .15s;
+}
+.add-card:hover{border-color:var(--accent); background:var(--accent-soft)}
+.add-card .ic{width:20px; height:20px; color:var(--accent)}
+.add-card small{font-size:13.5px; font-weight:400; color:var(--text-3)}
+.card-desc{max-width:88ch; margin-top:-4px; margin-bottom:0; font-size:14px; line-height:1.55; color:var(--text-2); overflow-wrap:anywhere}   /* a connection string or a path has no spaces to break at */
 
-/* the query: the thing people came for — full text, no inner scrolling, syntax-coloured */
-.card-query{position:relative; border:1px solid var(--border); border-radius:9px; background:var(--bg-2)}
+/* the query: the thing people came for — full text, full width, syntax-coloured */
+.card-query{position:relative; border:1px solid var(--border); border-radius:10px; background:var(--bg-2)}
 .card-query code{
-  display:block; padding:9px 38px 9px 11px; font-size:12.5px; line-height:1.6; color:var(--text-2);
+  display:block; padding:10px 46px 10px 14px; font-size:13px; line-height:1.65; color:var(--text);
   white-space:pre-wrap; overflow-wrap:anywhere;
 }
 .card-query code.brk{word-break:break-all}   /* URLs and regexes: fill each line instead of breaking at ? and / */
 .q-copy{
-  position:absolute; top:5px; right:5px; display:grid; place-items:center; width:26px; height:26px; padding:0;
-  border:1px solid transparent; border-radius:7px; background:transparent; color:var(--text-3); cursor:pointer;
+  position:absolute; top:5px; right:5px; display:grid; place-items:center; width:30px; height:30px; padding:0;
+  border:1px solid transparent; border-radius:8px; background:transparent; color:var(--text-3); cursor:pointer;
   transition:background .12s,color .12s,border-color .12s;
 }
-.q-copy .ic{width:14px; height:14px}
+.q-copy .ic{width:15px; height:15px}
 .q-copy:hover{border-color:var(--border-2); background:var(--surface-2); color:var(--text)}
 .tk-o{color:var(--syn-op)}
 .tk-k{color:var(--syn-kw); font-weight:600}
 .tk-s{color:var(--syn-str)}
 .tk-re{color:var(--syn-re)}
 .tk-t{      /* the templated-in target */
-  padding:0 2px; border-radius:3px;
-  background:color-mix(in srgb,var(--accent) 16%,transparent); color:var(--text); font-weight:600;
+  padding:1px 3px; border-radius:4px;
+  background:color-mix(in srgb,var(--accent) 18%,transparent); color:var(--text); font-weight:600;
 }
 .card-query code.brk .tk-t{display:inline-block; max-width:100%}   /* break-all would split it mid-word */
 mark{padding:0 1px; border-radius:3px; background:var(--mark); color:inherit}
 
-.card-foot{display:flex; align-items:center; gap:6px 8px; flex-wrap:wrap; margin-top:auto; padding-top:1px}
+.card-foot{display:flex; align-items:center; gap:8px 12px; flex-wrap:wrap}
 .card-engines{display:flex; gap:6px; flex-wrap:wrap}
 .eng-btn{
-  display:inline-flex; align-items:center; gap:7px; height:32px; padding:0 9px 0 10px;
-  border:1px solid var(--border-2); border-radius:8px; background:var(--surface-2); color:var(--text);
-  font-size:12.5px; font-weight:600; text-decoration:none; transition:background .15s,border-color .15s;
+  display:inline-flex; align-items:center; gap:8px; height:32px; padding:0 10px 0 11px;
+  border:1px solid var(--border-2); border-radius:8px; background:transparent; color:var(--text-2);
+  font-size:13px; font-weight:600; text-decoration:none; transition:background .15s,border-color .15s,color .15s;
 }
-.eng-btn:hover{border-color:var(--accent); background:var(--accent-soft); text-decoration:none}
+/* the dork's own engine is the main action; the others are alternatives */
+.card-engines .eng-btn:first-child{background:var(--surface-2); color:var(--text)}
+.eng-btn:hover{border-color:var(--accent); background:var(--accent-soft); color:var(--text); text-decoration:none}
 .eng-btn .swatch,.eng-chip .swatch{width:8px; height:8px; flex-shrink:0; border-radius:50%; box-shadow:0 0 0 1px color-mix(in srgb,var(--text) 22%,transparent)}
 .eng-btn .ic{width:13px; height:13px; color:var(--text-3)}
 .eng-btn:hover .arr{color:var(--accent)}
 .card-meta{display:flex; align-items:center; gap:2px; margin-left:auto; min-width:0}
-.card-tags{display:flex; flex-wrap:wrap; justify-content:flex-end; gap:0 4px; min-width:0}
+.card-tags{display:flex; flex-wrap:wrap; justify-content:flex-end; gap:0 2px; min-width:0; margin-right:4px}
 .card-tags .tag{
-  min-width:24px; min-height:24px; padding:0 4px; border:0; border-radius:5px; background:none;   /* 24×24 whatever the font */
-  font-family:var(--font-ui); font-size:11.5px; color:var(--text-3); cursor:pointer;
+  min-width:24px; min-height:24px; padding:0 5px; border:0; border-radius:6px; background:none;   /* 24×24 whatever the font */
+  font-family:var(--font-ui); font-size:12.5px; color:var(--text-3); cursor:pointer;
 }
 .card-tags .tag::before{content:"#"; opacity:.6}
 .card-tags .tag:hover{color:var(--accent)}
 .card-foot .iconbtn{color:var(--text-3)}
-.card-foot .iconbtn:last-child{margin-right:-4px}
-.card-foot .iconbtn .ic{width:15px; height:15px}
-.card-foot .iconbtn + .iconbtn{margin-left:-4px}
+.card-foot .iconbtn:last-child{margin-right:-6px}
+.card-foot .iconbtn .ic{width:16px; height:16px}
+.card-foot .iconbtn + .iconbtn{margin-left:-2px}
 .pin-btn[aria-pressed="true"]{color:var(--accent)}
 .pin-btn[aria-pressed="true"] .ic{fill:currentColor}
 .card-foot .iconbtn.del:hover{color:var(--danger)}
@@ -507,134 +528,134 @@ mark{padding:0 1px; border-radius:3px; background:var(--mark); color:inherit}
 .q-copy.done,.q-copy.done:hover,.card-foot .iconbtn.done,.card-foot .iconbtn.done:hover{color:var(--ok)}
 .q-copy.fail,.q-copy.fail:hover,.card-foot .iconbtn.fail,.card-foot .iconbtn.fail:hover{color:var(--danger)}
 
-.empty-state{padding:70px 20px; text-align:center}
-.empty-state > .ic{width:34px; height:34px; color:var(--text-3); stroke-width:1.5}
-.empty-state h2{margin:12px 0 6px; font-size:17px; font-weight:700}
-.empty-state p{max-width:46ch; margin:0 auto 18px; font-size:13.5px; color:var(--text-2)}
+.empty-state{padding:72px 20px; text-align:center}
+.empty-state > .ic{width:36px; height:36px; color:var(--text-3); stroke-width:1.5}
+.empty-state h2{margin:14px 0 6px; font-size:19px; font-weight:650; letter-spacing:-.01em}
+.empty-state p{max-width:48ch; margin:0 auto 20px; font-size:14.5px; color:var(--text-2)}
 .empty-state .actions{display:flex; flex-wrap:wrap; justify-content:center; gap:8px}
 
 /* ---------- 11 · tools panel ---------- */
-.tools-backdrop{position:fixed; inset:0; z-index:80; display:none; background:rgba(4,7,12,.55)}
+.tools-backdrop{position:fixed; inset:0; z-index:80; display:none; background:rgba(5,7,11,.6)}
 body.tools-open .tools-backdrop{display:block}
 .tools-panel{
-  position:fixed; top:0; right:0; bottom:0; z-index:85; display:flex; flex-direction:column; width:min(500px,100vw);
+  position:fixed; top:0; right:0; bottom:0; z-index:85; display:flex; flex-direction:column; width:min(520px,100vw);
   border-left:1px solid var(--border-2); background:var(--bg-2); box-shadow:var(--shadow);
   transform:translateX(100%); visibility:hidden; transition:transform .22s ease,visibility 0s .22s;
 }
 body.tools-open .tools-panel{transform:translateX(0); visibility:visible; transition:transform .22s ease}
-.tools-head{display:flex; align-items:center; gap:10px; flex-shrink:0; padding:11px 12px 11px 18px; border-bottom:1px solid var(--border)}
-.tools-head h2{display:flex; align-items:center; gap:10px; flex:1; margin:0; font-size:16px; font-weight:700}
+.tools-head{display:flex; align-items:center; gap:10px; flex-shrink:0; padding:12px 12px 12px 20px; border-bottom:1px solid var(--border)}
+.tools-head h2{display:flex; align-items:center; gap:10px; flex:1; margin:0; font-size:17px; font-weight:650}
 .tools-head h2 .ic{width:18px; height:18px; color:var(--accent)}
-.tools-body{flex:1; overflow-y:auto; padding:14px 14px 28px}
-.tools-intro{margin:0 4px 12px; font-size:12.5px; color:var(--text-3)}
+.tools-body{flex:1; overflow-y:auto; padding:16px 16px 28px}
+.tools-intro{margin:0 4px 14px; font-size:13.5px; color:var(--text-3)}
 .tool{border:1px solid var(--border); border-radius:var(--radius); background:var(--surface); overflow:hidden}
 .tool + .tool{margin-top:8px}
 .tool .dt{
-  display:flex; align-items:center; gap:12px; width:100%; padding:10px 12px;
+  display:flex; align-items:center; gap:12px; width:100%; padding:11px 12px;
   border:0; background:transparent; color:var(--text); text-align:left; cursor:pointer; transition:background .12s;
 }
 .tool .dt:hover{background:var(--surface-2)}
 .tool .dt:focus-visible{outline-offset:-2px}      /* inside the row: .tool clips anything drawn outside it */
 .tool-ic{
-  display:grid; place-items:center; width:34px; height:34px; flex-shrink:0; border-radius:9px;
+  display:grid; place-items:center; width:36px; height:36px; flex-shrink:0; border-radius:10px;
   background:var(--surface-2); color:var(--text-2); transition:background .12s,color .12s;
 }
 .tool-ic .ic{width:17px; height:17px}
 .tool .dt.on .tool-ic{background:var(--accent-soft); color:var(--accent)}
 .tool-meta{flex:1; min-width:0}
-.tool-name{display:block; font-size:13.5px; font-weight:650}
-.tool-desc{display:block; font-size:12px; line-height:1.4; color:var(--text-3)}
+.tool-name{display:block; font-size:14.5px; font-weight:600}
+.tool-desc{display:block; font-size:13px; line-height:1.45; color:var(--text-3)}
 .tool .chev{width:15px; height:15px; color:var(--text-3); transition:transform .15s}
 .tool .dt.on .chev{transform:rotate(180deg)}
-.drawer{display:none; padding:12px 12px 14px; border-top:1px solid var(--border)}
+.drawer{display:none; padding:14px 14px 16px; border-top:1px solid var(--border)}
 .drawer.open{display:block}
-.drawer p.help{margin:0 0 12px; font-size:12.5px; line-height:1.55; color:var(--text-2)}
+.drawer p.help{margin:0 0 12px; font-size:13.5px; line-height:1.55; color:var(--text-2)}
 .drawer .row{display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin-bottom:8px}
 .drawer .row input[type=text]{flex:1 1 200px; width:auto}
-.drawer .row textarea{min-height:92px; resize:vertical; font-family:var(--font-mono); font-size:12px}
+.drawer .row textarea{min-height:96px; resize:vertical; font-family:var(--font-mono); font-size:13px}
 .drawer .out{
-  margin-top:8px; padding:10px 12px; max-height:320px; overflow:auto; border:1px solid var(--border);
-  border-radius:8px; background:var(--bg-2); font-family:var(--font-mono); font-size:11.5px; line-height:1.55;
+  margin-top:8px; padding:11px 13px; max-height:340px; overflow:auto; border:1px solid var(--border);
+  border-radius:10px; background:var(--bg-2); font-family:var(--font-mono); font-size:12.5px; line-height:1.6;
   color:var(--text-2); white-space:pre-wrap; overflow-wrap:anywhere;
 }
 .drawer .chips{display:flex; flex-wrap:wrap; gap:6px; margin-top:8px}
 .chip{
-  min-height:26px; padding:3px 9px; border:1px solid var(--border-2); border-radius:6px; background:var(--surface-2);
-  font-family:var(--font-mono); font-size:11.5px; color:var(--text-2); cursor:pointer; transition:border-color .12s,color .12s;
+  min-height:28px; padding:3px 10px; border:1px solid var(--border-2); border-radius:7px; background:var(--surface-2);
+  font-family:var(--font-mono); font-size:12.5px; color:var(--text-2); cursor:pointer; transition:border-color .12s,color .12s;
 }
 .chip:hover{border-color:var(--accent); color:var(--text)}
-.drawer input[type=file]{font-size:12px; color:var(--text-2)}
+.drawer input[type=file]{font-size:13px; color:var(--text-2)}
 .drawer input[type=file]::file-selector-button{
-  height:30px; margin-right:10px; padding:0 11px; border:1px solid var(--border-2); border-radius:var(--radius-sm);
+  height:32px; margin-right:10px; padding:0 12px; border:1px solid var(--border-2); border-radius:var(--radius-sm);
   background:var(--surface-2); color:var(--text); font:inherit; font-weight:600; cursor:pointer;
 }
-.drawer code{padding:1px 5px; border-radius:4px; background:var(--bg-2); font-size:.92em}
-.kbd-hint{font-size:11.5px; color:var(--text-3)}
+.drawer code{padding:1px 5px; border-radius:5px; background:var(--bg-2); font-size:.92em}
+.kbd-hint{font-size:12.5px; color:var(--text-3)}
 
 /* ---------- 12 · dialogs ---------- */
 .modal-bg{
   position:fixed; inset:0; z-index:120; display:flex; align-items:center; justify-content:center; padding:20px;
-  background:rgba(4,7,12,.6); -webkit-backdrop-filter:blur(3px); backdrop-filter:blur(3px);
+  background:rgba(5,7,11,.62); -webkit-backdrop-filter:blur(3px); backdrop-filter:blur(3px);
 }
 .modal{
-  display:flex; flex-direction:column; width:100%; max-width:660px; max-height:min(86vh,760px);
-  border:1px solid var(--border-2); border-radius:14px; background:var(--surface); box-shadow:var(--shadow); overflow:hidden;
+  display:flex; flex-direction:column; width:100%; max-width:680px; max-height:min(86vh,780px);
+  border:1px solid var(--border-2); border-radius:16px; background:var(--surface); box-shadow:var(--shadow); overflow:hidden;
 }
-.modal-head{display:flex; align-items:center; gap:10px; flex-shrink:0; padding:11px 12px 11px 20px; border-bottom:1px solid var(--border)}
-.modal-head h2{flex:1; margin:0; font-size:16px; font-weight:700}
-.modal-body{overflow-y:auto; padding:4px 20px 22px}
-.modal-foot{display:flex; justify-content:flex-end; gap:8px; flex-shrink:0; padding:12px 20px; border-top:1px solid var(--border)}
+.modal-head{display:flex; align-items:center; gap:10px; flex-shrink:0; padding:12px 12px 12px 22px; border-bottom:1px solid var(--border)}
+.modal-head h2{flex:1; margin:0; font-size:17px; font-weight:650}
+.modal-body{overflow-y:auto; padding:4px 22px 24px}
+.modal-foot{display:flex; justify-content:flex-end; gap:8px; flex-shrink:0; padding:13px 22px; border-top:1px solid var(--border)}
 /* dialog forms (add / edit your own dork) */
-.form{display:flex; flex-direction:column; gap:14px; padding-top:16px}
-.form .fl{display:flex; flex-direction:column; gap:5px; min-width:0; font-size:12.5px; font-weight:650; color:var(--text-2)}
+.form{display:flex; flex-direction:column; gap:15px; padding-top:18px}
+.form .fl{display:flex; flex-direction:column; gap:6px; min-width:0; font-size:13.5px; font-weight:600; color:var(--text-2)}
 .form .fl i{font-style:normal; font-weight:400; color:var(--text-3)}
-.form .fl small{font-size:12px; font-weight:400; color:var(--text-3)}
+.form .fl small{font-size:13px; font-weight:400; color:var(--text-3)}
 .form .fl-row{display:grid; grid-template-columns:1fr 1fr; gap:12px}
-.form textarea{min-height:76px; resize:vertical; font-family:var(--font-mono); font-size:12.5px; line-height:1.55}
-.form select{height:37px; cursor:pointer}
-.form code{padding:1px 5px; border-radius:4px; background:var(--bg-2); font-size:.92em}
-.form-err{margin:0; padding:8px 11px; border-radius:var(--radius-sm); background:color-mix(in srgb,var(--danger) 14%,transparent); color:var(--danger); font-size:13px; font-weight:600}
-.form-preview{margin:0; padding:8px 11px; border:1px solid var(--border); border-radius:var(--radius-sm); background:var(--bg-2); font-family:var(--font-mono); font-size:12px; line-height:1.5; color:var(--text-2); overflow-wrap:anywhere}
-.form-preview b{font-family:var(--font-ui); font-size:10.5px; font-weight:700; letter-spacing:.6px; text-transform:uppercase; color:var(--text-3)}
-.modal h3{margin:18px 0 8px; font-size:10.5px; font-weight:700; letter-spacing:.9px; text-transform:uppercase; color:var(--text-3)}
-.modal table{width:100%; border-collapse:collapse; font-size:13px}
-.modal td{padding:7px 8px 7px 0; border-bottom:1px solid var(--border); vertical-align:top; color:var(--text-2)}
-.modal td:first-child{width:1%; padding-right:16px; white-space:nowrap}
+.form textarea{min-height:80px; resize:vertical; font-family:var(--font-mono); font-size:13px; line-height:1.55}
+.form select{height:40px; cursor:pointer}
+.form code{padding:1px 5px; border-radius:5px; background:var(--bg-2); font-size:.92em}
+.form-err{margin:0; padding:9px 12px; border-radius:var(--radius-sm); background:color-mix(in srgb,var(--danger) 14%,transparent); color:var(--danger); font-size:14px; font-weight:600}
+.form-preview{margin:0; padding:9px 12px; border:1px solid var(--border); border-radius:var(--radius-sm); background:var(--bg-2); font-family:var(--font-mono); font-size:12.5px; line-height:1.55; color:var(--text-2); overflow-wrap:anywhere}
+.form-preview b{font-family:var(--font-ui); font-size:12px; font-weight:650; color:var(--text-3)}
+.modal h3{margin:22px 0 8px; font-size:12px; font-weight:600; letter-spacing:.05em; text-transform:uppercase; color:var(--text-3)}
+.modal table{width:100%; border-collapse:collapse; font-size:14px}
+.modal td{padding:8px 8px 8px 0; border-bottom:1px solid var(--border); vertical-align:top; color:var(--text-2)}
+.modal td:first-child{width:1%; padding-right:18px; white-space:nowrap}
 .modal tr:last-child td{border-bottom:0}
-.modal .note{margin:10px 0 0; font-size:12.5px; color:var(--text-3)}
-.modal .check{display:flex; align-items:center; gap:9px; margin-top:10px; font-size:13px; color:var(--text-2); cursor:pointer}
-.modal .check input{width:15px; height:15px; margin:0; accent-color:var(--accent)}
-.eng-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(186px,1fr)); gap:6px}
+.modal .note{margin:10px 0 0; font-size:13.5px; color:var(--text-3)}
+.modal .check{display:flex; align-items:center; gap:10px; margin-top:12px; font-size:14px; color:var(--text-2); cursor:pointer}
+.modal .check input{width:16px; height:16px; margin:0; accent-color:var(--accent)}
+.eng-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(190px,1fr)); gap:6px}
 .eng-chip{
-  display:flex; align-items:center; gap:8px; min-width:0; padding:6px 8px 6px 10px;
-  border:1px solid var(--border); border-radius:8px; font-size:12.5px; color:var(--text);
+  display:flex; align-items:center; gap:8px; min-width:0; padding:7px 9px 7px 11px;
+  border:1px solid var(--border); border-radius:8px; font-size:13px; color:var(--text);
 }
 .eng-chip .nm{flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
-.eng-chip .ic{width:12px; height:12px; color:var(--text-3)}
+.eng-chip .ic{width:13px; height:13px; color:var(--text-3)}
 
 .disclaimer{
   position:fixed; left:16px; right:16px; bottom:16px; z-index:55; display:flex; align-items:center; gap:14px;   /* below every overlay */
-  max-width:760px; margin:0 auto; padding:14px 16px; border:1px solid var(--border-2); border-radius:14px;
+  max-width:780px; margin:0 auto; padding:14px 16px; border:1px solid var(--border-2); border-radius:16px;
   background:var(--surface); box-shadow:var(--shadow);
 }
 .disclaimer .badge{
-  display:grid; place-items:center; width:38px; height:38px; flex-shrink:0; border-radius:10px;
+  display:grid; place-items:center; width:40px; height:40px; flex-shrink:0; border-radius:11px;
   background:color-mix(in srgb,var(--warn) 16%,transparent); color:var(--warn);
 }
-.disclaimer .badge .ic{width:19px; height:19px}
-.disclaimer p{flex:1; min-width:0; margin:0; font-size:13px; line-height:1.5; color:var(--text-2)}
+.disclaimer .badge .ic{width:20px; height:20px}
+.disclaimer p{flex:1; min-width:0; margin:0; font-size:14px; line-height:1.5; color:var(--text-2)}
 .disclaimer p b{color:var(--text)}
 
 /* ---------- 13 · feedback ---------- */
 .toast{
-  position:fixed; left:16px; right:16px; bottom:24px; z-index:130; width:fit-content; max-width:calc(100% - 32px); margin:0 auto; padding:9px 15px;
-  border-radius:10px; background:var(--text); color:var(--bg); font-size:13px; font-weight:600; text-align:center;
+  position:fixed; left:16px; right:16px; bottom:24px; z-index:130; width:fit-content; max-width:calc(100% - 32px); margin:0 auto; padding:10px 16px;
+  border-radius:10px; background:var(--text); color:var(--bg); font-size:14px; font-weight:600; text-align:center;
   box-shadow:var(--shadow); opacity:0; pointer-events:none; transform:translateY(10px);
   transition:opacity .18s,transform .18s;
 }
 .toast.show{opacity:1; transform:none}
-.noscript-fallback{max-width:900px; margin:0 auto; padding:8px 0 24px}
-.noscript-fallback h2{margin:16px 0 6px; font-size:15px}
+.noscript-fallback{padding:8px 0 24px}
+.noscript-fallback h2{margin:18px 0 6px; font-size:16px}
 .noscript-fallback ul{padding-left:18px; line-height:1.7; color:var(--text-2)}
 
 /* ---------- 14 · a11y, motion, scrollbars, responsive ---------- */
@@ -643,20 +664,24 @@ body.tools-open .tools-panel{transform:translateX(0); visibility:visible; transi
 .switch input:focus-visible + .track{outline:2px solid var(--accent); outline-offset:3px}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important; transition:none!important}}
 @media (prefers-contrast:more){
-  :root{--border:#3a4a63; --border-2:#52668a; --field:#8fa1c2; --text-3:#a3afc4}
-  html[data-theme="light"]{--border:#aab8cc; --border-2:#7c8da6; --field:#55657d; --text-3:#3f4c61}
+  :root{--border:#3b4555; --border-2:#566378; --field:#93a0b6; --text-3:#a6b0c0}
+  html[data-theme="light"]{--border:#a9b3c2; --border-2:#7b879a; --field:#56627a; --text-3:#3e4856}
 }
 *{scrollbar-width:thin; scrollbar-color:var(--border-2) transparent}
 ::-webkit-scrollbar{width:10px; height:10px}
 ::-webkit-scrollbar-thumb{border:2px solid transparent; border-radius:8px; background:var(--border-2); background-clip:padding-box}
 ::-webkit-scrollbar-track{background:transparent}
 
-@media (max-width:1100px){
+@media (max-width:1180px){
+  /* the filter bar needs two lines here: let it scroll away instead of sticking at twice the height */
+  .toolbar{position:static}
+  .toolbar::before{display:none}
+  html{scroll-padding-top:calc(var(--topbar-h) + 12px)}
   .brand .tag{display:none}
   .tb-count .t{display:none}
   .tb-sep{display:none}
-  .sev-toggle{gap:4px}
-  .sev-pill{padding:0 8px}
+  .content{padding:26px 24px 72px}
+  .tb-fields{padding-left:24px}
 }
 @media (max-width:900px){
   :root{--topbar-h:0px}
@@ -669,7 +694,7 @@ body.tools-open .tools-panel{transform:translateX(0); visibility:visible; transi
   .tb-actions{order:3; margin:0; padding:0}
   .tb-actions .btn{width:36px; padding:0; margin:0}
   .tb-actions .btn .lbl,.opsec-flag .lbl{display:none}
-  .opsec-flag{margin-right:2px; padding:0 7px}
+  .opsec-flag{margin-right:2px; padding:0 8px}
   .field-search{order:4; flex:1 1 100%; max-width:none}
   .field-search .slash{display:none}
 
@@ -680,20 +705,29 @@ body.tools-open .tools-panel{transform:translateX(0); visibility:visible; transi
     transform:translateX(-100%); visibility:hidden; transition:transform .2s ease,visibility 0s .2s;
   }
   body.nav-open .sidebar{transform:translateX(0); visibility:visible; transition:transform .2s ease}
-  .nav-backdrop{position:fixed; inset:0; z-index:65; background:rgba(4,7,12,.55)}
+  .nav-backdrop{position:fixed; inset:0; z-index:65; background:rgba(5,7,11,.6)}
   body.nav-open .nav-backdrop{display:block}
 
   html{scroll-padding-top:112px}       /* here the topbar is the only sticky bar, and it is two rows tall */
-  .content{padding:18px 14px 56px}
-  .ch-title{font-size:20px}
-  .toolbar{position:static; gap:8px; margin:0 -14px 16px; padding:10px 14px}
+  .content{padding:20px 16px 60px}
+  .ch-title{font-size:22px}
+  .ch-title > .ic{width:32px; height:32px; padding:7px}
+  .toolbar{margin-bottom:18px; padding:0 0 12px}
   .group-head .d{display:none}
+}
+@media (max-width:640px){
+  .sev-toggle{display:contents}
+  /* narrow screens: nothing is indented, and the category sits above the title */
+  .card{padding:14px 14px 12px}
+  .card > .card-top,.card > .cat-pill{grid-column:1 / -1; grid-row:auto}
+  .card-desc,.card-query,.card-foot{margin-left:0}
+  .card-tags{display:none}             /* tags stay searchable; on a phone the space goes to the query and the buttons */
 }
 @media (max-width:520px){
   .field-target{padding-left:10px}
   .field-target .field-label{display:none}
   .field-target > .ic{display:block}
-  .select select{max-width:150px}
+  .select select{max-width:160px}
   .ch-actions{width:100%; flex-wrap:wrap}
   .ch-actions > #runNext{flex:1 1 100%}        /* the primary action gets its own row */
   .ch-actions > .btn,.ch-actions > .menu{flex:1}
@@ -743,6 +777,25 @@ body.tools-open .tools-panel{transform:translateX(0); visibility:visible; transi
   <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4.5 7h15M9.5 7V4.5h5V7M6.5 7l1 13h9l1-13M10 11v5.5M14 11v5.5"/></symbol>
   <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
   <symbol id="i-upload" viewBox="0 0 24 24"><path d="M12 15.5V4.5M7.5 9 12 4.5 16.5 9M5 19.5h14"/></symbol>
+  <!-- views and categories -->
+  <symbol id="i-star" viewBox="0 0 24 24"><path d="m12 3.6 2.5 5.2 5.7.8-4.1 4 1 5.7-5.1-2.7-5.1 2.7 1-5.7-4.1-4 5.7-.8z"/></symbol>
+  <symbol id="i-layers" viewBox="0 0 24 24"><path d="M12 3.5 3.5 8l8.5 4.5L20.5 8zM3.5 12l8.5 4.5 8.5-4.5M3.5 16l8.5 4.5 8.5-4.5"/></symbol>
+  <symbol id="i-database" viewBox="0 0 24 24"><ellipse cx="12" cy="6" rx="7.5" ry="3"/><path d="M4.5 6v6c0 1.7 3.4 3 7.5 3s7.5-1.3 7.5-3V6M4.5 12v6c0 1.7 3.4 3 7.5 3s7.5-1.3 7.5-3v-6"/></symbol>
+  <symbol id="i-sliders" viewBox="0 0 24 24"><path d="M4 7h9M17 7h3M4 12h3M11 12h9M4 17h11M19 17h1"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="17" cy="17" r="2"/></symbol>
+  <symbol id="i-folder" viewBox="0 0 24 24"><path d="M3.5 7.5a2 2 0 0 1 2-2h4l2 2.5h7a2 2 0 0 1 2 2v7.5a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2z"/></symbol>
+  <symbol id="i-window" viewBox="0 0 24 24"><rect x="3" y="4.5" width="18" height="15" rx="2"/><path d="M3 9h18M6.5 6.8h.01M9.5 6.8h.01"/></symbol>
+  <symbol id="i-flag" viewBox="0 0 24 24"><path d="M5.5 21V4.5M5.5 5H17l-2.5 4 2.5 4H5.5"/></symbol>
+  <symbol id="i-branch" viewBox="0 0 24 24"><circle cx="7" cy="5.5" r="2.2"/><circle cx="7" cy="18.5" r="2.2"/><circle cx="17" cy="8.5" r="2.2"/><path d="M7 7.7v8.6M17 10.7c0 3.6-6 2.4-9.3 5.9"/></symbol>
+  <symbol id="i-sparkles" viewBox="0 0 24 24"><path d="m11 4.5 1.7 4.3 4.3 1.7-4.3 1.7L11 16.5l-1.7-4.3L5 10.5l4.3-1.7zM18.5 15v4M16.5 17h4"/></symbol>
+  <symbol id="i-box" viewBox="0 0 24 24"><path d="M12 3.2 20 7.6v8.8l-8 4.4-8-4.4V7.6zM4.3 7.8 12 12l7.7-4.2M12 12v8.6"/></symbol>
+  <symbol id="i-message" viewBox="0 0 24 24"><path d="M5 5h14a1.5 1.5 0 0 1 1.5 1.5v9A1.5 1.5 0 0 1 19 17h-7.5L7 20.5V17H5a1.5 1.5 0 0 1-1.5-1.5v-9A1.5 1.5 0 0 1 5 5z"/></symbol>
+  <symbol id="i-cloud" viewBox="0 0 24 24"><path d="M7.5 18.5a4.3 4.3 0 0 1-.5-8.6 5.5 5.5 0 0 1 10.6 1.3 3.7 3.7 0 0 1-.4 7.3z"/></symbol>
+  <symbol id="i-bucket" viewBox="0 0 24 24"><ellipse cx="12" cy="7" rx="7.5" ry="2.6"/><path d="m4.5 7 1.7 11.3c.2 1 2.7 1.9 5.8 1.9s5.6-.9 5.8-1.9L19.5 7"/></symbol>
+  <symbol id="i-building" viewBox="0 0 24 24"><path d="M5 20.5V5a1 1 0 0 1 1-1h7.5a1 1 0 0 1 1 1v15.5M14.5 9.5H18a1 1 0 0 1 1 1v10M3 20.5h18M8.2 8h3M8.2 11.5h3M8.2 15h3"/></symbol>
+  <symbol id="i-history" viewBox="0 0 24 24"><path d="M3.5 12A8.5 8.5 0 1 0 12 3.5a9.2 9.2 0 0 0-6.4 2.6L3.5 8.2M3.5 3.7v4.5H8M12 7.5V12l3.6 1.9"/></symbol>
+  <symbol id="i-network" viewBox="0 0 24 24"><rect x="9" y="3.5" width="6" height="5" rx="1"/><rect x="3" y="15.5" width="6" height="5" rx="1"/><rect x="15" y="15.5" width="6" height="5" rx="1"/><path d="M12 8.5V12M6 15.5V13a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v2.5"/></symbol>
+  <symbol id="i-server" viewBox="0 0 24 24"><rect x="3.5" y="4" width="17" height="7" rx="2"/><rect x="3.5" y="13" width="17" height="7" rx="2"/><path d="M7.5 7.5h.01M7.5 16.5h.01M11 7.5h5M11 16.5h5"/></symbol>
+  <symbol id="i-users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.8 20a6.2 6.2 0 0 1 12.4 0M16 4.8a3.5 3.5 0 0 1 0 6.4M18 14.6a6.2 6.2 0 0 1 3.2 5.4"/></symbol>
 </svg>
 
 <header class="topbar" role="banner">
@@ -820,11 +873,11 @@ body.tools-open .tools-panel{transform:translateX(0); visibility:visible; transi
 
     <div class="toolbar" id="toolbar" role="group" aria-label="Filters">
       <div class="sev-toggle" id="sevToggle" role="group" aria-label="Severity filter">
-        <button type="button" class="sev-pill on" data-sev="crit" aria-pressed="true" title="Critical — direct credential or takeover"><span class="dot"></span>crit</button>
-        <button type="button" class="sev-pill on" data-sev="high" aria-pressed="true" title="High — strong secret or asset exposure"><span class="dot"></span>high</button>
-        <button type="button" class="sev-pill on" data-sev="med" aria-pressed="true" title="Medium — useful intel or attack surface"><span class="dot"></span>med</button>
-        <button type="button" class="sev-pill on" data-sev="low" aria-pressed="true" title="Low — context and enrichment"><span class="dot"></span>low</button>
-        <button type="button" class="sev-pill on" data-sev="info" aria-pressed="true" title="Info — purely informational"><span class="dot"></span>info</button>
+        <button type="button" class="sev-pill on" data-sev="crit" aria-pressed="true" title="Critical — direct credential or takeover"><span class="dot"></span>Critical</button>
+        <button type="button" class="sev-pill on" data-sev="high" aria-pressed="true" title="High — strong secret or asset exposure"><span class="dot"></span>High</button>
+        <button type="button" class="sev-pill on" data-sev="med" aria-pressed="true" title="Medium — useful intel or attack surface"><span class="dot"></span>Medium</button>
+        <button type="button" class="sev-pill on" data-sev="low" aria-pressed="true" title="Low — context and enrichment"><span class="dot"></span>Low</button>
+        <button type="button" class="sev-pill on" data-sev="info" aria-pressed="true" title="Info — purely informational"><span class="dot"></span>Info</button>
       </div>
       <span class="tb-sep" aria-hidden="true"></span>
       <label class="select" id="recipeWrap" title="Recon recipes — curated preset filters over the whole catalog">
@@ -1345,7 +1398,7 @@ const any = (name, desc, sev, tags, titles) => ({ name, desc, sev, tags, engine:
 const DATA = [
 
 /* ───────────── Web exposure ───────────── */
-{ id:"files", group:"Web exposure", label:"Exposed Files", icon:"📂", description:"The classics, on the target's own hosts: directory listings, backups, configs, dumps, logs and documents that were never meant to be indexed.", items:[
+{ id:"files", group:"Web exposure", label:"Exposed Files", icon:"folder", description:"The classics, on the target's own hosts: directory listings, backups, configs, dumps, logs and documents that were never meant to be indexed.", items:[
   {name:"Directory listings",                  desc:"Auto-generated “Index of /” pages — the fastest way to everything else on this list.",                                    sev:"high", tags:["exposure","listing"], engine:"g", q:'site:{t} intitle:"index of"',
     links:[{engine:"bg", q:'site:{t} intitle:"index of"'}, {engine:"ddg", q:'site:{t} intitle:"index of"'}]},
   {name:"Config & environment files",          desc:"Readable configuration: .env, .ini, .conf, .cfg, .yml, .toml, .properties and friends.",                                   sev:"crit", tags:["exposure","config","secret"], engine:"g", q:'site:{t} (ext:env OR ext:ini OR ext:conf OR ext:cnf OR ext:cfg OR ext:yml OR ext:yaml OR ext:toml OR ext:properties)',
@@ -1373,7 +1426,7 @@ const DATA = [
   {name:"Install & setup leftovers",           desc:"Installers, package manifests and readme files that disclose the stack and exact versions.",                               sev:"low",  tags:["exposure","version"], engine:"g", q:'site:{t} (inurl:"install.php" OR inurl:"setup.php" OR inurl:"composer.json" OR inurl:"package.json" OR inurl:"readme.html" OR inurl:"CHANGELOG")'}
 ]},
 
-{ id:"apps", group:"Web exposure", label:"APIs, Panels & Debug", icon:"🧩", description:"Where the application talks back: API documentation, admin and login panels, staging hosts, and the debug endpoints of the common frameworks.", items:[
+{ id:"apps", group:"Web exposure", label:"APIs, Panels & Debug", icon:"window", description:"Where the application talks back: API documentation, admin and login panels, staging hosts, and the debug endpoints of the common frameworks.", items:[
   {name:"Swagger / OpenAPI UI",                desc:"Interactive API documentation — every endpoint, parameter and auth scheme on one page.",                                   sev:"med",  tags:["api","swagger"], engine:"g", q:'site:{t} (inurl:swagger OR inurl:"api-docs" OR inurl:apidocs OR inurl:redoc OR inurl:openapi OR intitle:"Swagger UI")',
     links:[{engine:"ddg", q:'site:{t} (inurl:swagger OR inurl:api-docs OR intitle:"Swagger UI")'}]},
   {name:"OpenAPI / Swagger spec files",        desc:"The raw specification (swagger.json, openapi.yaml, v2 / v3 api-docs) — import it straight into Burp or Postman.",          sev:"med",  tags:["api","swagger"], engine:"g", q:'site:{t} (inurl:"swagger.json" OR inurl:"swagger.yaml" OR inurl:"openapi.json" OR inurl:"openapi.yaml" OR inurl:"v2/api-docs" OR inurl:"v3/api-docs")'},
@@ -1398,7 +1451,7 @@ const DATA = [
   {name:"security.txt & disclosure policy",    desc:"The security contact, disclosure policy and bug-bounty terms — read the rules of engagement first.",                       sev:"info", tags:["program","scope"], engine:"g", q:'site:{t} (inurl:"security.txt" OR "responsible disclosure" OR "vulnerability disclosure" OR "bug bounty")'}
 ]},
 
-{ id:"attack", group:"Web exposure", label:"Attack Vectors", icon:"🗡️", description:"Parameters and endpoints worth testing first: redirect, SSRF, LFI, XSS, SQLi, RCE and IDOR candidates, auth flows, and the usual CMS suspects.", items:[
+{ id:"attack", group:"Web exposure", label:"Attack Vectors", icon:"target", description:"Parameters and endpoints worth testing first: redirect, SSRF, LFI, XSS, SQLi, RCE and IDOR candidates, auth flows, and the usual CMS suspects.", items:[
   {name:"Open Redirect candidates",            desc:"Redirect-style parameters: redirect, url, return, next, continue, goto.",                                                  sev:"med",  tags:["params","redirect"], engine:"g", q:'site:{t} (inurl:"redirect=" OR inurl:"url=" OR inurl:"return=" OR inurl:"next=" OR inurl:"continue=" OR inurl:"goto=")'},
   {name:"SSRF candidates",                     desc:"Parameters that look like a server-side fetch.",                                                                           sev:"high", tags:["params","ssrf"], engine:"g", q:'site:{t} (inurl:"url=" OR inurl:"dest=" OR inurl:"image=" OR inurl:"path=" OR inurl:"file=" OR inurl:"proxy=" OR inurl:"callback=")'},
   {name:"LFI candidates",                      desc:"Parameters that look like a local file include.",                                                                          sev:"high", tags:["params","lfi"], engine:"g", q:'site:{t} (inurl:"file=" OR inurl:"page=" OR inurl:"document=" OR inurl:"include=" OR inurl:"template=" OR inurl:"folder=")'},
@@ -1422,7 +1475,7 @@ const DATA = [
   {name:"Adobe Experience Manager",            desc:"AEM consoles and content paths — CRXDE, the OSGi console and DAM are frequent findings.",                                  sev:"med",  tags:["cms","aem"], engine:"g", q:'site:{t} (inurl:"/crx/de" OR inurl:"/system/console" OR inurl:"/content/dam" OR inurl:"/libs/granite" OR inurl:"jcr:content")'}
 ]},
 
-{ id:"takeover", group:"Web exposure", label:"Subdomain Takeover", icon:"🪝", description:"can-i-take-over-xyz fingerprints that Google has already indexed on the target's subdomains.", items:[
+{ id:"takeover", group:"Web exposure", label:"Subdomain Takeover", icon:"flag", description:"can-i-take-over-xyz fingerprints that Google has already indexed on the target's subdomains.", items:[
   {name:"Heroku takeover",                     desc:'"There is no app configured at that hostname".',                                                                              sev:"high", tags:["takeover"], engine:"g", q:'site:{t} "There is no app configured at that hostname"'},
   {name:"GitHub Pages",                        desc:'"There isn\'t a GitHub Pages site here."',                                                                                     sev:"high", tags:["takeover"], engine:"g", q:'site:{t} "There isn\'t a GitHub Pages site here."'},
   {name:"Azure 404 over .azurewebsites.net",   desc:'.azurewebsites.net + 404 fingerprint.',                                                                                       sev:"high", tags:["takeover"], engine:"g", q:'site:{t} ".azurewebsites.net" intext:"404"'},
@@ -1435,7 +1488,7 @@ const DATA = [
 ]},
 
 /* ───────────── Secrets & code ───────────── */
-{ id:"raw-gh", group:"Secrets & code", label:"Raw GitHub", icon:"🐙", description:"site:raw.githubusercontent.com — Google indexes raw file content, so this works without a GitHub login and reaches forks and personal repositories.", items:[
+{ id:"raw-gh", group:"Secrets & code", label:"Raw GitHub", icon:"branch", description:"site:raw.githubusercontent.com — Google indexes raw file content, so this works without a GitHub login and reaches forks and personal repositories.", items:[
   {name:"Env files w/ password / api_key",      desc:".env files mentioning the target with password / secret / api_key, excluding obvious samples.",                           sev:"crit", tags:["secret","raw-gh"], engine:"g", q:'site:raw.githubusercontent.com "{t}" filetype:env (intext:"password" OR intext:"secret" OR intext:"api_key") -intext:"sample" -intext:"example"'},
   {name:"YAML configs w/ token",                desc:"YAML/YML configs mentioning the target with password / token / apiKey.",                                                   sev:"crit", tags:["secret","raw-gh"], engine:"g", q:'site:raw.githubusercontent.com "{t}" (filetype:yaml OR filetype:yml) (intext:"password" OR intext:"token" OR intext:"apiKey")'},
   {name:"JSON tokens / client_secret",          desc:"JSON files exposing token / client_secret / api_key for the target.",                                                      sev:"crit", tags:["secret","raw-gh"], engine:"g", q:'site:raw.githubusercontent.com "{t}" filetype:json (intext:"token" OR intext:"client_secret" OR intext:"api_key")'},
@@ -1454,7 +1507,7 @@ const DATA = [
   {name:".pypirc with password",                desc:"PyPI publish credentials in .pypirc.",                                                                                     sev:"high", tags:["pypi","raw-gh"],   engine:"g", q:'site:raw.githubusercontent.com "{t}" intext:"[pypi]" intext:"password"'}
 ]},
 
-{ id:"secrets", group:"Secrets & code", label:"Modern Secrets", icon:"🔑", description:"Secret formats by prefix. Each dork runs the regex on GitHub next to your target's domain — and, as a second button, across all public code on grep.app.", items:[
+{ id:"secrets", group:"Secrets & code", label:"Modern Secrets", icon:"key", description:"Secret formats by prefix. Each dork runs the regex on GitHub next to your target's domain — and, as a second button, across all public code on grep.app.", items:[
   key("GitHub tokens (ghp_ / github_pat_ / ghs_)", "Every GitHub token format: classic and fine-grained PATs, OAuth, app and refresh tokens. No upper length bound, so the long 2026 ghs_ app tokens match too.", "crit", ["github"], "(ghp|gho|ghu|ghs|ghr|github_pat)_[A-Za-z0-9_]{30,}"),
   key("GitLab PAT (glpat-)",                   "GitLab personal access tokens.",                                                                                                    "crit", ["gitlab"], "glpat-[A-Za-z0-9_-]{20,}"),
   key("AWS Access Key ID (AKIA)",              "Long-term AWS access key IDs; the secret key is usually a line away.",                                                              "crit", ["aws","cloud"], "AKIA[0-9A-Z]{16}"),
@@ -1485,7 +1538,7 @@ const DATA = [
   {name:"Private keys in archive",             desc:"Wayback CDX filter for archived .pem / .key / .p12 / .pfx / .jks files on the target.",                                        sev:"crit", tags:["pki","wayback"], engine:"wa", q:'https://web.archive.org/cdx/search/cdx?url=*.{t}/*&output=text&fl=original&filter=original:.*\\.(pem|key|p12|pfx|jks)$&from=20180101&limit=500'}
 ]},
 
-{ id:"ai-llm", group:"Secrets & code", label:"AI / LLM & Agents", icon:"🧠", description:"The AI-era surface: model-provider keys, vector databases, exposed model servers and orchestration tools, MCP servers and coding-agent configs.", items:[
+{ id:"ai-llm", group:"Secrets & code", label:"AI / LLM & Agents", icon:"sparkles", description:"The AI-era surface: model-provider keys, vector databases, exposed model servers and orchestration tools, MCP servers and coding-agent configs.", items:[
   key("OpenAI keys (sk-… / sk-proj-)",         "Legacy sk- keys and the project-scoped sk-proj- format.",                                                                           "crit", ["llm","openai"], "sk-(proj-[A-Za-z0-9_-]{20,}|[A-Za-z0-9]{48})"),
   key("Anthropic keys (sk-ant-)",              "Anthropic API and admin keys.",                                                                                                     "crit", ["llm","anthropic"], "sk-ant-[A-Za-z0-9_-]{90,}"),
   key("Google AI / Gemini (AIzaSy…)",          "Google API keys. Once the Gemini API is enabled on the project, a key that was “public by design” can be billed for inference.",   "high", ["llm","gcp"], "AIzaSy[A-Za-z0-9_-]{33}"),
@@ -1515,7 +1568,7 @@ const DATA = [
   {name:"MCP servers (Censys)",                desc:"Hosts that Censys classifies as MCP endpoints, on names belonging to the target.",                                             sev:"high", tags:["mcp","agent","panel"], engine:"cen", q:'web.endpoints.endpoint_type=MCP and web.hostname: "{t}"'}
 ]},
 
-{ id:"devops", group:"Secrets & code", label:"DevOps / Cloud Native", icon:"⚙️", description:"Terraform state, kubeconfig, Helm values, CI files, source maps and backend-as-a-service keys in code — plus the cluster and GitOps consoles on the target's hosts.", items:[
+{ id:"devops", group:"Secrets & code", label:"DevOps / Cloud Native", icon:"box", description:"Terraform state, kubeconfig, Helm values, CI files, source maps and backend-as-a-service keys in code — plus the cluster and GitOps consoles on the target's hosts.", items:[
   {name:"Terraform state files",               desc:"Terraform .tfstate files referencing the target — plaintext credentials and ARNs.",                                            sev:"crit", tags:["terraform"], engine:"gh", q:'path:*.tfstate "{t}"'},
   {name:"Terraform .tfstate.backup",           desc:"Backup copies of the state (often forgotten).",                                                                                sev:"crit", tags:["terraform"], engine:"gh", q:'path:*.tfstate.backup "{t}"'},
   {name:"Terraform variables (.tfvars)",       desc:"terraform.tfvars with passwords, tokens and keys in plain text.",                                                              sev:"high", tags:["terraform"], engine:"gh", q:'path:*.tfvars "{t}" (password OR secret OR token OR access_key)'},
@@ -1545,7 +1598,7 @@ const DATA = [
   any("Harbor / Nexus / Artifactory",          "Self-hosted registries and artifact repositories — images and packages, sometimes with anonymous read.",                            "high", ["docker","panel","supply-chain"], ["Harbor", "Nexus Repository", "JFrog"])
 ]},
 
-{ id:"code", group:"Secrets & code", label:"Code & Supply Chain", icon:"💻", description:"Source code, packages and build metadata: the organisation's repositories, what its people publish, shared analytics IDs, exposed SBOMs and dependency-confusion candidates.", items:[
+{ id:"code", group:"Secrets & code", label:"Code & Supply Chain", icon:"code", description:"Source code, packages and build metadata: the organisation's repositories, what its people publish, shared analytics IDs, exposed SBOMs and dependency-confusion candidates.", items:[
   {name:"GitHub org enum",                     desc:"The organisation's own repositories — the first thing to read on a new target.",                                               sev:"med",  tags:["github"], engine:"ghr", q:'org:{t_no_tld}'},
   {name:"GitHub .env files",                   desc:"GitHub code search for .env files that mention the target.",                                                                   sev:"high", tags:["github","secret"], engine:"gh", q:'"{t}" path:.env'},
   {name:"GitHub: credentials next to the domain", desc:"Files that mention the target together with password, secret or token assignments.",                                        sev:"high", tags:["github","secret"], engine:"gh", q:'"{t}" (password OR passwd OR secret OR api_key OR apikey OR token) NOT is:fork'},
@@ -1569,7 +1622,7 @@ const DATA = [
 ]},
 
 /* ───────────── Third parties ───────────── */
-{ id:"saas", group:"Third parties", label:"SaaS / Collaboration", icon:"🤝", description:"What the organisation left public on other people's platforms: Notion, Trello, Airtable, Postman, Confluence, Jira, Google Docs, paste sites.", items:[
+{ id:"saas", group:"Third parties", label:"SaaS / Collaboration", icon:"message", description:"What the organisation left public on other people's platforms: Notion, Trello, Airtable, Postman, Confluence, Jira, Google Docs, paste sites.", items:[
   {name:"Postman: public workspaces",          desc:"Postman's own search for collections, requests and environments that mention the target — tokens in variables are common.",    sev:"crit", tags:["postman","api"], engine:"pm", q:'{t}',
     links:[{engine:"g", q:'site:postman.com "{t}" inurl:workspace'}]},
   {name:"Postman documenter",                  desc:"documenter.getpostman.com — published API documentation.",                                                                    sev:"high", tags:["postman","api"], engine:"g", q:'site:documenter.getpostman.com "{t}"'},
@@ -1592,7 +1645,7 @@ const DATA = [
   {name:"GitLab Snippets",                     desc:"Public GitLab snippets.",                                                                                                     sev:"med",  tags:["gitlab"], engine:"g", q:'site:gitlab.com "{t}" inurl:snippets'}
 ]},
 
-{ id:"paas", group:"Third parties", label:"PaaS, Tenants & Tunnels", icon:"🛰️", description:"Apps and tenants the organisation runs on someone else's domain — and usually forgot to list: platform subdomains, identity tenants, support portals, developer tunnels.", items:[
+{ id:"paas", group:"Third parties", label:"PaaS, Tenants & Tunnels", icon:"cloud", description:"Apps and tenants the organisation runs on someone else's domain — and usually forgot to list: platform subdomains, identity tenants, support portals, developer tunnels.", items:[
   {name:"App platforms (Heroku, Vercel, Netlify, …)", desc:"Deployments on platform domains that carry the organisation's name — prototypes, previews and forgotten internal tools.",   sev:"med",  tags:["paas","shadow-it"], engine:"g", q:'(site:herokuapp.com OR site:vercel.app OR site:netlify.app OR site:pages.dev OR site:workers.dev OR site:onrender.com OR site:fly.dev OR site:up.railway.app) "{t_no_tld}"'},
   {name:"Cloud app domains (Azure, GCP, AWS)", desc:"The cloud providers' default app hostnames: App Service, Cloud Run, App Engine, Firebase Hosting, Amplify, Elastic Beanstalk.",  sev:"med",  tags:["paas","shadow-it","cloud"], engine:"g", q:'(site:azurewebsites.net OR site:cloudapp.azure.com OR site:appspot.com OR site:run.app OR site:web.app OR site:firebaseapp.com OR site:amplifyapp.com OR site:elasticbeanstalk.com) "{t_no_tld}"'},
   {name:"Developer tunnels (ngrok, Cloudflare, …)", desc:"A tunnel puts a developer's laptop on the internet. Rarely indexed — when one is, it is a direct line inside.",              sev:"high", tags:["paas","tunnel"], engine:"g", q:'(site:ngrok.io OR site:ngrok.app OR site:ngrok-free.app OR site:trycloudflare.com OR site:loca.lt OR site:serveo.net) "{t_no_tld}"'},
@@ -1604,7 +1657,7 @@ const DATA = [
   {name:"Atlassian cloud tenant",              desc:"The organisation's own atlassian.net site: Jira, Confluence and Service Management.",                                         sev:"med",  tags:["tenant","jira","confluence"], engine:"g", q:'site:{t_no_tld}.atlassian.net'}
 ]},
 
-{ id:"cloud", group:"Third parties", label:"Cloud Storage", icon:"🪣", description:"Open buckets and blobs: a dedicated open-bucket index first, then S3, GCS, Azure Blob, DigitalOcean Spaces, R2, Backblaze, Wasabi through Google.", items:[
+{ id:"cloud", group:"Third parties", label:"Cloud Storage", icon:"bucket", description:"Open buckets and blobs: a dedicated open-bucket index first, then S3, GCS, Azure Blob, DigitalOcean Spaces, R2, Backblaze, Wasabi through Google.", items:[
   {name:"Open buckets (GrayhatWarfare)",       desc:"GrayhatWarfare indexes the contents of publicly listable S3, Azure, GCS and DigitalOcean buckets — search the file names for the organisation.", sev:"high", tags:["s3","azure","gcs","bucket"], engine:"gb", q:'{t_no_tld}'},
   {name:"S3 by bucket name",                   desc:"s3.amazonaws.com buckets with the usual org-prefixed names.",                                                                 sev:"high", tags:["s3","bucket"], engine:"g", q:'site:s3.amazonaws.com ("{t_no_tld}-backup" OR "{t_no_tld}-prod" OR "{t_no_tld}-dev" OR "{t_no_tld}-static" OR "{t_no_tld}-uploads" OR "{t_no_tld}-media" OR "{t_no_tld}-assets" OR "{t_no_tld}-logs")'},
   {name:"S3 mentions of the target",           desc:"Any S3-hosted object that mentions the target, on path-style and virtual-hosted URLs.",                                       sev:"high", tags:["s3","bucket"], engine:"g", q:'(site:s3.amazonaws.com OR site:*.s3.amazonaws.com) "{t}"'},
@@ -1618,7 +1671,7 @@ const DATA = [
 ]},
 
 /* ───────────── Infrastructure ───────────── */
-{ id:"dns", group:"Infrastructure", label:"DNS / Cert / Subdomain", icon:"🪪", description:"Subdomain discovery from certificate transparency, passive DNS and crawl data — sources that answer without touching the target.", items:[
+{ id:"dns", group:"Infrastructure", label:"DNS / Cert / Subdomain", icon:"globe", description:"Subdomain discovery from certificate transparency, passive DNS and crawl data — sources that answer without touching the target.", items:[
   {name:"crt.sh wildcard JSON",                desc:"Certificate Transparency search for %.{t} — every subdomain that ever got a certificate, as JSON.",                           sev:"high", tags:["cert","ct","subdomain"], engine:"crt", q:'%.{t}',
     links:[{engine:"cs", q:'{t}'}]},
   {name:"crt.sh deep wildcard",                desc:"%.%.{t} — only the second-level subdomains (a.b.{t}).",                                                                       sev:"high", tags:["cert","ct","subdomain"], engine:"crt", q:'%.%.{t}'},
@@ -1635,7 +1688,7 @@ const DATA = [
   {name:"CommonCrawl host index",              desc:"The newest CommonCrawl monthly index for *.{t}/* — JSON.",                                                                    sev:"low",  tags:["cc","subdomain"], engine:"cc", q:'*.{t}/*'}
 ]},
 
-{ id:"org", group:"Infrastructure", label:"Org & Related Domains", icon:"🏢", description:"Horizontal recon: what else belongs to the organisation — its networks, sister domains, other TLDs and acquisitions.", items:[
+{ id:"org", group:"Infrastructure", label:"Org & Related Domains", icon:"building", description:"Horizontal recon: what else belongs to the organisation — its networks, sister domains, other TLDs and acquisitions.", items:[
   {name:"ASN & netblocks",                     desc:"Hurricane Electric's BGP toolkit: the autonomous systems and prefixes registered to the organisation.",                       sev:"med",  tags:["asn","network"], engine:"he", q:'{t_no_tld}'},
   {name:"Reverse WHOIS",                       desc:"Other domains registered with the same organisation name.",                                                                    sev:"med",  tags:["whois","pivot"], engine:"rw", q:'{t_no_tld}'},
   {name:"BuiltWith relationships",             desc:"Domains that share analytics, ad or tag-manager IDs with the target.",                                                        sev:"med",  tags:["pivot"], engine:"bw", q:'{t}'},
@@ -1646,7 +1699,7 @@ const DATA = [
   {name:"Acquisitions & subsidiaries",         desc:"News and filings about what the organisation bought — every acquisition is more scope.",                                     sev:"low",  tags:["pivot"], engine:"g", q:'"{t_no_tld}" (acquires OR acquired OR acquisition OR "subsidiary of" OR "a subsidiary")'}
 ]},
 
-{ id:"wayback", group:"Infrastructure", label:"Web Archive", icon:"📚", description:"Wayback Machine CDX queries since 2018 — historical URLs, sensitive extensions, parameters, archived robots.txt and .git.", items:[
+{ id:"wayback", group:"Infrastructure", label:"Web Archive", icon:"history", description:"Wayback Machine CDX queries since 2018 — historical URLs, sensitive extensions, parameters, archived robots.txt and .git.", items:[
   {name:"All historical URLs",                 desc:"Full CDX URL dump for the target since 2018, de-duplicated.",                                                                 sev:"med",  tags:["wayback"], engine:"wa", q:'https://web.archive.org/cdx/search/cdx?url=*.{t}/*&output=text&fl=original&collapse=urlkey&from=20180101&limit=2000'},
   {name:"Sensitive ext (sql/env/key/…)",       desc:"CDX filter for archived files with sensitive extensions.",                                                                    sev:"high", tags:["wayback","secret"], engine:"wa", q:'https://web.archive.org/cdx/search/cdx?url=*.{t}/*&output=text&fl=original&filter=original:.*\\.(sql|env|yml|log|bak|key|pem|json|csv|xml|tfstate)$&from=20180101&limit=500'},
   {name:"Archived API docs & specs",           desc:"Swagger, OpenAPI and GraphQL paths that were public once — the spec may be gone, the API usually is not.",                    sev:"med",  tags:["wayback","api"], engine:"wa", q:'https://web.archive.org/cdx/search/cdx?url=*.{t}/*&output=text&fl=original&collapse=urlkey&filter=original:.*(swagger|openapi|api-docs|graphql).*&from=20180101&limit=500'},
@@ -1659,7 +1712,7 @@ const DATA = [
   {name:"IntelX historical leaks",             desc:"intelx.io — leaked datasets and paste history for the domain.",                                                               sev:"high", tags:["leak"], engine:"ix", q:'{t}'}
 ]},
 
-{ id:"net", group:"Infrastructure", label:"Network & Service Intel", icon:"🌐", description:"The target's hosts as the internet scanners see them — by certificate, DNS name and organisation — plus pivots to the real origin behind a CDN.", items:[
+{ id:"net", group:"Infrastructure", label:"Network & Service Intel", icon:"network", description:"The target's hosts as the internet scanners see them — by certificate, DNS name and organisation — plus pivots to the real origin behind a CDN.", items:[
   {name:"Shodan facets: page titles",          desc:"One query, every web page title on the target's hosts ranked by count — VPN portals, admin consoles and forgotten apps stand out at once.", sev:"high", tags:["shodan","overview"], engine:"shf", q:'facet:http.title ssl:"{t}"'},
   {name:"Shodan facets: products & ports",     desc:"What software and which ports the target exposes, at a glance.",                                                              sev:"med",  tags:["shodan","overview"], engine:"shf", q:'facet:product ssl:"{t}"',
     links:[{engine:"shf", label:"Shodan · ports", q:'facet:port hostname:"{t}"'}]},
@@ -1687,7 +1740,7 @@ const DATA = [
   {name:"CDN origin: DNS history",             desc:"Historical A records — the origin IP from before the CDN went in front.",                                                     sev:"high", tags:["cdn","origin","dns"], engine:"sth", q:'{t}'}
 ]},
 
-{ id:"edge", group:"Infrastructure", label:"Edge & Remote Access", icon:"🚪", description:"VPN gateways, remote-access tools and file-transfer appliances on the target's hosts — the products that keep landing on CISA's Known Exploited Vulnerabilities list.", items:[
+{ id:"edge", group:"Infrastructure", label:"Edge & Remote Access", icon:"shield", description:"VPN gateways, remote-access tools and file-transfer appliances on the target's hosts — the products that keep landing on CISA's Known Exploited Vulnerabilities list.", items:[
   web("Palo Alto GlobalProtect",               "GlobalProtect portals and gateways. KEV: CVE-2024-3400, CVE-2025-0108.",                                                           "high", ["edge","vpn","kev"], 'http.title:"globalprotect"', 'title="globalprotect"'),
   web("Ivanti Connect Secure",                 "Ivanti (Pulse) Connect Secure. KEV: CVE-2024-21887, CVE-2025-0282, CVE-2025-22457.",                                               "high", ["edge","vpn","kev"], 'http.html:"/dana-na/auth/"', 'body="/dana-na/auth/"'),
   web("Fortinet FortiGate SSL-VPN",            "FortiOS web and SSL-VPN portals, by favicon. KEV: CVE-2022-42475, CVE-2024-21762, CVE-2024-55591.",                                "high", ["edge","vpn","kev"], 'http.favicon.hash:945408572', 'icon_hash="945408572"'),
@@ -1708,7 +1761,7 @@ const DATA = [
   svc("RDP, VNC, Telnet, SMB, WinRM",          "Remote-administration protocols answering on the internet.",                                                                       "high", ["edge","remote"], 'port:3389,5900,23,445,5985', '(port="3389" || port="5900" || port="23" || port="445" || port="5985")')
 ]},
 
-{ id:"services", group:"Infrastructure", label:"Exposed Services & ICS", icon:"🏭", description:"What should never face the internet, on the target's hosts: datastores, self-hosted dev and collaboration tools, and industrial protocols.", items:[
+{ id:"services", group:"Infrastructure", label:"Exposed Services & ICS", icon:"server", description:"What should never face the internet, on the target's hosts: datastores, self-hosted dev and collaboration tools, and industrial protocols.", items:[
   svc("Elasticsearch",                         "Open Elasticsearch — the whole index readable over HTTP.",                                                                         "crit", ["database"], 'port:9200 "cluster_name"', 'port="9200" && body="cluster_name"'),
   svc("MongoDB",                               "MongoDB answering without authentication.",                                                                                        "crit", ["database"], 'product:"MongoDB" -authentication', 'protocol="mongodb"'),
   svc("Redis",                                 "Open Redis: data, and often a path to code execution.",                                                                            "crit", ["database"], 'port:6379 "redis_version"', 'port="6379"'),
@@ -1732,7 +1785,7 @@ const DATA = [
 ]},
 
 /* ───────────── People ───────────── */
-{ id:"people", group:"People", label:"People & Jobs", icon:"👥", description:"Who works there and what they run: employee and email discovery, breach exposure, and job ads that name the internal stack.", items:[
+{ id:"people", group:"People", label:"People & Jobs", icon:"users", description:"Who works there and what they run: employee and email discovery, breach exposure, and job ads that name the internal stack.", items:[
   {name:"Hunter.io domain emails",             desc:"Hunter.io: the organisation's email pattern and the most common addresses.",                                                  sev:"low",  tags:["email"], engine:"hu", q:'{t}'},
   {name:"HIBP domain breaches",                desc:"Breached accounts on the target's domain (opens HIBP Domain Search — needs a verified login).",                               sev:"med",  tags:["breach"], engine:"hi", q:'{t}'},
   {name:"LinkedIn employees pivot",            desc:"Google site:linkedin.com/in for the organisation's name — employee enumeration.",                                             sev:"low",  tags:["people"], engine:"li", q:'{t_no_tld}'},
@@ -1766,7 +1819,7 @@ const ESSENTIAL_STEPS = [
 // state.cat: ESS = Essentials (the default), MY = My dorks, -1 = all dorks, 0…n = index of a category in DATA
 const ESS = -2, MY = -3;
 const ESSENTIALS = {
-  id:"essentials", label:"Essentials", icon:"⭐",
+  id:"essentials", label:"Essentials", icon:"star",
   description:"Start here. Set your target above, then work through this first-pass playbook: the highest-signal dorks from the whole catalog, in the order you would run them.",
   steps: ESSENTIAL_STEPS.map(s => ({
     title: s.title,
@@ -1781,7 +1834,7 @@ ESSENTIALS.items = ESSENTIALS.steps.flatMap(s => s.items.map(x => x.it));
 // "My dorks": the operator's own dorks plus the ones pinned from the catalog. `items` holds the own
 // dorks only (filled from storage — see Personal data); pins stay in their home category.
 const MY_CAT = {
-  id:"my", label:"My dorks", icon:"📌", items:[],
+  id:"my", label:"My dorks", icon:"pin", items:[],
   description:"Your own dorks and the ones you pinned from the catalog. Stored in this browser only — export them to back up or share."
 };
 // A view is Essentials (ESS), My dorks (MY), every dork (-1) or one category (index into DATA).
@@ -2041,17 +2094,17 @@ function selectCategory(i){
 // The sidebar is built once; render() only moves the active marker, so keyboard focus survives.
 function buildNav(){
   $catNav.innerHTML = "";
-  const mk = (i, emoji, label, count, title) => {
+  const mk = (i, ic, label, count, title) => {
     const btn = document.createElement("button");
     btn.type = "button"; btn.className = "nav-item"; btn.dataset.view = i;
-    btn.innerHTML = `<span class="emo" aria-hidden="true">${emoji}</span><span class="nm">${escHtml(label)}</span><span class="ct">${count}</span>`;
+    btn.innerHTML = `${icon(ic)}<span class="nm">${escHtml(label)}</span><span class="ct">${count}</span>`;
     if (title) btn.title = title;
     btn.onclick = () => selectCategory(i);
     return btn;
   };
   $catNav.appendChild(mk(ESS, ESSENTIALS.icon, ESSENTIALS.label, ESSENTIALS.items.length, "The curated first-pass playbook"));
   $catNav.appendChild(mk(MY, MY_CAT.icon, MY_CAT.label, 0, "Your own dorks and the ones you pinned"));
-  $catNav.appendChild(mk(-1, "🗂️", "All dorks", totalCounts().dorks, "Every dork in the catalog, by category"));
+  $catNav.appendChild(mk(-1, "layers", "All dorks", totalCounts().dorks, "Every dork in the catalog, by category"));
   let group = null;                                 // categories come in sections: a heading wherever the group changes
   DATA.forEach((cat, i) => {
     if (cat.group !== group){
@@ -2081,21 +2134,20 @@ function syncNav(){
 function renderContentHead(view){
   const tEl = $("#catTitle"), dEl = $("#catDesc");
   if (!tEl) return;
-  const emo = e => `<span class="emo" aria-hidden="true">${e}</span>`;
   if (view.searching){
     tEl.innerHTML = `${icon("search")}Search results`;
     dEl.textContent = view.global
       ? "Ranked across the whole catalog. Combine words with tag:, sev:, engine:, cat:, is:todo, \"a phrase\" or -exclude."
       : `Ranked within ${catAt(state.cat).label}. Combine words with tag:, sev:, engine:, is:todo, "a phrase" or -exclude.`;
   } else if (state.cat === -1 && RECIPES[state.recipe]){
-    tEl.innerHTML = `${emo("🍱")}${escHtml(RECIPES[state.recipe].label)}`;      // a recipe is a named lens over "All dorks"
+    tEl.innerHTML = `${icon("sliders")}${escHtml(RECIPES[state.recipe].label)}`;      // a recipe is a named lens over "All dorks"
     dEl.textContent = RECIPES[state.recipe].desc;
   } else if (state.cat === -1){
-    tEl.innerHTML = `${emo("🗂️")}All dorks`;
+    tEl.innerHTML = `${icon("layers")}All dorks`;
     dEl.textContent = `Every dork across all ${DATA.length} categories. Narrow it down with search, the severity filter or a recon recipe.`;
   } else {
     const c = catAt(state.cat);
-    tEl.innerHTML = `${emo(c.icon)}${escHtml(c.label)}`;
+    tEl.innerHTML = `${icon(c.icon)}${escHtml(c.label)}`;
     dEl.textContent = c.description;
   }
 }
@@ -2254,7 +2306,7 @@ function itemMatchesRecipe(it, catId){
   if (r.noAuth && ENGINES[it.engine].auth) return false;
   return true;
 }
-const SEV_LABEL = {info:"INFO", low:"LOW", med:"MED", high:"HIGH", crit:"CRIT"};
+const SEV_LABEL = {info:"Info", low:"Low", med:"Medium", high:"High", crit:"Critical"};
 const SEV_NAME  = {info:"informational", low:"low", med:"medium", high:"high", crit:"critical"};
 function setFilter(q){ state.filter = q; if ($filter) $filter.value = q; syncFilterClear(); saveState(); writeHash(); render(); }
 function escHtml(s){ return String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
@@ -2371,7 +2423,7 @@ function groupHead(g){
     head.innerHTML = `<h2>${escHtml(g.title)}</h2><span class="n">${g.items.length}</span>`;
   } else {
     const c = g.cat;
-    head.innerHTML = `<h2><button type="button" title="Open this category"><span class="emo" aria-hidden="true">${c.icon}</span>${escHtml(c.label)}</button></h2>`
+    head.innerHTML = `<h2><button type="button" title="Open this category">${icon(c.icon)}${escHtml(c.label)}</button></h2>`
       + `<span class="n">${g.items.length}</span><span class="d">${escHtml(c.description)}</span>`;
     $("button", head).onclick = () => { selectCategory(viewOf(c)); focusView(); };
   }
@@ -2536,7 +2588,7 @@ function renderCard(it, t, opts){
 
   if (opts.cat){                                    // mixed lists (search, Essentials, My dorks): show the home category
     const pill = document.createElement("button"); pill.type = "button"; pill.className = "cat-pill";
-    pill.innerHTML = `<span class="emo" aria-hidden="true">${opts.cat.icon}</span>${escHtml(opts.cat.label)}`;
+    pill.innerHTML = `${icon(opts.cat.icon)}${escHtml(opts.cat.label)}`;
     pill.title = "Browse this category";
     pill.onclick = () => { state.filter = ""; selectCategory(viewOf(opts.cat)); focusView(); };
     card.appendChild(pill);
