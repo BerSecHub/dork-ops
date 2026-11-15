@@ -9,6 +9,8 @@ Thanks for helping improve DorkOps! The whole tool is a single `index.html` file
 - [Template placeholders](#template-placeholders)
 - [Severity guide](#severity-guide)
 - [Adding a search engine](#adding-a-search-engine)
+- [Essentials and recipes](#essentials-and-recipes)
+- [Touching the UI](#touching-the-ui)
 - [Testing your change](#testing-your-change)
 - [Style](#style)
 - [Submitting a PR](#submitting-a-pr)
@@ -27,15 +29,17 @@ A good dork is **high-signal** (it surfaces something a defender or authorized t
 
 Everything lives in `index.html`:
 
-| Section | Around line | What it holds |
+| Section | Where | What it holds |
 | --- | --- | --- |
-| `<style>` | top | The design-system CSS (dark + light tokens) |
-| `ENGINES` | mid | The search-engine registry — one entry per engine |
-| `DATA` | mid | The dork catalog — an array of categories, each with `items` |
-| `TOP_PATTERNS`, `CROWN`, `GHDB_PICKS`, `RECIPES` | after `DATA` | Curated shortcuts and presets |
-| App logic | rest | Parser, rendering, routing, recon tools, wiring |
+| `<style>` | top | The design system: colour tokens for both themes, then one numbered section per UI area |
+| Icon sprite + markup | start of `<body>` | Inline SVG icons (`#i-…`), the top bar, sidebar, filter toolbar and the tools panel |
+| `ENGINES` | script | The search-engine registry — one entry per engine |
+| `DATA` | script | The dork catalog — an array of categories, each with `items` |
+| `ESSENTIAL_STEPS` | after `DATA` | The curated first-pass playbook shown on the home view |
+| `TOP_PATTERNS`, `GHDB_PICKS`, `RECIPES` | after `DATA` | Curated shortcuts and preset filters |
+| App logic | rest | Search parser, `viewGroups()` (what is on screen), rendering, routing, recon tools, wiring |
 
-To find a spot quickly, search the file for the banner comments (`/* ===== ... ===== */`).
+To find a spot quickly, search the file for the banner comments (`/* ===== ... ===== */`); the comment at the top of the script lists them in order.
 
 ## Adding a dork
 
@@ -58,8 +62,8 @@ To find a spot quickly, search the file for the banner comments (`/* ===== ... =
 
 | Field | Required | Type | Notes |
 | --- | --- | --- | --- |
-| `name` | ✅ | string | Short, unique, human-readable title shown on the card. |
-| `desc` | ✅ | string | One sentence on **why this matters** — what an attacker/defender learns. |
+| `name` | ✅ | string | Short, human-readable title shown on the card. Unique within its category (the Essentials playbook refers to dorks by name). |
+| `desc` | ✅ | string | One sentence on **why this matters** — what an attacker/defender learns. May contain [placeholders](#template-placeholders). |
 | `sev` | ✅ | `"crit"` \| `"high"` \| `"med"` \| `"low"` \| `"info"` | Drives the badge, colour, and the `sev:` filter. See [Severity guide](#severity-guide). |
 | `tags` | ✅ | string[] | Lowercase, kebab or single words. Used by the `tag:` filter, recipes, and the search index. Reuse existing tags where possible. |
 | `engine` | ✅ | string | An engine **key** from the `ENGINES` registry (e.g. `g`, `gh`, `gra`, `sh`, `fo`, `cen`, `wa`). |
@@ -75,13 +79,16 @@ The query must use the **native syntax of its `engine`**:
 - **grep.app** (`gra`): a **regex** (the engine runs it with `regexp=true`) — escape backslashes for JS strings (`\\.`).
 - **GitHub Issues** (`gho`): issue-search qualifiers.
 - **Shodan / FOFA / ZoomEye / Censys**: each has its own facet syntax (`port:`, `title=`, `cert.subject=`, `services.http...`). FOFA queries are base64-encoded automatically by the engine builder — write the plain query.
-- **Wayback** (`wa`): the query **is the full URL** to open (e.g. a `web.archive.org/cdx/...` or `crt.sh/...` URL) — the builder passes it through verbatim.
+- **crt.sh** (`crt`): the certificate-transparency pattern, e.g. `%.{t}`.
+- **Wayback** (`wa`): the query **is the full URL** to open (a `web.archive.org/cdx/...` URL) — the builder passes it through verbatim.
+
+On the card the query is syntax-coloured automatically: quoted strings, `operator:` / `field=` prefixes and `OR` / `AND` / `NOT` / `&&` / `||` are recognised, grep.app queries are styled as regexes, and every spot where a placeholder was substituted is highlighted as the target. You do not need to do anything for that.
 
 When in doubt, click the engine button after adding your dork and confirm the search actually returns what you intend.
 
 ## Template placeholders
 
-`applyTemplate()` substitutes these in `q` (and in `desc`) at render time:
+`applyTemplate()` substitutes these in both `q` and `desc` at render time:
 
 | Placeholder | Replaced with | Example (`target = example.com`) |
 | --- | --- | --- |
@@ -112,15 +119,37 @@ xx: {
   name:"Example",
   color:"#3366cc",                 // swatch colour on the engine button
   url: q => `https://example.com/search?q=${enc(q)}`,
-  auth:true,                       // optional: show a 🔒 (login required)
+  auth:true,                       // optional: show a padlock (login required)
   opsec:false                      // optional: hidden in OPSEC mode (engine logs operator/target)
 }
 ```
 
 - `enc` is `encodeURIComponent`; `b64` base64-encodes (used by FOFA).
-- Set `opsec:false` for engines that log who searched or the target (Shodan, FOFA, Censys, urlscan) so OPSEC mode can hide them.
+- Set `opsec:false` for engines that tie a query to your account (Shodan, FOFA, ZoomEye, Censys, Hunter.how, Netlas, Onyphe, BinaryEdge, urlscan) so OPSEC mode can hide them.
 - Set `auth:true` if the engine requires a logged-in account to see results.
 - Verify the URL builder against the engine's **current** query-parameter name and path.
+- The engine shows up in the Help legend automatically.
+
+## Essentials and recipes
+
+**Essentials** is the home view: a short, ordered playbook defined by `ESSENTIAL_STEPS`. Each step has a `title` and a list of `refs`, and each ref is `[categoryId, dorkName]` pointing at an existing item in `DATA`:
+
+```js
+{ title:"Map the attack surface", refs:[
+  ["dns","crt.sh wildcard JSON"], ["wayback","All historical URLs"], ["code","GitHub org enum"] ]},
+```
+
+Keep it short and opinionated — it is what a newcomer runs first. A ref whose dork was renamed or removed silently drops out, so if you rename a dork, update its ref too.
+
+**Recipes** (`RECIPES`) are preset filters over the whole catalog. `label` and `desc` feed the Recipe menu and the view header; the filter itself is any combination of `filterTags` (dork has any of these tags), `onlyCats`, `onlyEngines`, `maxPerCat` (cap per category) and `extraDrawers` (recon tools the recipe pairs with).
+
+## Touching the UI
+
+- **Colours** come from the tokens at the top of `<style>`; both themes define the same set. Do not hard-code colours in rules — add or reuse a token so light and dark stay in step.
+- **Icons** are symbols in the inline SVG sprite at the top of `<body>`. In markup use `<svg class="ic" aria-hidden="true"><use href="#i-name"/></svg>`; in script use `icon("name")`. Icon-only buttons need an `aria-label`.
+- **What is on screen** is decided in one place, `viewGroups()`. Rendering, *Open all*, *Export* and the scope runner all read from it — add new filters there, not in the individual features.
+- Controls must work from the keyboard and meet a 24×24 px target; state must not be conveyed by colour alone.
+- Nothing may be requested from the network on page load — only on an explicit user action.
 
 ## Testing your change
 
@@ -131,7 +160,8 @@ There is no test runner — you verify in the browser:
 3. Find your dork (browse its category or search for it).
 4. Check the templated query looks right for `target = example.com`.
 5. **Click each engine button** and confirm the search opens and is well-formed.
-6. If you touched counts, update the title/meta/JSON-LD in `<head>` and the search placeholder so the advertised numbers stay accurate.
+6. For UI changes, also check the light theme, a phone-width window, and that you can reach and operate the change with the keyboard alone.
+7. Counts in the UI are computed from the data. If the catalog crosses a round number, update the "230+ dorks / 35+ engines" wording in `<head>` (title, meta, JSON-LD) and in the `<noscript>` block.
 
 ## Style
 
