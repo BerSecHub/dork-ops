@@ -491,7 +491,7 @@ mark{padding:0 1px; border-radius:3px; background:var(--mark); color:inherit}
 .card-meta{display:flex; align-items:center; gap:2px; margin-left:auto; min-width:0}
 .card-tags{display:flex; flex-wrap:wrap; justify-content:flex-end; gap:0 4px; min-width:0}
 .card-tags .tag{
-  min-height:24px; padding:0 4px; border:0; border-radius:5px; background:none;
+  min-width:24px; min-height:24px; padding:0 4px; border:0; border-radius:5px; background:none;   /* 24×24 whatever the font */
   font-family:var(--font-ui); font-size:11.5px; color:var(--text-3); cursor:pointer;
 }
 .card-tags .tag::before{content:"#"; opacity:.6}
@@ -2741,7 +2741,7 @@ function openDorkForm(it){
     <div class="modal-body form">
       <label class="fl">Name<input id="dfName" type="text" maxlength="120" autocomplete="off" required></label>
       <label class="fl">Query<textarea id="dfQ" maxlength="4000" spellcheck="false" autocapitalize="off" required></textarea>
-        <small>Use <code>{t}</code> for the target domain and <code>{t_no_tld}</code> for its first label — write it in the engine's own syntax.</small></label>
+        <small>Use <code>{t}</code> for the target domain and <code>{t_no_tld}</code> for its name without the TLD (<code>example</code>) — write it in the engine's own syntax.</small></label>
       <p class="form-preview" id="dfPreview" aria-live="polite"></p>
       <div class="fl-row">
         <label class="fl">Engine<select id="dfEngine">${engines}</select></label>

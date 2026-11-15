@@ -28,7 +28,7 @@ body:
     id: query
     attributes:
       label: Query
-      description: In the engine's own syntax. `{t}` is the target domain, `{t_no_tld}` its first label.
+      description: In the engine's own syntax. `{t}` is the target domain, `{t_no_tld}` the organisation's label (`example` for `example.com`).
       render: text
       placeholder: 'path:*.tfstate "{t}"'
     validations:

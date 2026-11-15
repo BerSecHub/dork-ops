@@ -18,8 +18,8 @@ jobs:
     name: Catalog lint
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
       # No dependencies: checks every dork, engine, playbook reference and the numbers quoted in the page.
@@ -29,8 +29,8 @@ jobs:
     name: UI regression (headless Chromium)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
       # Playwright is a test-only dependency; the app itself ships none.
