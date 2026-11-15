@@ -44,7 +44,7 @@ Most of these came out of an independent code review.
 
 - `tests/catalog.test.mjs` — a zero-dependency lint of the whole catalog; `tests/ui.test.mjs` — 180+ checks driving the real page in headless Chromium. Both run in CI.
 - Issue and pull-request templates.
-- A new social preview image (`og-image`) — the old one still quoted the 0.4 numbers. The lint now reads the numbers in it, and in the README, too.
+- A new social preview image (`og-image`) — the old one still quoted the 0.4 numbers. The lint now reads the numbers in it, and in the README, too. Its URL carries a version derived from the file, so the year-long cache on PNG files cannot serve an old preview.
 
 ## 0.5 — 2026-11-15
 

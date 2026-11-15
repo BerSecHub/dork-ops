@@ -8,6 +8,7 @@
 // recipes point at things that exist; and the numbers quoted in the page head, the README and the social
 // preview image are still true.
 import { readFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
 
 const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
 const from = html.indexOf('const ENGINES = {');
@@ -95,6 +96,17 @@ try { og = readFileSync(new URL('../og-image.svg', import.meta.url), 'utf8').rep
 for (const m of og.matchAll(/(\d+)\+\s*dorks/g)) if (+m[1] > dorks) fail(`og-image.svg claims ${m[1]}+ dorks but the catalog has ${dorks}`);
 for (const m of og.matchAll(/(\d+)\+\s*engines/g)) if (+m[1] > ENGINE_SERVICES) fail(`og-image.svg claims ${m[1]}+ engines but there are ${ENGINE_SERVICES}`);
 for (const m of og.matchAll(/(\d+)\s*categories/g)) if (+m[1] !== DATA.length) fail(`og-image.svg says ${m[1]} categories but there are ${DATA.length}`);
+
+// og-image.png is served with a one-year immutable cache, so its URL in the page head carries a version taken
+// from the file's content: change the image and the lint says which value the three meta tags need.
+let png = null;
+try { png = readFileSync(new URL('../og-image.png', import.meta.url)); } catch (e) { /* a copy without it */ }
+if (png) {
+  const want = createHash('sha256').update(png).digest('hex').slice(0, 8);
+  const urls = [...html.matchAll(/<meta (?:property|name)="(og:image|og:image:secure_url|twitter:image)" content="([^"]*)"/g)];
+  if (urls.length !== 3) fail(`expected og:image, og:image:secure_url and twitter:image in the page head, found ${urls.length}`);
+  for (const [, name, url] of urls) if (!url.endsWith(`/og-image.png?v=${want}`)) fail(`${name} must end with og-image.png?v=${want} (the image changed, or the version is missing)`);
+}
 
 // The README quotes exact numbers: a catalog change has to update them.
 let readme = '';
