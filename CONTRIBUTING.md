@@ -202,6 +202,7 @@ Keep it short and opinionated — it is what a newcomer runs first. The lint fai
 - **Anything a user types or imports** goes through `cleanDork()`, is rendered with `escHtml()` / `textContent`, and reaches a link only through `buildUrl()`, which returns `https://` URLs or nothing.
 - Controls must work from the keyboard and meet a 24×24 px target; state must not be conveyed by colour alone.
 - Nothing may be requested from the network on page load — only on an explicit user action.
+- The social preview (`og-image.png`) is a 1200×630 render of `og-image.svg`. After editing the SVG, re-render it: `npx playwright screenshot --viewport-size "1200,630" "file://$PWD/og-image.svg" og-image.png`. The SVG asks for Inter and JetBrains Mono and falls back to system fonts.
 
 ## Testing your change
 
@@ -209,7 +210,7 @@ Keep it short and opinionated — it is what a newcomer runs first. The lint fai
 node tests/catalog.test.mjs
 ```
 
-needs only Node and checks every dork (fields, target scope, engine, https link, Google's word limit), that no engine is unused, that the playbook and recipes point at things that exist, and that the numbers quoted in the page head and in the README are still true.
+needs only Node and checks every dork (fields, target scope, engine, https link, Google's word limit), that no engine is unused, that the playbook and recipes point at things that exist, and that the numbers quoted in the page head, the README and the social preview image are still true.
 
 Then look at it:
 

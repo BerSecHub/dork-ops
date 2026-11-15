@@ -5,7 +5,8 @@
 // Reads the engine registry and the dork catalog straight out of index.html and checks what a
 // reviewer would otherwise check by hand: every dork is well-formed, scoped to the target, runs on a
 // registered engine and builds an https link; nothing in the registry is unused; the playbook and the
-// recipes point at things that exist; and the numbers quoted in the page head and the README are still true.
+// recipes point at things that exist; and the numbers quoted in the page head, the README and the social
+// preview image are still true.
 import { readFileSync } from 'node:fs';
 
 const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
@@ -87,6 +88,13 @@ const quotedCats = [...html.matchAll(/catalog of (\d+) categories/g)].map(m => +
 if (!quoted.length || quoted.some(n => n > dorks)) fail(`the page claims ${Math.max(...quoted, 0)}+ dorks but the catalog has ${dorks}`);
 if (!quotedEngines.length || quotedEngines.some(n => n > ENGINE_SERVICES)) fail(`the page claims ${Math.max(...quotedEngines, 0)}+ engines but there are ${ENGINE_SERVICES}`);
 if (quotedCats.some(n => n !== DATA.length)) fail(`the page says ${quotedCats.join('/')} categories but there are ${DATA.length}`);
+
+// The social preview image (og-image.svg, the source of og-image.png) quotes the same round numbers.
+let og = '';
+try { og = readFileSync(new URL('../og-image.svg', import.meta.url), 'utf8').replace(/<!--[\s\S]*?-->/g, '').replace(/<[^>]+>/g, ''); } catch (e) { /* a copy without it */ }
+for (const m of og.matchAll(/(\d+)\+\s*dorks/g)) if (+m[1] > dorks) fail(`og-image.svg claims ${m[1]}+ dorks but the catalog has ${dorks}`);
+for (const m of og.matchAll(/(\d+)\+\s*engines/g)) if (+m[1] > ENGINE_SERVICES) fail(`og-image.svg claims ${m[1]}+ engines but there are ${ENGINE_SERVICES}`);
+for (const m of og.matchAll(/(\d+)\s*categories/g)) if (+m[1] !== DATA.length) fail(`og-image.svg says ${m[1]} categories but there are ${DATA.length}`);
 
 // The README quotes exact numbers: a catalog change has to update them.
 let readme = '';

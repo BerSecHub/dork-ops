@@ -36,11 +36,13 @@ The catalog was reviewed against the engines' current documentation, every dork 
 - Focus no longer drops to the top of the page after an action that re-renders the list; content scrolled into view stops below the sticky bars; dialogs make the page behind them inert and lock scrolling without a sideways jump.
 - Stored state is validated field by field; nothing in `localStorage` can blank the app.
 - Anything typed in or imported goes through one cleaner, and every link the app builds is `https://` — a shared dork pack cannot inject markup or a `javascript:` URL.
+- Tag chips keep the 24 × 24 px target size with any system font — caught by the first CI run, on a machine with different fonts.
 
 ### Project
 
 - `tests/catalog.test.mjs` — a zero-dependency lint of the whole catalog; `tests/ui.test.mjs` — 180+ checks driving the real page in headless Chromium. Both run in CI.
 - Issue and pull-request templates.
+- A new social preview image (`og-image`) — the old one still quoted the 0.4 numbers. The lint now reads the numbers in it, and in the README, too.
 
 ## 0.5 — 2026-11-15
 
