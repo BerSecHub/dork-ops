@@ -39,7 +39,7 @@
 <link rel="icon" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M2 12l6.5 6.5L22 5' stroke='%2300ffff' stroke-width='2.5' fill='none' stroke-linecap='round'/></svg>">
 <link rel="apple-touch-icon" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><rect width='24' height='24' fill='%2305060a'/><path d='M2 12l6.5 6.5L22 5' stroke='%2300ffff' stroke-width='2.5' fill='none' stroke-linecap='round'/></svg>">
 <script type="application/ld+json">
-{"@context":"https://schema.org","@type":"WebApplication","name":"DorkOps","applicationCategory":"SecurityApplication","operatingSystem":"Any","url":"https://dorks.bersec.me/","description":"230+ curated OSINT dorks across 35+ engines for passive reconnaissance, secrets discovery and attack-surface mapping.","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"featureList":["Google dorks","raw.githubusercontent.com dorks","GitHub code search","grep.app regex search","Shodan","FOFA","ZoomEye","Censys","urlscan","LeakIX","crt.sh","Wayback CDX","Severity tagging","Deep-link routing","Favicon hash lab","Permutation generator","Bug bounty scope importer","JS recon pack","Wayback param wordlist","OPSEC mode","Bookmarklet","Recon recipes","GHDB integration"]}
+{"@context":"https://schema.org","@type":"WebApplication","name":"DorkOps","applicationCategory":"SecurityApplication","operatingSystem":"Any","url":"https://dorks.bersec.me/","description":"230+ curated OSINT dorks across 35+ engines for passive reconnaissance, secrets discovery and attack-surface mapping.","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"featureList":["Essentials first-pass playbook","Google dorks","raw.githubusercontent.com dorks","GitHub code search","grep.app regex search","Shodan","FOFA","ZoomEye","Censys","urlscan","LeakIX","crt.sh","Wayback CDX","Severity tagging","Deep-link routing","Favicon hash lab","Permutation generator","Bug bounty scope importer","JS recon pack","Wayback param wordlist","OPSEC mode","Bookmarklet","Recon recipes","GHDB integration"]}
 </script>
 <style>
 /* ============================================================
@@ -88,6 +88,7 @@ html[data-theme="light"]{
 
 /* ---------- 2 · base ---------- */
 *{box-sizing:border-box}
+html{scrollbar-gutter:stable}     /* no sideways jump when a view gets short or a dialog locks scrolling */
 body{
   /* min-height, not height: a fixed-height body would end the sticky topbar's range after one screen */
   min-height:100vh; margin:0; background:var(--bg); color:var(--text);
@@ -110,7 +111,7 @@ code,kbd,.mono{font-family:var(--font-mono)}
 }
 .skip:focus{top:10px; text-decoration:none}
 .results{scroll-margin-top:calc(var(--topbar-h) + 64px)}
-.results:focus{outline:0}
+.results:focus,.ch-title:focus{outline:0}     /* programmatic focus targets, not controls */
 /* icons: 24px stroke glyphs from the sprite, coloured by the text colour of their parent */
 .ic{width:16px; height:16px; flex-shrink:0; fill:none; stroke:currentColor; stroke-width:1.9; stroke-linecap:round; stroke-linejoin:round}
 kbd{
@@ -181,7 +182,7 @@ input::placeholder,textarea::placeholder{color:var(--text-3); opacity:1}
 .select select{
   -webkit-appearance:none; appearance:none; height:28px; max-width:210px; padding:0 28px 0 11px;
   border:1px solid var(--border-2); border-radius:999px; background:var(--surface-2);
-  font-size:12.5px; font-weight:600; color:var(--text-2); cursor:pointer; outline:0; text-overflow:ellipsis;
+  font-size:12.5px; font-weight:600; color:var(--text-2); cursor:pointer; text-overflow:ellipsis;
 }
 .select select:hover{color:var(--text); border-color:var(--text-3)}
 .select .ic{position:absolute; right:9px; width:13px; height:13px; color:var(--text-3); pointer-events:none}
@@ -442,6 +443,8 @@ mark{padding:0 1px; border-radius:3px; background:var(--mark); color:inherit}
 /* ---------- 11 · tools panel ---------- */
 .tools-backdrop{position:fixed; inset:0; z-index:80; display:none; background:rgba(4,7,12,.55)}
 body.tools-open .tools-backdrop{display:block}
+body.tools-open{overflow:hidden}              /* the page behind a dialog does not scroll */
+body:has(.modal-bg){overflow:hidden}
 .tools-panel{
   position:fixed; top:0; right:0; bottom:0; z-index:85; display:flex; flex-direction:column; width:min(500px,100vw);
   border-left:1px solid var(--border-2); background:var(--bg-2); box-shadow:var(--shadow);
@@ -555,8 +558,8 @@ body.tools-open .tools-panel{transform:translateX(0); visibility:visible; transi
 .switch input:focus-visible + .track{outline:2px solid var(--accent); outline-offset:3px}
 @media (prefers-reduced-motion:reduce){*{animation:none!important; transition:none!important}}
 @media (prefers-contrast:more){
-  :root{--border:#3a4a63; --border-2:#52668a; --text-3:#a3afc4}
-  html[data-theme="light"]{--border:#aab8cc; --border-2:#7c8da6; --text-3:#3f4c61}
+  :root{--border:#3a4a63; --border-2:#52668a; --field:#8fa1c2; --text-3:#a3afc4}
+  html[data-theme="light"]{--border:#aab8cc; --border-2:#7c8da6; --field:#55657d; --text-3:#3f4c61}
 }
 *{scrollbar-width:thin; scrollbar-color:var(--border-2) transparent}
 ::-webkit-scrollbar{width:10px; height:10px}
@@ -594,7 +597,7 @@ body.tools-open .tools-panel{transform:translateX(0); visibility:visible; transi
   body.nav-open .sidebar{transform:translateX(0); visibility:visible; transition:transform .2s ease}
   .nav-backdrop{position:fixed; inset:0; z-index:65; background:rgba(4,7,12,.55)}
   body.nav-open .nav-backdrop{display:block}
-  body.nav-open,body.tools-open{overflow:hidden}
+  body.nav-open{overflow:hidden}
 
   .content{padding:18px 14px 56px}
   .ch-title{font-size:20px}
@@ -706,7 +709,7 @@ body.tools-open .tools-panel{transform:translateX(0); visibility:visible; transi
   <main class="content" role="main">
     <div class="content-head">
       <div class="ch-info">
-        <h1 class="ch-title" id="catTitle">Essentials</h1>
+        <h1 class="ch-title" id="catTitle" tabindex="-1">Essentials</h1>
         <p class="ch-desc" id="catDesc"></p>
         <div class="search-ops" id="searchOps" hidden></div>
       </div>
@@ -743,7 +746,7 @@ body.tools-open .tools-panel{transform:translateX(0); visibility:visible; transi
       <label class="switch" title="OPSEC mode — hides authenticated internet-scan engines that log your query against your account (Shodan, FOFA, ZoomEye, Censys, Hunter.how, Netlas, Onyphe, BinaryEdge), plus urlscan">
         <input type="checkbox" id="opsec"><span class="track" aria-hidden="true"></span>OPSEC
       </label>
-      <span class="tb-count" id="visibleCount" aria-live="polite" aria-atomic="true"></span>
+      <span class="tb-count"><span id="visibleCount" aria-live="polite" aria-atomic="true"></span><span class="t" id="visibleTarget"></span></span>
     </div>
 
     <div id="grid" class="results" tabindex="-1"></div>
@@ -1185,7 +1188,8 @@ function openCommonCrawl(e, q, t){
     const url = buildUrl("cc", q, t);
     if (tab){ try { tab.opener = null; } catch(_){} tab.location.replace(url); }
     else toast("Allow pop-ups for this site to open CommonCrawl");
-    render();                                          // hrefs pick up the confirmed id
+    // point the links already on screen at the confirmed index (no re-render, so focus stays put)
+    $$(".eng-btn[data-cc]").forEach(a => { a.href = buildUrl("cc", a.dataset.cc, currentTarget()); });
   });
 }
 
@@ -1585,10 +1589,11 @@ const RECIPES = {
  * State + storage
  * ============================================================ */
 const STORAGE_KEY = "ndo_state_v1";
+const SEVERITIES = ["info","low","med","high","crit"];
 let state = {
   cat: ESS,           // the view: ESS (Essentials, the default), -1 (all dorks) or an index into DATA
   filter: "",
-  sevs: new Set(["info","low","med","high","crit"]),
+  sevs: new Set(SEVERITIES),
   opsec: false,
   recipe: null,       // active recipe key (string) or null
   shortcutsOff: false, // disable single-character keyboard shortcuts (WCAG 2.1.4)
@@ -1597,10 +1602,17 @@ let state = {
 function loadState(){
   try{
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw){ const s = JSON.parse(raw); Object.assign(state, s); state.sevs = new Set(s.sevs||["info","low","med","high","crit"]); }
-    // Clamp a stale/tampered view index so a shrunk catalog can't blank the page.
-    if (state.cat !== -1 && !catAt(state.cat)) state.cat = ESS;
+    if (raw){ const s = JSON.parse(raw); if (s && typeof s === "object") Object.assign(state, s); }
   }catch(e){}
+  // Whatever storage held (an older version's shape, a hand-edited value), end up with a usable state:
+  // a stale view index must not blank the page, and every field must have the type the app expects.
+  if (state.cat !== -1 && !catAt(state.cat)) state.cat = ESS;
+  const sevs = (Array.isArray(state.sevs) ? state.sevs : []).filter(s => SEVERITIES.includes(s));
+  state.sevs = new Set(sevs.length ? sevs : SEVERITIES);
+  state.filter = typeof state.filter === "string" ? state.filter : "";
+  state.history = (Array.isArray(state.history) ? state.history : []).map(normHost).filter(Boolean).slice(0, 8);
+  if (!RECIPES[state.recipe]) state.recipe = null;
+  state.opsec = !!state.opsec; state.shortcutsOff = !!state.shortcutsOff;
 }
 function saveState(){
   try{
@@ -1655,8 +1667,8 @@ function readHash(fromNav){
   }
   if (fromNav || params.has("filter")) state.filter = params.get("filter") || "";
   if (params.has("sev")){
-    state.sevs = new Set((params.get("sev")||"").split(",").filter(Boolean));
-    if (state.sevs.size === 0) state.sevs = new Set(["info","low","med","high","crit"]);
+    state.sevs = new Set((params.get("sev")||"").split(",").filter(s => SEVERITIES.includes(s)));
+    if (state.sevs.size === 0) state.sevs = new Set(SEVERITIES);
   }
   if (params.has("target")){
     const t = normHost(params.get("target")||"");
@@ -1716,10 +1728,11 @@ function selectCategory(i){
   state.cat = i;
   if (i === ESS) state.recipe = null;      // Essentials is its own curated lens; a recipe would hide most of it
   saveState(); writeHash();
-  closeNav();
+  const fromDrawer = closeNav();
   syncControls();
   render();
   window.scrollTo(0, 0);
+  if (fromDrawer) $("#catTitle").focus();     // the drawer is gone: land on the new view's title
 }
 // The sidebar is built once; render() only moves the active marker, so keyboard focus survives.
 function buildNav(){
@@ -1994,15 +2007,17 @@ function renderResults(view){
   if (!view.total) frag.appendChild(emptyState(view));
   $grid.replaceChildren(frag);
 
-  // result count (announced to screen readers), Open-all counter, operator chips
+  // Result count, Open-all counter, operator chips. The count is a polite live region, so it is only
+  // touched when its text really changes; the target sits beside it, outside the region, or every
+  // keystroke in the target box would be read out.
   const vc = $("#visibleCount");
   if (vc){
-    const scope = view.global ? "" : catAt(state.cat).label;
     const inView = state.cat === -1 ? totalCounts().dorks : catAt(state.cat).items.length;   // before filters
-    const where = document.createElement("span"); where.className = "t"; where.textContent = ` · ${t}`;
-    vc.replaceChildren(view.searching
-      ? `${view.total} result${view.total === 1 ? "" : "s"}` + (view.global ? "" : ` in ${scope}`)
-      : view.total === inView ? `${inView} dorks` : `${view.total} of ${inView} dorks`, where);
+    const text = view.searching
+      ? `${view.total} result${view.total === 1 ? "" : "s"}` + (view.global ? "" : ` in ${catAt(state.cat).label}`)
+      : view.total === inView ? `${inView} dorks` : `${view.total} of ${inView} dorks`;
+    if (vc.textContent !== text) vc.textContent = text;
+    $("#visibleTarget").textContent = ` · ${t}`;
   }
   const oc = $("#openCount"); if (oc) oc.textContent = view.total;
   const ob = $("#openCat"); if (ob) ob.disabled = !view.total;
@@ -2054,7 +2069,7 @@ function emptyState(view){
 }
 // Severity + recipe back to "everything". OPSEC is a safety setting, so it is only ever turned off explicitly.
 function resetFilters(){
-  state.sevs = new Set(["info","low","med","high","crit"]);
+  state.sevs = new Set(SEVERITIES);
   state.recipe = null;
   saveState(); writeHash(); syncControls(); render();
 }
@@ -2162,7 +2177,7 @@ function renderCard(it, t, opts){
     a.title = `Run on ${e.name}` + (e.auth ? " (login required)" : "");
     a.innerHTML = `<span class="swatch" style="background:${e.color}"></span>${escHtml(e.name)}`
       + (e.auth ? `${icon("lock")}<span class="visually-hidden"> (login required)</span>` : "") + icon("external", "arr");
-    if (L.engine === "cc") a.addEventListener("click", ev => openCommonCrawl(ev, L.q, t));
+    if (L.engine === "cc"){ a.dataset.cc = L.q; a.addEventListener("click", ev => openCommonCrawl(ev, L.q, t)); }
     engines.appendChild(a);
   });
   foot.appendChild(engines);
@@ -2683,7 +2698,7 @@ function applyRecipe(name){
   state.recipe = r ? name : null;
   state.cat = -1;                                   // a recipe spans every category
   state.filter = "";
-  state.sevs = new Set(["info","low","med","high","crit"]);
+  state.sevs = new Set(SEVERITIES);
   saveState(); writeHash(); syncControls(); render();
   window.scrollTo(0, 0);
   // Some recipes pair with a recon tool: point at it instead of throwing a panel over the results.
@@ -2705,8 +2720,12 @@ function setOpsec(on){
  * Bookmarklet
  * ============================================================ */
 function makeBookmarklet(){
-  // Opened from disk there is no usable origin, so fall back to the hosted app.
-  const base = /^https?:$/.test(location.protocol) ? location.origin + location.pathname : "https://dorks.bersec.me/";
+  // The app's own URL is baked into the bookmarklet's code, and a bookmarklet later runs inside whatever
+  // site the user clicks it on — so only a strictly whitelisted path may be embedded. Anything with
+  // quotes, %-escapes (a javascript: URL is percent-decoded before it runs) or other punctuation falls
+  // back to the site root; opened from disk there is no usable origin, so use the hosted app.
+  const path = /^\/[A-Za-z0-9._~\/-]*$/.test(location.pathname) ? location.pathname : "/";
+  const base = /^https?:\/\/[A-Za-z0-9.-]+(:\d+)?$/.test(location.origin) ? location.origin + path : "https://dorks.bersec.me/";
   const code = `(function(){window.open('${base}#cat=essentials&target='+encodeURIComponent(location.hostname),'_blank');})();`;
   return "javascript:" + code;
 }
@@ -2752,11 +2771,22 @@ function closeTools(){
   if (toolsLastFocus && toolsLastFocus.focus){ toolsLastFocus.focus(); toolsLastFocus = null; }
 }
 function toggleTools(){ document.body.classList.contains("tools-open") ? closeTools() : openTools(); }
-// On small screens the sidebar is a slide-in drawer.
-function openNav(){ document.body.classList.add("nav-open"); $("#navBtn").setAttribute("aria-expanded", "true"); }
-function closeNav(){
+// On small screens the sidebar is a slide-in drawer: focus moves into it and the page behind is inert.
+function openNav(){
+  document.body.classList.add("nav-open");
+  $("#navBtn").setAttribute("aria-expanded", "true");
+  $(".content").setAttribute("inert", "");
+  const cur = $(".nav-item.active", $catNav) || $(".nav-item", $catNav);
+  if (cur) cur.focus();
+}
+// refocus: hand focus back to the menu button (Esc / backdrop). Returns whether the drawer was open.
+function closeNav(refocus){
+  if (!document.body.classList.contains("nav-open")) return false;
   document.body.classList.remove("nav-open");
-  const b = $("#navBtn"); if (b) b.setAttribute("aria-expanded", "false");
+  $(".content").removeAttribute("inert");
+  const b = $("#navBtn"); b.setAttribute("aria-expanded", "false");
+  if (refocus) b.focus();
+  return true;
 }
 function syncFilterClear(){
   const w = $("#filterWrap");
@@ -2797,7 +2827,7 @@ function wire(){
     p.onclick = () => {
       const k = p.dataset.sev;
       if (state.sevs.has(k)) state.sevs.delete(k); else state.sevs.add(k);
-      if (state.sevs.size === 0) state.sevs = new Set(["info","low","med","high","crit"]);   // "none" would just be an empty page
+      if (state.sevs.size === 0) state.sevs = new Set(SEVERITIES);   // "none" would just be an empty page
       saveState(); writeHash(); syncControls(); render();
     };
   });
@@ -2823,8 +2853,11 @@ function wire(){
   $("#toolsBackdrop").onclick = closeTools;
 
   // Mobile navigation drawer
-  $("#navBtn").onclick = () => document.body.classList.contains("nav-open") ? closeNav() : openNav();
-  $("#navBackdrop").onclick = closeNav;
+  $("#navBtn").onclick = () => { if (!closeNav(true)) openNav(); };
+  $("#navBackdrop").onclick = () => closeNav(true);
+  const wide = window.matchMedia("(min-width:901px)");          // resized to desktop with the drawer open: close it
+  const onWide = e => { if (e.matches) closeNav(); };
+  if (wide.addEventListener) wide.addEventListener("change", onWide); else if (wide.addListener) wide.addListener(onWide);
 
   // Bookmarklet: a draggable link (drag it to the bookmarks bar), with click-to-copy as a fallback
   const $bm = $("#bookmarklet");
@@ -2848,12 +2881,12 @@ function wire(){
 
   // Keyboard
   document.addEventListener("keydown", e => {
-    if (e.key === "Escape"){ if (!closeExportMenu()){ closeModal(); closeTools(); closeNav(); } return; }
+    if (e.key === "Escape"){ if (!closeExportMenu()){ closeModal(); closeTools(); closeNav(true); } return; }
     if (e.ctrlKey || e.metaKey || e.altKey) return;        // never hijack Ctrl+C and friends
     const el = e.target, tag = (el && el.tagName) || "";
     if (["INPUT","TEXTAREA","SELECT"].includes(tag) || (el && el.isContentEditable)) return;
     if (state.shortcutsOff) return;                         // WCAG 2.1.4 — single-key shortcuts can be turned off
-    if ($("#modalRoot").firstChild || document.body.classList.contains("tools-open")) return;   // a dialog is open
+    if ($("#modalRoot").firstChild || /\b(tools|nav)-open\b/.test(document.body.className)) return;   // a dialog or drawer is open
     if (e.key === "/"){ e.preventDefault(); $filter.focus(); }
     else if (e.key === "?"){ openHelp(); }
     else if (e.key === "j" || e.key === "k"){
