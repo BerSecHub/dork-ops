@@ -27,7 +27,9 @@ The catalog was reviewed against the engines' current documentation, every dork 
 - The secret-pattern and GHDB lists left the tools panel — they are ordinary dorks now: searchable, trackable, exportable.
 - Recipes: **Perimeter** and **No account needed** are new; *OPSEC-safe* is gone (the OPSEC switch does that).
 
-### Fixes (from an independent code review)
+### Fixes
+
+Most of these came out of an independent code review.
 
 - The target is parsed, not stripped: `example.com:8443`, `user@host`, a query string or an IDN no longer become a different host.
 - `engine:sh` means Shodan, not crt.sh; odd operator values and absurdly long queries can no longer throw.
