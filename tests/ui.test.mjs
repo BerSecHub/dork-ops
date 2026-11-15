@@ -47,65 +47,98 @@ const settle = p => p.waitForTimeout(180);
 {
   const p = await newPage();
   const d = await p.evaluate(() => {
-    const sevs = new Set(['crit', 'high', 'med', 'low', 'info']);
-    const bad = [], dupNames = [];
+    const sevs = new Set(SEVERITIES);
+    const bad = [], dupNames = [], badUrl = [], tooLong = [], unresolved = [], unscoped = [], badTags = [];
+    const used = new Set();
     DATA.forEach(c => {
       const seen = new Set();
       c.items.forEach(it => {
-        if (!it.name || !it.desc || !sevs.has(it.sev) || !Array.isArray(it.tags) || !it.tags.length || !ENGINES[it.engine] || !it.q) bad.push(`${c.id}/${it.name}`);
-        if (seen.has(it.name)) dupNames.push(`${c.id}/${it.name}`); seen.add(it.name);
+        const where = `${c.id}/${it.name}`;
+        if (!it.name || !it.desc || !sevs.has(it.sev) || !Array.isArray(it.tags) || !it.tags.length || !it.q) bad.push(where);
+        if (it.tags.some(t => !/^[a-z0-9][a-z0-9._-]*$/.test(t))) badTags.push(where);
+        if (seen.has(it.name)) dupNames.push(where); seen.add(it.name);
+        if (!/\{t(_no_tld)?\}/.test(it.q)) unscoped.push(where);
+        [{ engine: it.engine, q: it.q }, ...(it.links || [])].forEach(L => {
+          if (!has(ENGINES, L.engine) || !L.q) { bad.push(where + ' → ' + L.engine); return; }
+          used.add(L.engine);
+          if (!/^https:\/\//.test(buildUrl(L.engine, L.q, 'example.com'))) badUrl.push(where + ' → ' + L.engine);
+          const q = applyTemplate(L.q, 'example.com');
+          if (['g', 'bg', 'ddg', 'ya', 'li'].includes(L.engine) && q.split(/\s+/).length > 32) tooLong.push(where + ' → ' + L.engine);
+          if (/\{[a-z_]+\}/.test(q.replace(/\{\d+(,\d*)?\}/g, ''))) unresolved.push(where + ' → ' + L.engine);
+        });
+        if (/\{[a-z_]+\}/.test(applyTemplate(it.desc, 'example.com'))) unresolved.push(where + ' (desc)');
       });
     });
-    const icons = DATA.map(c => c.icon);
+    const icons = DATA.map(c => c.icon), ids = DATA.map(c => c.id);
     const refs = ESSENTIAL_STEPS.flatMap(s => s.refs);
-    const usedEngines = new Set(DATA.flatMap(c => c.items.map(i => i.engine)));
+    const groups = []; DATA.forEach(c => { if (groups[groups.length - 1] !== c.group) groups.push(c.group); });
     return {
-      dorks: DATA.reduce((n, c) => n + c.items.length, 0), cats: DATA.length, engines: Object.keys(ENGINES).length,
-      bad, dupNames, dupIcons: icons.filter((x, i) => icons.indexOf(x) !== i),
+      dorks: DATA.reduce((n, c) => n + c.items.length, 0), cats: DATA.length, endpoints: Object.keys(ENGINES).length, services: ENGINE_SERVICES,
+      bad, badTags, dupNames, badUrl, tooLong, unresolved, unscoped,
+      dupIcons: icons.filter((x, i) => icons.indexOf(x) !== i), dupIds: ids.filter((x, i) => ids.indexOf(x) !== i),
+      unusedEngines: Object.keys(ENGINES).filter(k => !used.has(k)),
+      groups, noGroup: DATA.filter(c => !c.group).map(c => c.id),
       essRefs: refs.length, essResolved: ESSENTIALS.items.length, essUnique: new Set(ESSENTIALS.items).size,
       recipesEmpty: Object.keys(RECIPES).filter(k => { state.recipe = k; const n = DATA.reduce((a, c) => a + c.items.filter(i => itemMatchesRecipe(i, c.id)).length, 0); state.recipe = null; return n === 0; }),
       recipeNoMeta: Object.keys(RECIPES).filter(k => !RECIPES[k].label || !RECIPES[k].desc),
-      crtUsed: usedEngines.has('crt'),
-      urlsOk: DATA.every(c => c.items.every(i => /^https:\/\//.test(buildUrl(i.engine, i.q, 'example.com')))),
-      unresolved: DATA.flatMap(c => c.items.filter(i => /\{(t|t_no_tld|date|org|target)\}/.test(applyTemplate(i.q, 'example.com') + applyTemplate(i.desc, 'example.com'))).map(i => i.name)),
+      keys: new Set(DATA.flatMap(c => c.items.map(i => i.key))).size,
     };
   });
-  check('catalog: 232 dorks / 18 categories / 39 engines', d.dorks === 232 && d.cats === 18 && d.engines === 39, d);
-  check('catalog: every item is well-formed', d.bad.length === 0, d.bad);
-  check('catalog: dork names unique per category', d.dupNames.length === 0, d.dupNames);
-  check('catalog: category icons are unique', d.dupIcons.length === 0, d.dupIcons);
-  check('catalog: every dork builds an https URL', d.urlsOk);
-  check('catalog: no unresolved {placeholders} in query or description', d.unresolved.length === 0, d.unresolved);
-  check('essentials: all refs resolve, no duplicates', d.essRefs === 15 && d.essResolved === 15 && d.essUnique === 15, d);
+  check('catalog: 300+ dorks in 19 categories on 40+ engines', d.dorks >= 300 && d.cats === 19 && d.services >= 40 && d.endpoints >= d.services, { dorks: d.dorks, cats: d.cats, services: d.services, endpoints: d.endpoints });
+  check('catalog: every item is well-formed (fields, severity, engine of every link)', d.bad.length === 0, d.bad);
+  check('catalog: tags are lowercase slugs', d.badTags.length === 0, d.badTags);
+  check('catalog: dork names unique per category, every dork has its own key', d.dupNames.length === 0 && d.keys === d.dorks, d.dupNames);
+  check('catalog: category ids and icons are unique', d.dupIcons.length === 0 && d.dupIds.length === 0, { icons: d.dupIcons, ids: d.dupIds });
+  check('catalog: every category sits in a group, groups are contiguous', d.noGroup.length === 0 && new Set(d.groups).size === d.groups.length && d.groups.length === 5, d.groups);
+  check('catalog: every dork and every extra engine link builds an https URL', d.badUrl.length === 0, d.badUrl);
+  check('catalog: web-search queries stay within Google\'s 32-word limit', d.tooLong.length === 0, d.tooLong);
+  check('catalog: no unresolved {placeholders} in any query or description', d.unresolved.length === 0, d.unresolved);
+  check('catalog: every dork is scoped to the target', d.unscoped.length === 0, d.unscoped);
+  check('engines: none is registered without a dork that uses it', d.unusedEngines.length === 0, d.unusedEngines);
+  check('essentials: all refs resolve, no duplicates', d.essRefs >= 15 && d.essResolved === d.essRefs && d.essUnique === d.essRefs, d);
   check('recipes: each has label + desc and matches something', d.recipeNoMeta.length === 0 && d.recipesEmpty.length === 0, d);
-  check('engines: crt.sh dorks use the crt engine', d.crtUsed);
 
-  const e = await p.evaluate(() => ({
-    ze: ENGINES.ze.url('x'), ghdb: ENGINES.ghdb.url('zzz'), ghr: ENGINES.ghr.url('org:x'), cen: ENGINES.cen.name,
-    auth: [ENGINES.gn.auth, ENGINES.vt.auth, ENGINES.lx.auth], opsec: [ENGINES.hh, ENGINES.nl, ENGINES.oy, ENGINES.be].map(x => x.opsec),
-    cc: ENGINES.cc.url('x').includes(CC_LATEST + '-index'),
-    crt: buildUrl('crt', DATA.find(c => c.id === 'dns').items[0].q, 'example.com'),
-    s3: DATA.find(c => c.id === 'cloud').items.find(i => i.name === 'S3 by bucket name').q,
-    yaml: DATA.find(c => c.id === 'raw-gh').items.some(i => i.q.includes('filetype:yaml OR filetype:yml')),
-    shodan: DATA.find(c => c.id === 'net').items.find(i => i.name === 'Shodan org').q,
-    saml: DATA.find(c => c.id === 'attack').items.find(i => i.name === 'SAML metadata exposed').q,
-    sg: DATA.find(c => c.id === 'code').items.find(i => i.name === 'Sourcegraph multi-lang').q,
-    orgEnum: DATA.find(c => c.id === 'code').items.find(i => i.name === 'GitHub org enum').engine,
-  }));
-  check('engines: ZoomEye on .ai', e.ze.includes('zoomeye.ai'), e.ze);
-  check('engines: GHDB opens the searchable DB', e.ghdb === 'https://www.exploit-db.com/google-hacking-database', e.ghdb);
-  check('engines: GitHub Repos engine', e.ghr.includes('type=repositories'), e.ghr);
-  check('engines: Censys flagged legacy', /legacy/i.test(e.cen), e.cen);
+  const e = await p.evaluate(() => {
+    const find = (cat, name) => DATA.find(c => c.id === cat).items.find(i => i.name === name);
+    const dec = u => atob(decodeURIComponent(new URL(u).searchParams.get(u.includes('fofa') ? 'qbase64' : 'q')));
+    return {
+      dead: ['be', 'sc', 'dd', 'pb', 'ghdb', 'gnp', 'bd'].filter(k => has(ENGINES, k)),
+      cen: ENGINES.cen.url('host.dns.names: "example.com"'), cenName: ENGINES.cen.name,
+      ze: dec(ENGINES.ze.url('domain="example.com"')), fo: dec(ENGINES.fo.url('domain="example.com"')),
+      shf: ENGINES.shf.url('facet:http.title ssl:"example.com"'),
+      nd: decodeURIComponent(ENGINES.nd.url('example.com')), gn: ENGINES.gn.url('x'), oy: ENGINES.oy.url('x'), lx: ENGINES.lx.url('x'), hh: ENGINES.hh.url('x'),
+      ghr: ENGINES.ghr.url('org:x'), ghAuth: ENGINES.gh.auth,
+      auth: [ENGINES.gn.auth, ENGINES.vt.auth, ENGINES.lx.auth], opsec: [ENGINES.sh, ENGINES.shf, ENGINES.fo, ENGINES.cen, ENGINES.ze, ENGINES.hh, ENGINES.nl, ENGINES.oy, ENGINES.fh].map(x => x.opsec),
+      cc: ENGINES.cc.url('x').includes(CC_LATEST + '-index'),
+      crt: buildUrl('crt', find('dns', 'crt.sh wildcard JSON').q, 'example.com'),
+      wa: ENGINES.wa.url('example.com/*'),
+      s3: find('cloud', 'S3 by bucket name').q, shodan: find('net', 'Shodan org').q, saml: find('attack', 'SAML metadata exposed').q,
+      sg: find('code', 'Sourcegraph multi-lang').q, orgEnum: find('code', 'GitHub org enum'),
+      censys: DATA.flatMap(c => c.items).flatMap(i => [i, ...(i.links || [])]).filter(l => l.engine === 'cen').map(l => l.q),
+      zoomeye: DATA.flatMap(c => c.items).flatMap(i => [i, ...(i.links || [])]).filter(l => l.engine === 'ze').map(l => l.q),
+      key: find('secrets', 'AWS Access Key ID (AKIA)'), dbUrl: find('secrets', 'Database URLs with credentials').q,
+      web: find('edge', 'Palo Alto GlobalProtect'), svc: find('services', 'Redis'), any: find('services', 'Grafana, Kibana & Prometheus'),
+    };
+  });
+  check('engines: the dead ones are gone (BinaryEdge, searchcode, DNSDumpster, Phonebook, …)', e.dead.length === 0, e.dead);
+  check('engines: Censys points at the Platform with CenQL fields; no legacy services.* syntax left', e.cen === 'https://platform.censys.io/search?q=host.dns.names%3A%20%22example.com%22' && !/legacy/i.test(e.cenName) && e.censys.length > 5 && e.censys.every(q => /\b(host|web)\./.test(q) && !/(^|[\s(])services\./.test(q)), { cen: e.cen, bad: e.censys.filter(q => !/\b(host|web)\./.test(q)) });
+  check('engines: ZoomEye and FOFA get a base64 query; ZoomEye dorks use field="value"', e.ze === 'domain="example.com"' && e.fo === 'domain="example.com"' && e.zoomeye.every(q => /^[a-z.]+="/.test(q)), e);
+  check('engines: Shodan facets split the facet from the query', e.shf === 'https://www.shodan.io/search/facet?query=ssl%3A%22example.com%22&facet=http.title', e.shf);
+  check('engines: NerdyData, GreyNoise, Onyphe, LeakIX and Hunter.how use their current deep links', e.nd.includes('/reports/new?search={"all":[{"type":"code","value":"example.com"}]') && e.gn === 'https://viz.greynoise.io/ips?q=x' && e.oy === 'https://search.onyphe.io/search?q=x' && e.lx === 'https://leakix.net/search?scope=leak&q=x' && e.hh === 'https://hunter.how/list?searchValue=x', e);
+  check('engines: GitHub repos endpoint; code search is flagged as needing a login', e.ghr.includes('type=repositories') && e.ghAuth === true, e.ghr);
   check('engines: auth flags on GreyNoise / VirusTotal / LeakIX', e.auth.every(x => x === true), e.auth);
-  check('engines: OPSEC flags on Hunter.how / Netlas / Onyphe / BinaryEdge', e.opsec.every(x => x === false), e.opsec);
+  check('engines: every internet scanner is hidden in OPSEC mode', e.opsec.every(x => x === false), e.opsec);
   check('engines: CommonCrawl uses the resolved crawl id', e.cc);
   check('engines: crt.sh URL', e.crt === 'https://crt.sh/?q=%25.example.com&output=json', e.crt);
+  check('engines: Wayback turns a plain pattern into a capture listing', e.wa === 'https://web.archive.org/web/*/example.com/*', e.wa);
   check('dorks: S3 matches bucket names (no negation)', e.s3.includes('"{t_no_tld}-backup"') && !e.s3.includes('-backup OR'), e.s3);
-  check('dorks: YAML covers .yml', e.yaml);
   check('dorks: Shodan org uses the org label', e.shodan === 'org:"{t_no_tld}"', e.shodan);
   check('dorks: SAML is single-level', e.saml === 'site:{t} (inurl:"/saml/metadata" OR "EntityDescriptor")', e.saml);
   check('dorks: Sourcegraph parenthesised', e.sg.includes('(lang:yaml OR lang:dotenv)'), e.sg);
-  check('dorks: org enum on GitHub Repos', e.orgEnum === 'ghr', e.orgEnum);
+  check('dorks: org enum on GitHub repos, without the no-op fork:false', e.orgEnum.engine === 'ghr' && e.orgEnum.q === 'org:{t_no_tld}', e.orgEnum);
+  check('dorks: secret formats run as a target-scoped GitHub regex, with grep.app as the global variant', e.key.engine === 'gh' && e.key.q === '"{t}" /AKIA[0-9A-Z]{16}/' && e.key.links[0].engine === 'gra' && e.key.links[0].q === 'AKIA[0-9A-Z]{16}' && e.dbUrl.includes(':\\/\\/'), { key: e.key, dbUrl: e.dbUrl });
+  check('dorks: scanner fingerprints are scoped by certificate, reverse DNS and root domain', e.web.q === 'ssl:"{t}" http.title:"globalprotect"' && e.web.links[0].q === 'hostname:"{t}" http.title:"globalprotect"' && e.web.links[0].label === 'Shodan · rDNS' && e.web.links[1].q === 'domain="{t}" && title="globalprotect"', e.web);
+  check('dorks: bare services are scoped by reverse DNS and org; multi-product dorks use FOFA + Censys lists', e.svc.q.startsWith('hostname:"{t}" ') && e.svc.links[0].q.startsWith('org:"{t_no_tld}" ') && e.any.engine === 'fo' && e.any.q.includes('title="Grafana" || title="Kibana"') && e.any.links[0].q.includes('html_title: {"Grafana", "Kibana", "Prometheus Time Series"}'), { svc: e.svc, any: e.any });
   await p.context().close();
 }
 
@@ -121,10 +154,11 @@ const settle = p => p.waitForTimeout(180);
     h1: document.querySelectorAll('h1').length, placeholder: document.getElementById('filter').placeholder,
   }));
   check('home: Essentials is the default view', home.title.endsWith('Essentials') && home.active === 'Essentials' && home.current === 1, home);
-  check('home: 15 cards in 4 numbered steps, each with its category', home.cards === 15 && home.groups === 4 && home.steps === 4 && home.pills === 15, home);
-  check('home: counter + Open-all agree', home.count.startsWith('15 dorks') && home.open === '15', home);
+  const ESS_N = await p.evaluate(() => ESSENTIALS.items.length), ALL_N = await p.evaluate(() => DATA.reduce((n, c) => n + c.items.length, 0)), CAT_N = await p.evaluate(() => DATA.length);
+  check('home: the playbook in 4 numbered steps, each card with its category', home.cards === ESS_N && home.groups === 4 && home.steps === 4 && home.pills === ESS_N, home);
+  check('home: counter + Open-all agree', home.count.startsWith(`${ESS_N} dorks`) && home.open === String(ESS_N), home);
   check('home: nav has Essentials + My dorks + All + every category', home.nav === 3 + (await p.evaluate(() => DATA.length)), home.nav);
-  check('home: exactly one h1, live placeholder count', home.h1 === 1 && home.placeholder.includes('232'), home);
+  check('home: exactly one h1, live placeholder count', home.h1 === 1 && home.placeholder.includes(String(ALL_N)), home);
 
   // search from Essentials is global
   await p.fill('#filter', 'stripe'); await settle(p);
@@ -144,14 +178,14 @@ const settle = p => p.waitForTimeout(180);
   check('search: removing a chip rewrites the query', (await p.inputValue('#filter')) === 'token -wayback', await p.inputValue('#filter'));
 
   await p.fill('#filter', 'engine:g'); await settle(p);
-  const eg = await p.evaluate(() => [...new Set([...document.querySelectorAll('.card .eng-btn')].map(a => a.textContent.trim()))]);
-  check('search: engine:g means Google only', eg.length === 1 && eg[0].startsWith('Google'), eg);
+  const eg = await p.evaluate(() => { const cards = [...document.querySelectorAll('.card')]; return { n: cards.length, noGoogle: cards.filter(c => ![...c.querySelectorAll('.eng-btn')].some(a => /^Google( ·|$)/.test(a.textContent.trim()))).map(c => c.dataset.key), ghOnly: cards.filter(c => BY_KEY.get(c.dataset.key).it.engine === 'gh' && !(BY_KEY.get(c.dataset.key).it.links || []).some(l => l.engine === 'g')).length }; });
+  check('search: engine:g means Google — every hit can be run on Google, GitHub-only dorks are not matched', eg.n > 50 && eg.noGoogle.length === 0 && eg.ghOnly === 0, eg);
 
   await p.fill('#filter', 'zzzzqqq'); await settle(p);
   const empty = await p.evaluate(() => ({ t: document.querySelector('.empty-state h2')?.textContent, btns: [...document.querySelectorAll('.empty-state .btn')].map(b => b.textContent), open: document.getElementById('openCat').disabled }));
   check('search: empty state with a way out, Open-all disabled', empty.t === 'No dorks match' && empty.btns.includes('Clear search') && empty.open === true, empty);
   await p.click('.empty-state .btn'); await settle(p);
-  check('search: Clear search restores the view', (await p.locator('.card').count()) === 15);
+  check('search: Clear search restores the view', (await p.locator('.card').count()) === ESS_N);
 
   // XSS probe through the search box and the hash
   await p.fill('#filter', '"<img src=x onerror=window.__xss=1>" <svg/onload=window.__xss=1>'); await settle(p);
@@ -161,14 +195,15 @@ const settle = p => p.waitForTimeout(180);
   // all dorks
   await p.click('.nav-item[data-view="-1"]'); await settle(p);
   const all = await p.evaluate(() => ({ cards: document.querySelectorAll('.card').length, heads: document.querySelectorAll('.group-head').length, count: document.getElementById('visibleCount').textContent, y: window.scrollY, hash: location.hash }));
-  check('all: 232 cards under 18 category headings', all.cards === 232 && all.heads === 18 && all.count.startsWith('232 dorks') && all.hash.includes('cat=all'), all);
+  check('all: every dork under its category heading', all.cards === ALL_N && all.heads === CAT_N && all.count.startsWith(`${ALL_N} dorks`) && all.hash.includes('cat=all'), all);
   await p.click('.group-head h2 button'); await settle(p);
-  check('all: a heading opens its category', (await p.evaluate(() => location.hash)).includes('cat=raw-gh') && (await p.locator('.card').count()) === 16);
+  const first = await p.evaluate(() => ({ id: DATA[0].id, n: DATA[0].items.length }));
+  check('all: a heading opens its category', (await p.evaluate(() => location.hash)).includes('cat=' + first.id) && (await p.locator('.card').count()) === first.n);
 
   // severity
   await p.click('.sev-pill[data-sev="crit"]'); await settle(p);
   const sev = await p.evaluate(() => ({ pressed: document.querySelector('.sev-pill[data-sev="crit"]').getAttribute('aria-pressed'), crit: document.querySelectorAll('.card[data-sev="crit"]').length, count: document.getElementById('visibleCount').textContent, hash: location.hash }));
-  check('filters: severity toggle (aria-pressed, counter "x of y", hash)', sev.pressed === 'false' && sev.crit === 0 && / of 16 dorks/.test(sev.count) && !/sev=[^&]*crit/.test(sev.hash), sev);
+  check('filters: severity toggle (aria-pressed, counter "x of y", hash)', sev.pressed === 'false' && sev.crit === 0 && new RegExp(` of ${first.n} dorks`).test(sev.count) && !/sev=[^&]*crit/.test(sev.hash), sev);
   await p.click('.sev-pill[data-sev="crit"]'); await settle(p);
 
   // recipes
@@ -180,11 +215,11 @@ const settle = p => p.waitForTimeout(180);
     cards: document.querySelectorAll('.card').length, exported: buildExportData().reduce((n, c) => n + c.items.length, 0), hash: location.hash,
     options: document.querySelectorAll('#recipe option').length,
   }));
-  check('recipes: select lists all 5 (+ none)', rec.options === 6, rec.options);
+  check('recipes: select lists every recipe (+ none)', rec.options === 1 + (await p.evaluate(() => Object.keys(RECIPES).length)), rec.options);
   check('recipes: becomes a named view over All dorks, capped per category', rec.title.endsWith('Bug Bounty Triage') && rec.active && rec.nav === 'All dorks' && rec.maxPerCat <= 4 && rec.cards > 0 && rec.hash.includes('recipe=bbTriage'), rec);
   check('export: exactly the visible dorks (recipe + cap respected)', rec.exported === rec.cards, rec);
   await p.click('.nav-item[data-view="-2"]'); await settle(p);
-  check('recipes: going to Essentials clears the recipe', await p.evaluate(() => state.recipe === null && document.getElementById('recipe').value === '' && document.querySelectorAll('.card').length === 15));
+  check('recipes: going to Essentials clears the recipe', await p.evaluate(() => state.recipe === null && document.getElementById('recipe').value === '' && document.querySelectorAll('.card').length === ESSENTIALS.items.length));
 
   // OPSEC
   await p.goto(FILE + '#cat=net'); await p.reload(); await settle(p);
@@ -243,13 +278,13 @@ const settle = p => p.waitForTimeout(180);
   // other token styles
   const tk = await p.evaluate(() => {
     const find = (cat, name) => { state.cat = DATA.findIndex(c => c.id === cat); state.filter = ''; render(); return [...document.querySelectorAll('.card')].find(c => c.querySelector('.card-title').textContent === name); };
-    const re = find('secrets', 'AWS Access Key ID (AKIA)'); const a = { re: !!re.querySelector('.tk-re'), brk: re.querySelector('code').classList.contains('brk') };
+    const re = find('secrets', 'AWS Access Key ID (AKIA)'); const a = { re: re.querySelector('.tk-re').textContent, s: re.querySelector('.tk-s').textContent, brk: re.querySelector('code').classList.contains('brk'), btns: [...re.querySelectorAll('.eng-btn')].map(b => b.textContent.trim()) };
     const url = find('wayback', 'All historical URLs'); const b = { brk: url.querySelector('code').classList.contains('brk'), t: url.querySelectorAll('.tk-t').length, o: url.querySelectorAll('.tk-o').length, btn: url.querySelector('.eng-btn').textContent.trim() };
-    const fofa = find('cdn', 'FOFA body + not-cloudflare'); const c = { o: [...fofa.querySelectorAll('.tk-o')].map(x => x.textContent), k: [...fofa.querySelectorAll('.tk-k')].map(x => x.textContent), lock: !!fofa.querySelector('.eng-btn .visually-hidden') };
+    const fofa = find('net', 'CDN origin: FOFA body match'); const c = { o: [...fofa.querySelectorAll('.tk-o')].map(x => x.textContent), k: [...fofa.querySelectorAll('.tk-k')].map(x => x.textContent), lock: !!fofa.querySelector('.eng-btn .visually-hidden') };
     const crt = find('dns', 'crt.sh wildcard JSON'); const d = { btn: crt.querySelector('.eng-btn').textContent.trim(), code: crt.querySelector('code').textContent, desc: crt.querySelector('.card-desc').textContent };
     return { a, b, c, d };
   });
-  check('query: regex dorks get the regex style', tk.a.re && tk.a.brk, tk.a);
+  check('query: a GitHub /regex/ gets the regex style next to the quoted target; the global variant is its own button', tk.a.re === '/AKIA[0-9A-Z]{16}/' && tk.a.s === '"example.com"' && tk.a.brk && tk.a.btns.length === 2 && tk.a.btns[0].startsWith('GitHub') && tk.a.btns[1].startsWith('grep.app · global'), tk.a);
   check('query: URL dorks wrap evenly, only the target highlighted', tk.b.brk && tk.b.t === 1 && tk.b.o === 0 && tk.b.btn.startsWith('Wayback'), tk.b);
   check('query: FOFA operators + && recognised, login flagged for screen readers', tk.c.o.includes('body=') && tk.c.o.includes('cert.subject!=') && tk.c.k.includes('&&') && tk.c.lock, tk.c);
   check('query: crt.sh card is labelled crt.sh and its description is templated', tk.d.btn.startsWith('crt.sh') && tk.d.code === '%.example.com' && tk.d.desc.includes('%.example.com'), tk.d);
@@ -279,7 +314,7 @@ const settle = p => p.waitForTimeout(180);
     open: !!document.querySelector('.modal[role="dialog"][aria-modal="true"]'), top: document.querySelector('.modal-body').scrollTop,
     focus: document.activeElement.id, engines: document.querySelectorAll('.eng-chip').length, inView: document.querySelector('.modal h3').getBoundingClientRect().top < innerHeight,
   }));
-  check('help: opens at the top with focus on Close, lists 39 engines', h.open && h.top === 0 && h.focus === 'hmClose' && h.engines === 39 && h.inView, h);
+  check('help: opens at the top with focus on Close, lists every engine endpoint', h.open && h.top === 0 && h.focus === 'hmClose' && h.engines === (await p.evaluate(() => Object.keys(ENGINES).length)) && h.inView, h);
   // the page behind is inert, so Tab can only move inside the dialog (or out to the browser's own UI)
   const outside = [];
   for (let i = 0; i < 6; i++) { await p.keyboard.press(i % 2 ? 'Tab' : 'Shift+Tab'); outside.push(await p.evaluate(() => { const a = document.activeElement; return a === document.body || document.querySelector('.modal').contains(a) ? '' : a.tagName + '#' + a.id; })); }
@@ -297,14 +332,13 @@ const settle = p => p.waitForTimeout(180);
     focus: document.activeElement.id, tools: document.querySelectorAll('.tool .dt').length,
     aria: [...document.querySelectorAll('.tool .dt')].every(b => b.getAttribute('aria-expanded') === 'false' && document.getElementById(b.getAttribute('aria-controls'))),
   }));
-  check('tools: modal panel with 8 tools, background inert, focus moved in', t.open && !t.inert && t.bg && t.focus === 'toolsClose' && t.tools === 8 && t.aria, t);
+  check('tools: modal panel with 6 tools, background inert, focus moved in', t.open && !t.inert && t.bg && t.focus === 'toolsClose' && t.tools === 6 && t.aria, t);
   await p.click('.dt[data-drawer="perm"]');
   await p.evaluate(() => { document.getElementById('target').value = 'app.example.co.uk'; });
   await p.click('#permGo'); await settle(p);
   const pm = await p.evaluate(() => ({ exp: document.querySelector('.dt[data-drawer="perm"]').getAttribute('aria-expanded'), chips: [...document.querySelectorAll('#permChips .chip')].map(c => c.tagName + ':' + c.textContent) }));
   check('tools: permutations handle subdomain + multi-level TLD targets', pm.exp === 'true' && pm.chips.length > 40 && pm.chips.every(c => c.startsWith('BUTTON')) && pm.chips.some(c => c.endsWith(':example-dev.co.uk')) && !pm.chips.some(c => /\.ple\.|\.\./.test(c)), pm.chips.slice(0, 6));
-  await p.click('.dt[data-drawer="patterns"]');
-  check('tools: secret patterns moved in (15 one-click hunts)', (await p.locator('#patterns .pat').count()) === 15);
+  check('tools: the dork lists that used to live here (secret patterns, GHDB picks) are ordinary catalog dorks now', await p.evaluate(() => !document.getElementById('patterns') && !document.getElementById('ghdbList') && !!BY_KEY.get('files/Directory listings') && !!BY_KEY.get('secrets/Stripe live secret (sk_live_)')));
   await p.click('.dt[data-drawer="scope"]');
   await p.fill('#scopeIn', JSON.stringify({ data: [
     { attributes: { asset_identifier: '*.Example.com', asset_type: 'WILDCARD', eligible_for_submission: true } },
@@ -335,7 +369,7 @@ const settle = p => p.waitForTimeout(180);
   await p.keyboard.press('Escape');
   check('export: Esc closes only the menu and restores focus', await p.evaluate(() => document.getElementById('exportPop').hidden && document.activeElement.id === 'exportBtn'));
   const ex = await p.evaluate(() => { const d = buildExportData(); const md = buildMd(); return { cats: d.length, items: d.reduce((n, c) => n + c.items.length, 0), md: md.startsWith('# DorkOps — example.com') && md.includes('- [ ] **crt.sh wildcard JSON**'), desc: d.flatMap(c => c.items).every(i => !/\{t/.test(i.desc + i.query)) }; });
-  check('export: Essentials exports its 15 dorks under their real categories', ex.items === 15 && ex.cats >= 5 && ex.md && ex.desc, ex);
+  check('export: Essentials exports its dorks under their real categories', ex.items === (await p.evaluate(() => ESSENTIALS.items.length)) && ex.cats >= 5 && ex.md && ex.desc, ex);
 
   // keyboard
   await p.evaluate(() => { document.activeElement.blur(); window.__clip = []; Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText: t => { window.__clip.push(t); return Promise.resolve(); } } }); });
@@ -363,7 +397,7 @@ const settle = p => p.waitForTimeout(180);
   // brand = home; back/forward re-syncs controls
   await p.selectOption('#recipe', 'aiEra'); await p.fill('#filter', 'ollama'); await settle(p);
   await p.click('.brand'); await settle(p);
-  check('brand: click returns to a clean Essentials', await p.evaluate(() => state.cat === ESS && state.filter === '' && state.recipe === null && document.getElementById('filter').value === '' && document.querySelectorAll('.card').length === 15));
+  check('brand: click returns to a clean Essentials', await p.evaluate(() => state.cat === ESS && state.filter === '' && state.recipe === null && document.getElementById('filter').value === '' && document.querySelectorAll('.card').length === ESSENTIALS.items.length));
   await p.evaluate(() => { location.hash = '#cat=devops&sev=crit,high&filter=tfstate'; }); await settle(p);
   const nav = await p.evaluate(() => ({ cat: DATA[state.cat].id, filter: document.getElementById('filter').value, pills: [...document.querySelectorAll('.sev-pill.on')].map(x => x.dataset.sev).join(), cards: document.querySelectorAll('.card').length }));
   check('routing: a hand-edited hash drives view, search and severity pills', nav.cat === 'devops' && nav.filter === 'tfstate' && nav.pills === 'crit,high' && nav.cards >= 1, nav);
@@ -654,7 +688,7 @@ for (const [w, hgt] of [[390, 844], [360, 740], [320, 640], [768, 1024], [1024, 
       inert: document.querySelector('.content').hasAttribute('inert'), focus: document.activeElement.classList.contains('nav-item'), lock: getComputedStyle(document.body).overflowY }));
     await p.keyboard.press('j');                                   // single-key shortcuts must not act underneath the drawer
     const held = await p.evaluate(() => state.cat === ESS && document.body.classList.contains('nav-open'));
-    await p.click('.nav-item[data-view="3"]'); await settle(p);
+    await p.click(`.nav-item[data-view="${await p.evaluate(() => DATA.findIndex(c => c.id === 'devops'))}"]`); await settle(p);
     const after = await p.evaluate(() => ({ open: document.body.classList.contains('nav-open'), vis: getComputedStyle(document.getElementById('sidebar')).visibility, cat: DATA[state.cat].id,
       inert: document.querySelector('.content').hasAttribute('inert'), focus: document.activeElement.id }));
     check(`responsive ${w}px: nav drawer opens, navigates, closes (and leaves the tab order)`, n.open && n.exp === 'true' && n.vis === 'visible' && !after.open && after.cat === 'devops', { n, after });
@@ -702,7 +736,7 @@ for (const [w, hgt] of [[390, 844], [360, 740], [320, 640], [768, 1024], [1024, 
   await p.goto(FILE + '#cat=dns', { waitUntil: 'networkidle' }); await settle(p);
   await p.fill('#filter', 'aws'); await settle(p); await p.fill('#filter', ''); await settle(p);
   await p.click('#helpBtn'); await p.keyboard.press('Escape'); await p.click('#toolsBtn'); await p.keyboard.press('Escape');
-  await p.click('.nav-item[data-view="-1"]'); await settle(p); await p.click('.nav-item[data-view="6"]'); await settle(p);
+  await p.click('.nav-item[data-view="-1"]'); await settle(p); await p.click(`.nav-item[data-view="${await p.evaluate(() => DATA.findIndex(c => c.id === 'dns'))}"]`); await settle(p);
   check('privacy: browsing, searching and opening panels makes zero third-party requests', seen.length === 0, seen);
   const link = p.locator('.card', { hasText: 'CommonCrawl host index' }).locator('.eng-btn');
   const pinned = await link.getAttribute('href');
