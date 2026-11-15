@@ -2239,6 +2239,7 @@ let lastFocus = null;
 function openHelp(){
   const root = $("#modalRoot");
   if (root.firstChild) return;                       // already open
+  closeNav();                                        // never two overlays at once
   lastFocus = document.activeElement;
   const row = (k, v) => `<tr><td>${k}</td><td>${v}</td></tr>`;
   root.innerHTML = `<div class="modal-bg"><div class="modal" role="dialog" aria-modal="true" aria-labelledby="hm">
@@ -2755,6 +2756,7 @@ let toolsLastFocus = null;
 // Treat the recon panel as a modal dialog: move focus in, make the app behind inert
 // (which also traps Tab), and restore focus on close.
 function openTools(){
+  closeNav();                                   // never two overlays at once
   toolsLastFocus = document.activeElement;
   document.body.classList.add("tools-open");
   const panel = $("#toolsPanel");
