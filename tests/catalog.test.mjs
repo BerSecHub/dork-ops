@@ -212,11 +212,13 @@ for (const [re, actual, what] of [
   [/(\d+) hand-picked dorks/g, essentials, 'hand-picked dorks (Essentials)'],
   [/(\d+) of them also run on a second/g, withLinks, 'dorks with a second engine'],
   [/\((\d+) extra engine buttons/g, links, 'extra engine buttons'],
-  [/([\d,]+) GHDB dorks/g, libRows.ghdb, 'GHDB dorks in ghdb.js'],
-  [/([\d,]+) product fingerprints/g, libRows.fingerprints, 'products in fingerprints.js'],
-  [/top ([\d,]+) of the GHDB/g, libPicks.ghdb, 'GHDB top picks'],
-  [/([\d,]+) products on CISA's KEV list/g, libPicks.fingerprints, 'fingerprints on the KEV list'],
-]) for (const m of readme.matchAll(re)) if (+m[1].replace(/,/g, '') !== actual) fail(`README.md says "${m[0]}" but there are ${actual} ${what}`);
+]) for (const m of readme.matchAll(re)) if (+m[1] !== actual) fail(`README.md says "${m[0]}" but there are ${actual} ${what}`);
+// A library changes size whenever it is refreshed, so the README quotes those as round "N+" figures — true for
+// as long as the library holds at least that many.
+for (const [re, actual, what] of [
+  [/([\d,]+)\+ GHDB dorks/g, libRows.ghdb, 'GHDB dorks in ghdb.js'],
+  [/([\d,]+)\+ product fingerprints/g, libRows.fingerprints, 'products in fingerprints.js'],
+]) for (const m of readme.matchAll(re)) if (+m[1].replace(/,/g, '') > actual) fail(`README.md says "${m[0]}" but there are ${actual} ${what}`);
 
 console.log(`${dorks} dorks (+${links} links to further engines) · libraries: GHDB ${libRows.ghdb} (${libPicks.ghdb} picks), fingerprints ${libRows.fingerprints} (${libPicks.fingerprints} picks) · ${DATA.length} categories in ${groups.length} groups · ${ENGINE_SERVICES} engines (${Object.keys(ENGINES).length} endpoints) · ${ESSENTIAL_STEPS.reduce((n, s) => n + s.refs.length, 0)} in Essentials · ${Object.keys(RECIPES).length} recipes`);
 if (errors.length) { console.error(`\n${errors.length} problem${errors.length === 1 ? '' : 's'}:\n` + errors.map(e => '  ✗ ' + e).join('\n')); process.exit(1); }

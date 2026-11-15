@@ -651,6 +651,8 @@ const settle = p => p.waitForTimeout(180);
 {
   const ready = (pg, id) => pg.waitForFunction(i => LIBS.find(L => L.id === i).state === 'ready', id, { timeout: 15000 });
   const p = await newPage();
+  // sizes come from the page, never from this file: refreshing a library must not need a change here
+  const { G, GP } = await p.evaluate(() => ({ G: fmt(LIB_META.ghdb.count), GP: fmt(LIB_META.ghdb.picks) }));
   const fetched = [];
   p.on('request', r => { if (/\/(ghdb|fingerprints)\.js/.test(r.url())) fetched.push(r.url()); });
   await p.click('.nav-item[data-view="-1"]'); await settle(p);
@@ -671,7 +673,7 @@ const settle = p => p.waitForTimeout(180);
   check('ghdb: the pointer carries the search over — one same-origin fetch, hits highlighted', fetched.length === 1 && fetched[0].startsWith(ORIGIN) && fetched[0].includes('ghdb.js?v=') && viaHint.cat && viaHint.filter === 'jenkins'
     && viaHint.title === 'Search results' && viaHint.rows > 0 && viaHint.all && viaHint.marks >= viaHint.rows && /^\d+ results? in GHDB$/.test(viaHint.count) && viaHint.focus === 'catTitle', { fetched, viaHint });
   check('ghdb: a search goes through the whole library, not only the top picks — and the menu says so', viaHint.scope === '' && viaHint.sel === 'all' && viaHint.picksOff && !viaHint.hash.includes('scope=')
-    && viaHint.beyondPicks && viaHint.desc.includes('across all 7,944 GHDB dorks'), viaHint);
+    && viaHint.beyondPicks && viaHint.desc.includes(`across all ${G} GHDB dorks`), viaHint);
 
   await p.click('#filterClear'); await settle(p);
   const view = await p.evaluate(() => {
@@ -685,14 +687,14 @@ const settle = p => p.waitForTimeout(180);
       shownArePicks: rows.every(r => L.cat.items.find(it => it.key === r.dataset.key).pick), firstIsBest: first.dataset.key === L.cat.items[0].key,
       picksLead: L.cat.items.every((it, i) => it.pick === (i < L.meta.picks)), extras: rows.every(r => r.querySelectorAll('.card-foot button, .card-foot a').length === 4) };
   });
-  check('ghdb: it opens on its top picks, best first, a page at a time', view.total === view.meta.count && view.total > 7000 && view.meta.picks === 500 && view.rows === view.page && view.shownArePicks && view.firstIsBest && view.picksLead
-    && view.count === `500 of ${view.total.toLocaleString('en-US')} dorks` && view.open === '500' && /^Show 60 more/.test(view.more) && view.sel === '' && !view.picksOff, view);
+  check('ghdb: it opens on its top picks, best first, a page at a time', view.total === view.meta.count && view.total > 7000 && view.meta.picks >= 100 && view.rows === view.page && view.shownArePicks && view.firstIsBest && view.picksLead
+    && view.count === `${GP} of ${G} dorks` && view.open === GP && /^Show 60 more/.test(view.more) && view.sel === '' && !view.picksOff, view);
   check('ghdb: every row is scoped to the target, runs on Google and links to its entry on exploit-db.com', view.scoped && view.targets && view.href.startsWith('https://www.google.com/search?q=') && view.href.includes('example.com')
     && /^https:\/\/www\.exploit-db\.com\/ghdb\/\d+$/.test(view.link) && view.rel === 'noopener noreferrer' && /^GHDB-\d+: /.test(view.heading) && /^Done: GHDB-\d+$/.test(view.tick), view);
   check('ghdb: a row carries four controls and no more (run, category, source, save)', view.extras, view);
-  check('ghdb: its own header and menu — top picks, everything, GHDB\'s categories with their sizes', view.title === 'Google Hacking Database' && view.desc.includes('scoped to example.com') && view.desc.includes('500 best of 7,944')
-    && view.src === `Snapshot ${view.meta.v} · newest entry ${view.meta.newest}` && view.recipe && !view.scopeHidden && view.options.length === 16 && view.options[0] === 'Top picks (500)' && view.options[1] === 'Everything (7,944)'
-    && view.options.slice(2).every(o => /\(\d[\d,]*\)$/.test(o)) && view.ph.includes('7,944 GHDB dorks'), view);
+  check('ghdb: its own header and menu — top picks, everything, GHDB\'s categories with their sizes', view.title === 'Google Hacking Database' && view.desc.includes('scoped to example.com') && view.desc.includes(`${GP} best of ${G}`)
+    && view.src === `Snapshot ${view.meta.v} · newest entry ${view.meta.newest}` && view.recipe && !view.scopeHidden && view.options.length === 16 && view.options[0] === `Top picks (${GP})` && view.options[1] === `Everything (${G})`
+    && view.options.slice(2).every(o => /\(\d[\d,]*\)$/.test(o)) && view.ph.includes(`${G} GHDB dorks`), view);
 
   // scoping rules, one case per shape of site: found in the database
   const scope = await p.evaluate(() => [
@@ -719,12 +721,12 @@ const settle = p => p.waitForTimeout(180);
   await p.selectOption('#scope', 'all'); await settle(p);
   const all = await p.evaluate(() => ({ rows: document.querySelectorAll('.card.compact').length, count: document.getElementById('visibleCount').textContent, open: document.getElementById('openCount').textContent,
     hash: location.hash, active: document.getElementById('scopeWrap').classList.contains('active'), saved: JSON.parse(localStorage.getItem('ndo_state_v1')).scope }));
-  check('ghdb: Everything — the whole library, in the hash and remembered', all.rows === 60 && all.count === '7,944 dorks' && all.open === '7,944' && all.hash.includes('scope=all') && all.active && all.saved.ghdb === 'all', all);
+  check('ghdb: Everything — the whole library, in the hash and remembered', all.rows === 60 && all.count === `${G} dorks` && all.open === G && all.hash.includes('scope=all') && all.active && all.saved.ghdb === 'all', all);
   await p.selectOption('#scope', 'passwords'); await settle(p);
   const cat = await p.evaluate(() => ({ rows: document.querySelectorAll('.card.compact').length, only: [...document.querySelectorAll('.card.compact .gcat')].every(b => b.textContent === 'Files Containing Passwords'),
     sev: [...document.querySelectorAll('.card.compact')].every(c => c.dataset.sev === 'crit'), hash: location.hash, count: document.getElementById('visibleCount').textContent,
     n: libAt(GHDB).cat.items.filter(it => it.ghdb.slug === 'passwords').length }));
-  check('ghdb: one of its categories — rows, count, severity and hash agree', cat.rows === 60 && cat.only && cat.sev && cat.hash.includes('scope=passwords') && cat.count === `${cat.n} of 7,944 dorks`, cat);
+  check('ghdb: one of its categories — rows, count, severity and hash agree', cat.rows === 60 && cat.only && cat.sev && cat.hash.includes('scope=passwords') && cat.count === `${cat.n} of ${G} dorks`, cat);
   await p.fill('#filter', 'zzzqqq'); await settle(p);
   const none = await p.evaluate(() => ({ text: document.querySelector('.empty-state p').textContent, btns: [...document.querySelectorAll('.empty-state .btn')].map(b => b.textContent) }));
   await p.click('.empty-state .btn:nth-of-type(2)'); await settle(p);
@@ -735,7 +737,7 @@ const settle = p => p.waitForTimeout(180);
     phrase: rows.every(r => /index of/i.test(r.querySelector('code').textContent)), no: rows.every(r => !/wordpress/i.test(r.textContent)), chips: [...document.querySelectorAll('#searchOps .op')].map(c => c.textContent) }; });
   check('ghdb: search operators work inside it (cat:, a phrase, an exclusion)', ops.n > 0 && ops.cat && ops.phrase && ops.no && ops.chips.length === 3, ops);
   await p.fill('#filter', 'is:pick'); await settle(p);
-  check('ghdb: is:pick finds the top picks from anywhere', await p.evaluate(() => document.getElementById('visibleCount').textContent) === '500 results in GHDB');
+  check('ghdb: is:pick finds the top picks from anywhere', await p.evaluate(() => document.getElementById('visibleCount').textContent) === `${GP} results in GHDB`);
   await p.click('#filterClear'); await settle(p);
   await p.click('.card.compact .gcat'); await settle(p);
   check('ghdb: a row\'s category is a one-click filter', await p.evaluate(() => GHDB_SLUGS.includes(state.scope.ghdb) && document.getElementById('scope').value === state.scope.ghdb && document.activeElement.id === 'catTitle'));
@@ -746,7 +748,7 @@ const settle = p => p.waitForTimeout(180);
   await p.click('#runNext'); await settle(p);
   const run = await p.evaluate(() => ({ opened: window.__opened.slice(), done: document.querySelector('.card.compact').classList.contains('done'), href: document.querySelector('.card.compact .eng-btn').href,
     nav: document.querySelector(`.nav-item[data-view="${GHDB}"] .ct`).textContent, prog: document.getElementById('progressText').textContent, stored: JSON.parse(localStorage.getItem('ndo_progress_v1'))['example.com'].done }));
-  check('ghdb: Run next opens the best dork and ticks it; meter and sidebar follow', run.opened.length === 1 && run.opened[0] === run.href && run.done && run.nav === '1/7,944' && run.prog.startsWith('1/500') && run.stored.length === 1 && /^ghdb\/\d+$/.test(run.stored[0]), run);
+  check('ghdb: Run next opens the best dork and ticks it; meter and sidebar follow', run.opened.length === 1 && run.opened[0] === run.href && run.done && run.nav === `1/${G}` && run.prog.startsWith(`1/${GP}`) && run.stored.length === 1 && /^ghdb\/\d+$/.test(run.stored[0]), run);
   await p.focus('#showMore'); await p.keyboard.press('Enter'); await settle(p);
   const more = await p.evaluate(() => ({ rows: document.querySelectorAll('.card.compact').length, focusRow: [...document.querySelectorAll('.card[data-key] .done-btn')].indexOf(document.activeElement) }));
   check('ghdb: Show more adds a page and moves focus to its first row', more.rows === 120 && more.focusRow === 60, more);
@@ -829,7 +831,7 @@ const settle = p => p.waitForTimeout(180);
   // progress is counted without loading a library; a deep link opens the view filtered
   const q = await newPage(undefined, { hash: '#cat=essentials', storage: { ndo_disclaimer_v1: '1', ndo_progress_v1: JSON.stringify({ 'example.com': { at: 1, done: ['ghdb/8452', 'ghdb/8451', 'fp/grafana/grafana', 'dns/crt.sh wildcard JSON'] } }) } });
   const idle = await q.evaluate(() => ({ nav: LIBS.map(L => document.querySelector(`.nav-item[data-view="${L.view}"] .ct`).textContent), states: LIBS.map(L => L.state) }));
-  check('libraries: ticks show in the sidebar before anything is loaded', idle.states.every(s => s === 'idle') && idle.nav[0] === '2/7,944' && idle.nav[1].startsWith('1/'), idle);
+  check('libraries: ticks show in the sidebar before anything is loaded', idle.states.every(s => s === 'idle') && idle.nav[0] === `2/${G}` && idle.nav[1].startsWith('1/'), idle);
   await q.evaluate(() => { location.hash = '#cat=ghdb&scope=login-portals&filter=citrix&target=victim.example'; });
   await ready(q, 'ghdb'); await settle(q);
   const deep = await q.evaluate(() => ({ cat: state.cat === GHDB, scope: document.getElementById('scope').value, filter: document.getElementById('filter').value, rows: document.querySelectorAll('.card.compact').length,
@@ -888,7 +890,7 @@ const settle = p => p.waitForTimeout(180);
   block = false;
   await f.click('.empty-state .btn'); await ready(f, 'ghdb'); await settle(f);
   const retry = await f.evaluate(() => document.querySelectorAll('.card.compact').length);
-  check('libraries: without its data file a view explains itself; Try again loads it', fail.h === 'This library did not load' && fail.text.includes('ghdb.js') && fail.run && fail.open && fail.btn === 'Try again' && fail.count === '7,944 dorks' && retry === 60, { fail, retry });
+  check('libraries: without its data file a view explains itself; Try again loads it', fail.h === 'This library did not load' && fail.text.includes('ghdb.js') && fail.run && fail.open && fail.btn === 'Try again' && fail.count === `${G} dorks` && retry === 60, { fail, retry });
   await ctx.close();
 }
 

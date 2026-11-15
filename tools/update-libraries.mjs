@@ -309,6 +309,18 @@ async function get(urls, label) {
   }
   throw new Error(`could not download ${label} — ${last}`);
 }
+// A run that finds nothing new leaves the file alone — snapshot date included — so a scheduled run only produces
+// a change when the data changed. (The fingerprints are compared without the KEV catalog's version, which moves
+// several times a week without touching most products.)
+const dataOf = js => js.replace(/^\/\*[\s\S]*?\*\/\s*/, '').replace(/"v":"[^"]*",/, '').replace(/"kev":"[^"]*",/, '');
+async function save(file, js) {
+  const path = new URL(file, ROOT);
+  let old = '';
+  try { old = await readFile(path, 'utf8'); } catch (e) { /* first build */ }
+  if (old && dataOf(old) === dataOf(js)) return false;
+  await writeFile(path, js);
+  return true;
+}
 // The page knows each library's size and date without loading it (sidebar count, top picks, cache-busting ?v=).
 async function writeMeta(id, meta) {
   const path = new URL('index.html', ROOT), page = await readFile(path, 'utf8');
@@ -328,9 +340,9 @@ async function main(argv) {
   if (wanted('ghdb')) {
     const parsed = parseGhdb(await src('ghdb.xml', SOURCES.ghdb, 'the GHDB dump'));
     const { js, meta, cats } = ghdbFile(rankGhdb(parsed.rows), today);
-    await writeFile(new URL('ghdb.js', ROOT), js);
-    await writeMeta('ghdb', meta);
-    console.log(`ghdb.js: ${meta.count} dorks · ${meta.picks} top picks · newest ${meta.newest} · ${(js.length / 1024).toFixed(0)} KB`);
+    const changed = await save('ghdb.js', js);
+    if (changed) await writeMeta('ghdb', meta);
+    console.log(`ghdb.js: ${meta.count} dorks · ${meta.picks} top picks · newest ${meta.newest} · ${(js.length / 1024).toFixed(0)} KB${changed ? '' : ' — nothing new, file left as it was'}`);
     console.log('  ' + cats.map(([c, n]) => `${c} ${n}`).join(' · '));
     if (parsed.skipped.length) console.log(`  skipped ${parsed.skipped.length} entries with no usable query: ${parsed.skipped.slice(0, 20).join(', ')}`);
   }
@@ -340,13 +352,13 @@ async function main(argv) {
     if (!Array.isArray(kev.vulnerabilities) || kev.vulnerabilities.length < 500) throw new Error('the KEV catalog looks wrong — refusing to rank with it');
     const ranked = buildFingerprints(yaml, kev);
     const { js, meta } = fingerprintsFile(ranked, kev.catalogVersion, today);
-    await writeFile(new URL('fingerprints.js', ROOT), js);
-    await writeMeta('fingerprints', meta);
+    const changed = await save('fingerprints.js', js);
+    if (changed) await writeMeta('fingerprints', meta);
     const n = k => ranked.rows.filter(r => r[k]).length;
-    console.log(`fingerprints.js: ${meta.count} products · ${meta.picks} on the KEV list (catalog ${meta.kev}) · ${(js.length / 1024).toFixed(0)} KB`);
+    console.log(`fingerprints.js: ${meta.count} products · ${meta.picks} on the KEV list (catalog ${meta.kev}) · ${(js.length / 1024).toFixed(0)} KB${changed ? '' : ' — nothing new, file left as it was'}`);
     console.log(`  Shodan ${n('sh')} · FOFA ${n('fo')} · Google ${n('g')} · used in ransomware ${ranked.rows.filter(r => r.pick && r.ransom).length}`);
   }
-  console.log('index.html: LIB_META updated — now run  node tests/catalog.test.mjs');
+  console.log('Now run  node tests/catalog.test.mjs  — it re-checks every row and the order.');
 }
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   main(process.argv.slice(2)).catch(e => { console.error('update-libraries: ' + e.message); process.exit(1); });
