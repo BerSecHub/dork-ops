@@ -245,13 +245,13 @@ body.opsec-on .switch{border-color:color-mix(in srgb,var(--ok) 55%,var(--border-
 .field-target input{font-weight:600}
 .field-search{flex:1 1 320px; max-width:600px}
 .field-search .slash{flex-shrink:0}
-.field-search .clear{
+.field .clear{
   display:none; place-items:center; width:24px; height:24px; padding:0; flex-shrink:0;
   border:0; border-radius:6px; background:var(--surface-2); color:var(--text-2); cursor:pointer;
 }
-.field-search .clear .ic{width:13px; height:13px}
-.field-search .clear:hover{background:var(--surface-3); color:var(--text)}
-.field-search.has-text .clear{display:grid}
+.field .clear .ic{width:13px; height:13px}
+.field .clear:hover{background:var(--surface-3); color:var(--text)}
+.field-search.has-text .clear,.field-target.has-target .clear{display:grid}
 .field-search.has-text .slash{display:none}
 .tb-actions{display:flex; align-items:center; gap:4px; flex-shrink:0; margin-left:auto; padding-right:16px}
 .tb-actions .btn{margin-right:4px}
@@ -765,6 +765,8 @@ body.tools-open .tools-panel{transform:translateX(0); visibility:visible; transi
   .field-target{padding-left:10px}
   .field-target .field-label{display:none}
   .field-target > .ic{display:block}
+  .field-target.has-target .clear{display:none}                   /* on a phone the box is narrow: the name gets the room, */
+  .field-target.has-target:focus-within .clear{display:grid}      /* and the × appears while the box is in use */
   .select select{max-width:160px}
   .ch-actions{width:100%; flex-wrap:wrap}
   .ch-actions > #runNext{flex:1 1 100%}        /* the primary action gets its own row */
@@ -852,11 +854,12 @@ body.tools-open .tools-panel{transform:translateX(0); visibility:visible; transi
   </a>
 
   <div class="tb-fields">
-    <label class="field field-target" title="Every dork is templated with this domain">
+    <label class="field field-target" id="targetWrap" title="Every dork is templated with this domain">
       <svg class="ic" aria-hidden="true"><use href="#i-target"/></svg>
       <span class="field-label">Target</span>
       <input id="target" type="text" inputmode="url" placeholder="example.com" value="example.com" autocomplete="off" autocapitalize="off" spellcheck="false" list="targetHistory" aria-label="Target domain">
       <datalist id="targetHistory"></datalist>
+      <button class="clear" id="targetForget" type="button" title="Forget this target — it leaves this browser's history, and its progress is deleted" aria-label="Forget this target"><svg class="ic" aria-hidden="true"><use href="#i-x"/></svg></button>
     </label>
     <label class="field field-search" id="filterWrap">
       <svg class="ic" aria-hidden="true"><use href="#i-search"/></svg>
@@ -2937,6 +2940,7 @@ function saveFromLib(it){
  * Render — result groups, cards, empty state
  * ============================================================ */
 function render(){
+  syncTargetForget();
   if (iocFilter && (state.cat !== HUNT || !state.filter)) setIocFilter(false);      // the carried-over name is gone: searches are ordinary again
   const lib = libAt(state.cat);
   if (lib && lib.state === "idle") loadLib(lib);     // first visit to a library view: fetch its data file
@@ -3449,6 +3453,22 @@ function markViewDone(){
   markDone(items.map(x => x.it.key), true);
   toast(`${items.length} dork${items.length === 1 ? "" : "s"} marked as done`);
 }
+// The × in the Target box. A target is remembered in this browser only — in the history that fills the box next time,
+// and with what was ticked off for it. Forgetting it removes both; the next remembered target, or the example, takes its place.
+function syncTargetForget(){
+  const t = normHost($target.value);
+  $("#targetWrap").classList.toggle("has-target", !!t && t !== "example.com");
+}
+function forgetTarget(){
+  const t = normHost($target.value), n = t ? doneFor(t).size : 0;
+  if (n && !confirm(`Forget ${t}?\n\n${n} dork${n === 1 ? " is" : "s are"} ticked off for it — that progress is deleted too.`)) return;
+  state.history = state.history.filter(h => h !== t);
+  if (t && progress.has(t)){ progress.delete(t); saveProgress(); }
+  $target.value = state.history[0] || "example.com";
+  saveState(); refreshHistoryDatalist(); render();
+  if (t) toast(`${t} forgotten`);
+  $target.focus();
+}
 function resetProgress(){
   const t = currentTarget(), n = doneFor(t).size;
   if (!n || !confirm(`Reset progress for ${t}?\n\n${n} dork${n === 1 ? " is" : "s are"} ticked off for this target.`)) return;
@@ -3663,6 +3683,7 @@ function openHelp(){
         ${row("Run next", "Opens the next dork you have not run for this target and ticks it off — one key press per step")}
         ${row("Tick", "The circle on a card: done for this target. Running a dork ticks it for you; click to undo")}
         ${row("Progress", "The meter in the filter bar: hide what is done, mark the view as done, or reset the target")}
+        ${row("Forget a target", "The <b>×</b> in the Target box. Targets are remembered in this browser only; forgetting one removes it from the history and deletes its progress")}
         ${row("Pin", "Keeps a dork in <b>My dorks</b>, next to the ones you add yourself")}
         ${row("Libraries", "<b>GHDB</b> (Exploit-DB's Google Hacking Database) and <b>Fingerprints</b> (how to find a product on the target's hosts). Each opens on its top picks, and a search goes through all of it. Every row arrives scoped to your target, and <b>+</b> saves it to My dorks")}
         ${row("Investigate", "Type an indicator — a domain, an IP address, a file hash, an e-mail address, the name of a threat actor or a malware family — and get the questions worth asking, each with the sources that answer it. Defanged indicators (<kbd>evil[.]example</kbd>) are understood. Nothing you type there is saved")}
@@ -4230,6 +4251,7 @@ function wire(){
   $target.addEventListener("input", debounce(() => render(), 80));
   $target.addEventListener("change", () => { const v = normHost($target.value); if (v){ $target.value = v; pushHistory(v); render(); } });
   $target.addEventListener("keydown", e => { if (e.key === "Enter") $target.blur(); });
+  $("#targetForget").onclick = forgetTarget;
 
   // Search (the placeholder, with its live count, is set per view in syncControls)
   const onFilter = debounce(() => { state.filter = $filter.value || ""; saveState(); writeHash(); render(); }, 80);

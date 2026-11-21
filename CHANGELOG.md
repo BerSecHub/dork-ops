@@ -2,6 +2,10 @@
 
 All notable changes to DorkOps. The app is a single file with no build step, so "a release" is simply what is on the default branch.
 
+## 0.7.1 — 2026-11-21
+
+- **Forget a target.** The **×** in the Target box removes the target that is showing from the browser: it leaves the history that fills the box and the autocomplete, and what was ticked off for it is deleted (it asks first when there is progress to lose). The next remembered target, or `example.com`, takes its place. Until now a target could only be removed by clearing the site's data. On a phone the × appears while the box is in use, so the name keeps the room.
+
 ## 0.7 — 2026-11-21
 
 A calmer interface, three libraries that load on demand, and a first step from recon into threat intelligence.

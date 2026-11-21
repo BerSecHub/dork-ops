@@ -73,6 +73,8 @@ There is nothing to install or build. To self-host, copy `index.html` and the th
 
 Type a domain into the **Target** box (e.g. `example.com`). Paste anything — a full URL, `host:port`, a wildcard like `*.example.com` — and it is reduced to a bare, lower-cased host when you press Enter. Every visible dork re-templates live as you type. Targets you have used are offered as autocomplete, and the last one is restored the next time you open the app.
 
+Targets are remembered **in your browser only** — they are not part of the app, the repository or any link the app writes. The **×** in the Target box forgets the one that is showing: it leaves the history, and what was ticked off for it is deleted.
+
 ### 2. Start with Essentials, then browse or search
 
 The app opens on **Essentials**: a short playbook that takes you from mapping the surface to the quick wins. From there:
@@ -259,7 +261,7 @@ Open **Tools** in the top bar. Everything here runs locally in your browser.
 ## Privacy & security
 
 - **No backend, no analytics, no cookies.** DorkOps never phones home, and nothing is requested when the page loads. The only network requests are the searches you explicitly open (in new tabs), the fetches you trigger inside the recon tools, and a library's data file — from the same site as the page — the first time you open that library. (One nuance: the first time you open a CommonCrawl dork, the app asks commoncrawl.org — the site you are about to visit — for its newest index name, and remembers it for a week.)
-- **Local state only.** Your target history, progress, pins, own dorks, theme and filters are stored in `localStorage` on your machine. Nothing is synced; export *My dorks* if you want a backup. An indicator typed into *Investigate* is not stored at all.
+- **Local state only.** Your target history, progress, pins, own dorks, theme and filters are stored in `localStorage` on your machine. Nothing is synced; export *My dorks* if you want a backup. An indicator typed into *Investigate* is not stored at all, and the **×** in the Target box removes a target and its progress from the browser.
 - **Third-party data is treated as untrusted.** Library rows are type- and size-checked before they are used and are only ever shown as text; a CSV export defuses cells that a spreadsheet would run as a formula.
 - **OPSEC mode** hides the engines that would log your target against your account.
 - A strict **Content-Security-Policy** ships in the page `<meta>` and is reinforced by security headers in [`_headers`](_headers) (`X-Frame-Options: DENY`, `nosniff`, `Referrer-Policy: no-referrer`, HSTS, a restrictive `Permissions-Policy`).

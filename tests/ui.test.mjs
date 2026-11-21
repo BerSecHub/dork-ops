@@ -1195,6 +1195,40 @@ const settle = p => p.waitForTimeout(180);
   await b.context().close();
 }
 
+/* ───────────── 5b. forgetting a target ───────────── */
+{
+  const fg = await newPage(undefined, { storage: { ndo_disclaimer_v1: '1', ndo_state_v1: JSON.stringify({ history: ['client.example', 'old.example'] }),
+    ndo_progress_v1: JSON.stringify({ 'client.example': { at: 2, done: ['dns/crt.sh wildcard JSON', 'wayback/All historical URLs'] }, 'old.example': { at: 1, done: ['dns/crt.sh wildcard JSON'] } }) } });
+  const dialogs = []; fg.on('dialog', d => { dialogs.push(d.message()); d.accept(); });
+  const shown = () => getComputedStyle(document.getElementById('targetForget')).display !== 'none';
+  const all = () => Object.keys(localStorage).map(k => localStorage.getItem(k)).join('\n');
+  const before = await fg.evaluate(`({ t: document.getElementById('target').value, shown: (${shown})(), name: document.getElementById('targetForget').getAttribute('aria-label'), box: document.getElementById('targetForget').getBoundingClientRect().width })`);
+  await fg.click('#targetForget'); await settle(fg);
+  const after = await fg.evaluate(`({ t: document.getElementById('target').value, hist: JSON.parse(localStorage.getItem('ndo_state_v1')).history, prog: Object.keys(JSON.parse(localStorage.getItem('ndo_progress_v1'))),
+    list: [...document.querySelectorAll('#targetHistory option')].map(o => o.value), stored: (${all})().includes('client.example'), focus: document.activeElement.id, toast: document.getElementById('toast').textContent,
+    code: document.querySelector('.card code').textContent.includes('old.example'), shown: (${shown})() })`);
+  check('target: × forgets it — out of the history, its progress deleted, the next remembered target takes its place', before.t === 'client.example' && before.shown && before.name === 'Forget this target' && before.box >= 24
+    && dialogs.length === 1 && /^Forget client\.example\?\n\n2 dorks are ticked off/.test(dialogs[0]) && after.t === 'old.example' && JSON.stringify(after.hist) === '["old.example"]' && JSON.stringify(after.prog) === '["old.example"]'
+    && JSON.stringify(after.list) === '["old.example"]' && !after.stored && after.focus === 'target' && after.toast === 'client.example forgotten' && after.code && after.shown, { before, dialogs, after });
+  await fg.click('#targetForget'); await settle(fg);
+  const last = await fg.evaluate(`({ t: document.getElementById('target').value, shown: (${shown})(), stored: (${all})().includes('old.example'), cards: document.querySelectorAll('.card.done').length })`);
+  check('target: with nothing left to remember, the box is back on the example and the × is gone', last.t === 'example.com' && !last.shown && !last.stored && last.cards === 0 && dialogs.length === 2, last);
+  await fg.fill('#target', 'typed.example'); await settle(fg);
+  const typed = await fg.evaluate(`({ shown: (${shown})() })`);
+  await fg.click('#targetForget'); await settle(fg);
+  check('target: a target that was only typed is cleared without asking', typed.shown && dialogs.length === 2 && await fg.evaluate(`document.getElementById('target').value === 'example.com' && !(${all})().includes('typed.example')`), typed);
+  await fg.context().close();
+
+  const ph = await newPage({ width: 390, height: 844 }, { storage: { ndo_disclaimer_v1: '1', ndo_state_v1: JSON.stringify({ history: ['client.example'] }) } });
+  const idle = await ph.evaluate(`(${shown})()`);
+  await ph.click('#target'); await settle(ph);
+  const used = await ph.evaluate(`({ shown: (${shown})(), w: document.getElementById('targetForget').getBoundingClientRect().width, over: document.documentElement.scrollWidth - document.documentElement.clientWidth })`);
+  await ph.click('#targetForget'); await settle(ph);
+  check('target on a phone: the name gets the room; the × appears while the box is in use, and works', !idle && used.shown && used.w >= 24 && used.over <= 0
+    && await ph.evaluate(`document.getElementById('target').value === 'example.com' && !(${all})().includes('client.example')`), { idle, used });
+  await ph.context().close();
+}
+
 /* ───────────── 6. responsive + a11y sweep ───────────── */
 for (const [w, hgt] of [[390, 844], [360, 740], [320, 640], [768, 1024], [1024, 768], [1920, 1080]]) {
   const p = await newPage({ width: w, height: hgt });
