@@ -17,6 +17,7 @@
 // rankHunt() below, and tests/catalog.test.mjs re-runs them against the files in the repository. Each file lists
 // its rows best first; a view opens on the top picks.
 import { readFile, writeFile } from 'node:fs/promises';
+import { createHash } from 'node:crypto';
 import { pathToFileURL } from 'node:url';
 
 const ROOT = new URL('..', import.meta.url);
@@ -272,9 +273,12 @@ export function buildFingerprints(yaml, kev) {
   const unlisted = { kev: 0, cve: '', kevDate: '', ransom: false };
   return rankFingerprints(joinKev(rows, kev).map(r => (r.kev && !believable(r) ? { ...r, ...unlisted } : r)));
 }
+const KEV_VERSION = /^\d{4}\.\d{2}\.\d{2}$/;
 function fingerprintsFile(ranked, kevVersion, today) {
   const { rows, picks } = ranked;
-  const meta = { v: today, count: rows.length, picks, kev: clean(kevVersion || '', 20) };
+  // The version is the one piece of downloaded text written outside a JSON string (the header comment below, LIB_META in the page).
+  if (!KEV_VERSION.test(kevVersion)) throw new Error('the KEV catalog has an unexpected version — refusing to use it');
+  const meta = { v: today, count: rows.length, picks, kev: kevVersion };
   const js = `/* Product fingerprints — a snapshot for the Fingerprints view of DorkOps. Data only; generated, do not edit.
  *
  * Source:   QUERIES.yaml from ProjectDiscovery's awesome-search-queries,
@@ -415,16 +419,35 @@ async function save(file, js) {
   await writeFile(path, js);
   return true;
 }
-// The page knows each library's size and date without loading it (sidebar count, top picks, cache-busting ?v=).
+// The page knows each library's size and date without loading it (sidebar count, top picks) — and a hash of the file, which
+// it puts in the file's address: the files are cached for a year, so a changed file needs a new address.
+// These values are written into the page's script, so they are checked for what they should be: digits, dots, dashes, hex.
 async function writeMeta(id, meta) {
   const path = new URL('index.html', ROOT), page = await readFile(path, 'utf8');
   const re = new RegExp(`(\\n  ${id}: )\\{[^}]*\\}`);
   if (!/const LIB_META = \{/.test(page) || !re.test(page)) throw new Error(`LIB_META.${id} not found in index.html`);
+  for (const [k, v] of Object.entries(meta)) {
+    if (!(Number.isInteger(v) && v >= 0) && !(typeof v === 'string' && /^[0-9a-f.-]{1,40}$/.test(v))) throw new Error(`LIB_META.${id}.${k}: unexpected value ${JSON.stringify(v)}`);
+  }
   const body = Object.entries(meta).map(([k, v]) => `${k}:${JSON.stringify(v)}`).join(', ');
-  await writeFile(path, page.replace(re, `$1{ ${body} }`));
+  const next = page.replace(re, (m, lead) => `${lead}{ ${body} }`);        // a function: nothing in the values is read as a replacement pattern
+  if (next !== page) await writeFile(path, next);
+}
+// Writes the data file if its data changed, then makes LIB_META say what is on disk.
+async function publish(id, file, js) {
+  const changed = await save(file, js);
+  const text = await readFile(new URL(file, ROOT), 'utf8');
+  const open = `(window.DORKOPS_LIB || function(){})(${JSON.stringify(id)}, `, body = text.replace(/^\/\*[\s\S]*?\*\/\s*/, '').trim();
+  if (!body.startsWith(open) || !body.endsWith(');')) throw new Error(`${file} is not a single DORKOPS_LIB("${id}", {…}) call`);
+  const d = JSON.parse(body.slice(open.length, -2));
+  const meta = { v: d.v, h: createHash('sha256').update(text).digest('hex').slice(0, 8), count: d.count, picks: d.picks };
+  for (const k of ['newest', 'kev']) if (d[k] !== undefined) meta[k] = d[k];
+  await writeMeta(id, meta);
+  return changed;
 }
 async function main(argv) {
   const from = argv.includes('--from') ? argv[argv.indexOf('--from') + 1] : null;
+  if (argv.includes('--from') && (!from || from.startsWith('--'))) throw new Error('--from needs a folder that holds ghdb.xml, QUERIES.yaml and kev.json');
   const only = argv.filter((a, i) => !a.startsWith('--') && argv[i - 1] !== '--from');
   const wanted = id => !only.length || only.includes(id);
   for (const id of only) if (!['ghdb', 'fingerprints', 'hunt'].includes(id)) throw new Error(`unknown library "${id}" — use ghdb, fingerprints or hunt`);
@@ -434,8 +457,7 @@ async function main(argv) {
   if (wanted('ghdb')) {
     const parsed = parseGhdb(await src('ghdb.xml', SOURCES.ghdb, 'the GHDB dump'));
     const { js, meta, cats } = ghdbFile(rankGhdb(parsed.rows), today);
-    const changed = await save('ghdb.js', js);
-    if (changed) await writeMeta('ghdb', meta);
+    const changed = await publish('ghdb', 'ghdb.js', js);
     console.log(`ghdb.js: ${meta.count} dorks · ${meta.picks} top picks · newest ${meta.newest} · ${(js.length / 1024).toFixed(0)} KB${changed ? '' : ' — nothing new, file left as it was'}`);
     console.log('  ' + cats.map(([c, n]) => `${c} ${n}`).join(' · '));
     if (parsed.skipped.length) console.log(`  skipped ${parsed.skipped.length} entries with no usable query: ${parsed.skipped.slice(0, 20).join(', ')}`);
@@ -443,11 +465,10 @@ async function main(argv) {
   if (wanted('fingerprints')) {
     const yaml = await src('QUERIES.yaml', SOURCES.queries, 'QUERIES.yaml');
     const kev = JSON.parse(await src('kev.json', SOURCES.kev, 'the KEV catalog'));
-    if (!Array.isArray(kev.vulnerabilities) || kev.vulnerabilities.length < 500) throw new Error('the KEV catalog looks wrong — refusing to rank with it');
+    if (!kev || !Array.isArray(kev.vulnerabilities) || kev.vulnerabilities.length < 500 || !KEV_VERSION.test(kev.catalogVersion)) throw new Error('the KEV catalog looks wrong — refusing to rank with it');
     const ranked = buildFingerprints(yaml, kev);
     const { js, meta } = fingerprintsFile(ranked, kev.catalogVersion, today);
-    const changed = await save('fingerprints.js', js);
-    if (changed) await writeMeta('fingerprints', meta);
+    const changed = await publish('fingerprints', 'fingerprints.js', js);
     const n = k => ranked.rows.filter(r => r[k]).length;
     console.log(`fingerprints.js: ${meta.count} products · ${meta.picks} on the KEV list (catalog ${meta.kev}) · ${(js.length / 1024).toFixed(0)} KB${changed ? '' : ' — nothing new, file left as it was'}`);
     console.log(`  Shodan ${n('sh')} · FOFA ${n('fo')} · Google ${n('g')} · used in ransomware ${ranked.rows.filter(r => r.pick && r.ransom).length}`);
@@ -455,8 +476,7 @@ async function main(argv) {
   if (wanted('hunt')) {
     const ranked = buildHunt(JSON.parse(await readFile(new URL('tools/hunt-sources.json', ROOT), 'utf8')));
     const { js, meta } = huntFile(ranked, today);
-    const changed = await save('hunt.js', js);
-    if (changed) await writeMeta('hunt', meta);
+    const changed = await publish('hunt', 'hunt.js', js);
     const per = g => ranked.rows.filter(r => r.group === g).length;
     console.log(`hunt.js: ${meta.count} fingerprints of ${new Set(ranked.rows.map(r => r.tool)).size} tools · ${meta.picks} top picks · ${(js.length / 1024).toFixed(0)} KB${changed ? '' : ' — nothing new, file left as it was'}`);
     console.log('  ' + HUNT_GROUPS.map(g => `${g} ${per(g)}`).join(' · '));

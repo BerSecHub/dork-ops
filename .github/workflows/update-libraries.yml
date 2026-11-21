@@ -1,6 +1,6 @@
 name: Update libraries
 
-# Rebuilds ghdb.js and fingerprints.js from their sources (tools/update-libraries.mjs).
+# Rebuilds the library data files (ghdb.js, fingerprints.js, hunt.js) from their sources (tools/update-libraries.mjs).
 # When the data changed and both test suites pass, the result is pushed to the branch auto/update-libraries and
 # offered as a pull request. Nothing reaches the default branch until someone merges that pull request.
 # Started by hand from any other branch, it is a dry run: it builds and tests, and publishes nothing.
@@ -19,7 +19,7 @@ concurrency:
 
 jobs:
   update:
-    name: Refresh GHDB and fingerprints
+    name: Refresh the libraries
     runs-on: ubuntu-latest
     timeout-minutes: 20
     env:
@@ -35,12 +35,12 @@ jobs:
         id: diff
         run: |
           git status --short
-          if git diff --quiet -- ghdb.js fingerprints.js index.html; then
+          if git diff --quiet -- ghdb.js fingerprints.js hunt.js index.html; then
             echo "changed=false" >> "$GITHUB_OUTPUT"
             echo "Nothing new in the sources." >> "$GITHUB_STEP_SUMMARY"
           else
             echo "changed=true" >> "$GITHUB_OUTPUT"
-            { echo '```'; git diff --stat -- ghdb.js fingerprints.js index.html; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+            { echo '```'; git diff --stat -- ghdb.js fingerprints.js hunt.js index.html; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
           fi
       - name: Catalog lint (every row, and the order)
         if: steps.diff.outputs.changed == 'true'
@@ -60,7 +60,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git switch -C auto/update-libraries
-          git add ghdb.js fingerprints.js index.html
+          git add ghdb.js fingerprints.js hunt.js index.html
           git commit -m "data: refresh the libraries from their sources"
           git push --force origin auto/update-libraries
           if [ "$(gh pr list --head auto/update-libraries --state open --json number --jq length)" != "0" ]; then

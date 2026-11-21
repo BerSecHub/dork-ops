@@ -994,6 +994,13 @@ body.tools-open .tools-panel{transform:translateX(0); visibility:visible; transi
         <ul>
           <li><b>People &amp; Jobs</b> — Hunter.io, HIBP, LinkedIn, committer emails, job ads on LinkedIn, Indeed, Greenhouse, Lever, Workable and Ashby for tech-stack mining.</li>
         </ul>
+        <h2>Libraries and threat intel</h2>
+        <ul>
+          <li><b>GHDB</b> — Exploit-DB's Google Hacking Database, every dork rewritten to stay on the target, the best of each category first.</li>
+          <li><b>Fingerprints</b> — how products show up on Shodan, FOFA and Google, the ones on CISA's Known Exploited Vulnerabilities list first.</li>
+          <li><b>Investigate</b> — look up a domain, an IP address, a file hash, an e-mail address or a threat actor across reputation services, threat-intelligence feeds, sandboxes, WHOIS and passive DNS.</li>
+          <li><b>Hunt</b> — published fingerprints of adversary infrastructure: C2 frameworks, RATs, malware panels and phishing kits on Shodan, Censys and FOFA.</li>
+        </ul>
       </div>
     </noscript>
   </main>
@@ -1896,9 +1903,9 @@ const MY_CAT = {
  *   fingerprints.js  ProjectDiscovery's search queries (MIT)           — how to find a product on the target's hosts
  *   hunt.js          published fingerprints of adversary infrastructure — C2 frameworks, RATs, malware panels; not tied to a target */
 const LIB_META = {
-  ghdb: { v:"2026-11-15", count:7944, picks:500, newest:"2024-08-23" },
-  fingerprints: { v:"2026-11-15", count:2766, picks:175, kev:"2026.11.13" },
-  hunt: { v:"2026-11-21", count:174, picks:32 }
+  ghdb: { v:"2026-11-15", h:"250278dc", count:7944, picks:500, newest:"2024-08-23" },
+  fingerprints: { v:"2026-11-15", h:"a54dd528", count:2766, picks:175, kev:"2026.11.13" },
+  hunt: { v:"2026-11-21", h:"f23b1cbc", count:174, picks:32 }
 };      // written by tools/update-libraries.mjs together with the data files — do not edit by hand
 // GHDB's own categories: [slug for search (cat:passwords), severity for the filter]
 const GHDB_CATS = {
@@ -1927,8 +1934,9 @@ const GHDB_SUFFIX = /^(com|co|org|net|edu|ac|gov|govt|gob|gouv|go|mil|nic|res|or
 const GHDB_STANDIN = /^(www\.)?(example|target|site|domain|website|yoursite|yourdomain|company|victim)\.com$/;   // the author's placeholder for "your target"
 const GHDB_JOIN = /^(\||&|\+|OR|AND)$/;
 function ghdbScope(q){
-  if (!/site:/i.test(q) || (q.match(/"/g) || []).length % 2) return "site:{t} " + q;      // nothing to rewrite, or quotes too broken to read
-  const toks = q.match(/\||(?:[^\s"|]+|"[^"]*")+/g) || [];             // "|" is its own token; a quoted string never splits
+  if (!/site:/i.test(q)) return "site:{t} " + q;                        // nothing to rewrite
+  const odd = (q.match(/"/g) || []).length % 2 === 1;                    // quotes too broken to pair up: split on spaces, and touch nothing but the scopes
+  const toks = odd ? q.split(/\s+/).filter(Boolean) : q.match(/\||(?:[^\s"|]+|"[^"]*")+/g) || [];      // "|" is its own token; a quoted string never splits
   const out = [];                                                        // null marks a scope that was dropped
   let named = false, scoped = false;
   for (let i = 0; i < toks.length; i++){
@@ -1937,15 +1945,17 @@ function ghdbScope(q){
     let val = m[2], joined = false;
     if (!val && i + 1 < toks.length && !GHDB_JOIN.test(toks[i + 1])){ val = toks[++i]; joined = true; }      // "site: gov"
     const close = (val.match(/\)+$/) || [""])[0];
-    const bare = val.slice(0, val.length - close.length).replace(/^["']|["']$/g, "").replace(/^https?:\/\//i, "");
+    const bare = val.slice(0, val.length - close.length).replace(/["']/g, "").replace(/^[a-z][a-z0-9+.-]*:\/\//i, "");
     const cut = bare.indexOf("/"), first = (cut < 0 ? bare : bare.slice(0, cut)).toLowerCase(), path = cut < 0 ? "" : bare.slice(cut);
     const sub = /^([a-z0-9-]+)\.\*/.exec(first);
-    const host = first.replace(/^\*\./, ""), labels = host.split(".");                       // *.zendesk.com is still zendesk.com: a named third party
-    const klass = !host || host[0] === "." || host.includes("*") || labels.length < 2 || (labels.length === 2 && GHDB_SUFFIX.test(labels[0]));
+    const host = first.replace(/^(\*?\.)+/, ""), labels = host.split(".").filter(Boolean);   // *.zendesk.com and .zendesk.com are still zendesk.com: a named third party
+    const solid = labels.slice(labels.map(l => l.includes("*")).lastIndexOf(true) + 1);     // what follows the last wildcard: vps-*.vps.ovh.net → vps.ovh.net
+    const klass = !host || solid.length < 2 || (solid.length === 2 && GHDB_SUFFIX.test(solid[0]));
+    if (joined && !/[.*]/.test(first) && !/^[a-z]{2,4}$/.test(first)){ out.push(val); continue; }       // "site: zoom+meeting": words, not a scope
     if (GHDB_STANDIN.test(host)){ out.push(m[1] + "site:{t}" + path + close); scoped = true; }
     else if (sub && !GHDB_SUFFIX.test(sub[1])){ out.push(m[1] + "site:" + sub[1] + ".{t}" + path + close); scoped = true; }   // site:login.*.* → site:login.{t}
     else if (klass) out.push(path.length > 1 ? m[1] + 'inurl:"' + path + '"' + close : null);            // site:*/cgi-bin/x → inurl:"/cgi-bin/x"; site:.edu → gone
-    else { named = true; out.push(joined ? m[1] + "site:" + val : tok); }
+    else { named = true; out.push(m[1] + "site:" + first.replace(/^\.+/, "") + path + close); }
   }
   // a connector that lost one of its sides goes with it
   const kept = [];
@@ -1960,7 +1970,7 @@ function ghdbScope(q){
   while (kept.length && GHDB_JOIN.test(kept[kept.length - 1])) kept.pop();
   let rest = kept.join(" ");
   const plain = rest.replace(/"[^"]*"/g, "");                            // brackets left unbalanced by a dropped scope
-  if ((plain.match(/\(/g) || []).length !== (plain.match(/\)/g) || []).length) rest = rest.replace(/"[^"]*"|[()]/g, x => x === "(" || x === ")" ? "" : x).replace(/\s+/g, " ").trim();
+  if (!odd && (plain.match(/\(/g) || []).length !== (plain.match(/\)/g) || []).length) rest = rest.replace(/"[^"]*"|[()]/g, x => x === "(" || x === ")" ? "" : x).replace(/\s+/g, " ").trim();
   return scoped ? rest : ((named ? '"{t}" ' : "site:{t} ") + rest).trim();
 }
 
@@ -2001,8 +2011,9 @@ const validScope = (L, v) => v === "all" || L.scopes.some(x => x[0] === v) ? v :
  *   A page is a URL — {x} the indicator, URL-encoded; {xc} without spaces; {xs} without spaces, lower case; {hex} hex-encoded;
  *   {algo} md5 | sha1 | sha256; {org} a domain's own label — or [engine, query] to go through one of the engines above.
  *   Kinds: domain, ip, email, name (a threat actor or a malware family), hash — or md5 / sha1 / sha256 for one algorithm only.
- *   Flags: "a" asks for an account; "o" an internet scanner, hidden in OPSEC mode like the scanner engines.
- * Every address was checked against the service itself — its pages, its documentation or its front-end code — in November 2026.
+ *   Flags: "a" asks for an account; "o" hidden in OPSEC mode, like the engines of the same service (the internet scanners, urlscan).
+ * Every address was verified in November 2026 against the service's own pages, documentation or front-end code — or, where a bot
+ * wall stopped that, against its pages as a search engine had indexed them. What a logged-out visitor sees there was not checked.
  * Left out on purpose: people-search engines, data brokers, username look-ups, phone and address look-ups. */
 const SOURCES = {
   // verdicts and blocklists
@@ -2024,7 +2035,7 @@ const SOURCES = {
   yf:    ["YARAify", "#c0392b", { hash:"https://yaraify.abuse.ch/search/{algo}/{x}/" }],
   circl: ["CIRCL hashlookup", "#369", { hash:"https://hashlookup.circl.lu/lookup/{algo}/{x}" }],
   // sandboxes and scans
-  usc:   ["urlscan", "#26b", { domain:"https://urlscan.io/domain/{x}", ip:"https://urlscan.io/ip/{x}", sha256:"https://urlscan.io/search/#hash:{x}" }],
+  usc:   ["urlscan", "#26b", { domain:"https://urlscan.io/domain/{x}", ip:"https://urlscan.io/ip/{x}", sha256:"https://urlscan.io/search/#hash:{x}" }, "o"],
   ha:    ["Hybrid Analysis", "#e8632b", { domain:"https://hybrid-analysis.com/search?q=dns_domain%3A{x}", ip:"https://hybrid-analysis.com/search?q=ip%3A{x}", sha256:"https://hybrid-analysis.com/sample/{x}", md5:"https://hybrid-analysis.com/search?q=md5%3A{x}" }],
   tri:   ["Triage", "#5aa02c", { domain:"https://tria.ge/s?q=domain%3A{x}", sha256:"https://tria.ge/s?q={x}", name:"https://tria.ge/s?q=family%3A{xs}" }],
   ar:    ["ANY.RUN", "#00a3e0", { name:"https://app.any.run/submissions#tag:{xs}" }],
@@ -2049,7 +2060,7 @@ const SOURCES = {
   bgpt:  ["bgp.tools", "#333", { ip:"https://bgp.tools/prefix/{x}" }],
   pgp:   ["keys.openpgp.org", "#2e9d5b", { email:"https://keys.openpgp.org/search?q={x}" }],
   uks:   ["Ubuntu keyserver", "#e95420", { email:"https://keyserver.ubuntu.com/pks/lookup?search={x}&fingerprint=on&op=index" }],
-  ghc:   ["GitHub · commits", "#444", { email:"https://github.com/search?q=author-email%3A{x}&type=commits" }],
+  ghc:   ["GitHub · commits", "#444", { email:"https://github.com/search?q=author-email%3A{x}&type=Commits" }],
   // connections
   vdh:   ["ViewDNS · IP history", "#369", { domain:"https://viewdns.info/iphistory/?domain={x}" }],
   sthi:  ["SecurityTrails · DNS history", "#06c", { domain:["sth", "{t}"] }, "a"],
@@ -2101,31 +2112,43 @@ const IOC_KIND = { domain:"Domain", ip:"IP address", email:"E-mail address", has
 // What was typed or pasted: a domain, an IP address, a file hash, an e-mail address — anything else is taken as a name.
 // Indicators written the way analysts pass them around (hxxp://evil[.]example, 1.2.3[.]4) are read as meant.
 function readIoc(raw){
-  let v = (typeof raw === "string" ? raw : "").replace(/[\u0000-\u001f\u007f]+/g, " ").trim().slice(0, 200).replace(/^["'<]+|["'>]+$/g, "");
+  let v = (typeof raw === "string" ? raw : "").replace(/[\u0000-\u001f\u007f]+/g, " ").trim().slice(0, 200);
+  const whole = x => x.replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]|[\uD800-\uDFFF]/g, c => c.length === 2 ? c : "");     // half a character, left by a length limit, cannot be URL-encoded
+  v = whole(v).trim().replace(/^["'<]+|["'>]+$/g, "").replace(/^mailto:/i, "");
   v = v.replace(/\[(\.|dot)\]|\((\.|dot)\)|\{(\.|dot)\}/gi, ".").replace(/\[(@|at)\]|\((@|at)\)/gi, "@").replace(/\[:\]/g, ":").replace(/^hxxp/i, "http");
   const low = v.toLowerCase();
   if (/^([a-f0-9]{32}|[a-f0-9]{40}|[a-f0-9]{64})$/.test(low)) return { type:"hash", value: low, algo: { 32:"md5", 40:"sha1", 64:"sha256" }[low.length] };
   if (/^[^\s@\/:]+@[a-z0-9-]+(\.[a-z0-9-]+)+$/.test(low)) return { type:"email", value: low };
-  const v4 = x => /^\d{1,3}(\.\d{1,3}){3}$/.test(x) && x.split(".").every(n => +n < 256);
-  if (v4(low)) return { type:"ip", value: low };
-  if (/^[0-9a-f:]+$/.test(low) && (low.match(/:/g) || []).length >= 2) return { type:"ip", value: low };              // IPv6
   if (v && !/\s/.test(v)){
-    const host = normHost(v);
-    if (v4(host)) return { type:"ip", value: host };
+    // The host as it was written, not as a URL parser reads it: to a parser "8220" is the address 0.0.32.28.
+    let h = low.replace(/^[a-z][a-z0-9+.-]*:\/\//, "").replace(/[\/?#].*$/, "").replace(/^[^@]*@/, "");
+    const boxed = /^\[([0-9a-f:.]+)\](:\d+)?$/.exec(h);                    // [2001:db8::1]:8080
+    if (boxed) h = boxed[1]; else if ((h.match(/:/g) || []).length < 2) h = h.replace(/:\d+$/, "");
+    const v4 = /^\d{1,3}(\.\d{1,3}){3}$/.test(h) && h.split(".").every(n => +n < 256);
+    let v6 = false;
+    if (!v4 && /^[0-9a-f:.]+$/.test(h) && (h.match(/:/g) || []).length >= 2){ try { v6 = new URL("http://[" + h + "]/").hostname.length > 2; } catch(e){} }
+    if (v4 || v6) return { type:"ip", value: h };
+    const host = /^[a-z0-9*._-]*[a-z][a-z0-9*._-]*$/.test(h) || /[^\u0000-\u007f]/.test(h) ? normHost(h) : "";
     if (/^[a-z0-9-]+(\.[a-z0-9-]+)*\.[a-z][a-z0-9-]+$/.test(host)) return { type:"domain", value: host };
   }
-  const name = v.replace(/\s+/g, " ").slice(0, 80);
+  const name = whole(v.replace(/\s+/g, " ").slice(0, 80)).trim();
   return name.length >= 2 ? { type:"name", value: name } : null;
 }
 // The address of one lookup — "" when the source has no page for this kind of indicator.
 function lookupUrl(key, ioc){
   const pages = SOURCES[key][2], page = (ioc.algo && pages[ioc.algo]) || pages[ioc.type];
   if (!page) return "";
-  if (Array.isArray(page)) return buildUrl(page[0], page[1], ioc.value).replace(/^#$/, "");
-  const v = ioc.value, e = x => enc(x).replace(/%40/g, "@"), tight = v.replace(/\s+/g, "");
-  const u = page.replaceAll("{x}", e(v)).replaceAll("{xc}", e(tight)).replaceAll("{xs}", e(tight.toLowerCase())).replaceAll("{algo}", ioc.algo || "")
-    .replaceAll("{org}", e(hostOrg(v))).replaceAll("{hex}", [...v].map(c => c.charCodeAt(0).toString(16).padStart(2, "0")).join(""));
-  return /^https:\/\//.test(u) ? u : "";
+  const v = ioc.value;
+  try {
+    let u;
+    if (Array.isArray(page)) u = ENGINES[page[0]].url(page[1].split("{t}").join(v));       // through an engine: the indicator goes in as it is, whatever characters it has
+    else {
+      const e = x => enc(x).replace(/%40/g, "@"), tight = v.replace(/\s+/g, "");
+      const put = { x: e(v), xc: e(tight), xs: e(tight.toLowerCase()), algo: ioc.algo || "", org: e(hostOrg(v)), hex: [...v].map(c => c.charCodeAt(0).toString(16).padStart(2, "0")).join("") };
+      u = page.replace(/\{(x|xc|xs|algo|org|hex)\}/g, (m, k) => put[k]);
+    }
+    return /^https:\/\//.test(u) ? u : "";
+  } catch(e){ return ""; }                             // text that cannot be URL-encoded
 }
 const INV_CAT = { id:"investigate", label:"Investigate", icon:"eye", items:[],
   description:"Paste a domain, an IP address, a file hash or an e-mail address — or name a threat actor or a malware family — and work through the questions. Each button opens that source's own page for it." };
@@ -2194,8 +2217,18 @@ function loadState(){
 function saveState(){
   try{
     const s = {...state, sevs:[...state.sevs]};
+    if (iocFilter) s.filter = "";                      // the search box holds a name carried over from Investigate: not stored, like the indicator itself
     localStorage.setItem(STORAGE_KEY, JSON.stringify(s));
   }catch(e){}
+}
+// "Search Hunt for …" puts the name from the Indicator box into the search box. While it is there it is treated as the
+// indicator it came from: kept out of storage. The flag — not the name — lives as long as the tab, so a reload does not forget it.
+const IOC_FILTER_KEY = "ndo_ioc_filter";
+let iocFilter = false;
+try { iocFilter = sessionStorage.getItem(IOC_FILTER_KEY) === "1"; } catch(e){}
+function setIocFilter(on){
+  iocFilter = on;
+  try { if (on) sessionStorage.setItem(IOC_FILTER_KEY, "1"); else sessionStorage.removeItem(IOC_FILTER_KEY); } catch(e){}
 }
 function pushHistory(t){
   if (!t) return;
@@ -2396,6 +2429,7 @@ function renderStats(){
 }
 // Switch view (Essentials / all dorks / one category) and start it from the top.
 function selectCategory(i){
+  if (iocFilter && i !== HUNT){ state.filter = ""; setIocFilter(false); }      // leaving Hunt: the carried-over name goes with it
   state.cat = i;
   if (i === ESS || i === MY || i === INVEST || libAt(i)) state.recipe = null;      // each is its own lens; a recipe would hide most of it
   saveState(); writeHash();
@@ -2746,13 +2780,14 @@ function syncIoc(){
  * ============================================================ */
 // The data files are data, and still checked row by row: only values of the expected type and size get in,
 // and everything is rendered as text.
+// A row that is not an array, or that throws while it is read, is dropped — alone: the rest of the library stands.
+const eachRow = (d, fn) => (Array.isArray(d.rows) ? d.rows : []).forEach((r, i) => { if (!Array.isArray(r)) return; try { fn(r, i); } catch(e){} });
 const LIB_BUILD = {
   // ghdb.js rows: [GHDB id, yyyymmdd, index into cats, index into authors, query]
   ghdb(d){
     const cats = Array.isArray(d.cats) ? d.cats : [], authors = Array.isArray(d.authors) ? d.authors : [];
     const picks = Number.isInteger(d.picks) ? d.picks : 0, out = [];
-    (Array.isArray(d.rows) ? d.rows : []).forEach((r, i) => {
-      if (!Array.isArray(r)) return;
+    eachRow(d, (r, i) => {
       const id = r[0], cat = cats[r[2]], q = r[4];
       if (!Number.isInteger(id) || id <= 0 || !has(GHDB_CATS, cat) || typeof q !== "string" || !q || q.length > 400) return;
       const [slug, sev] = GHDB_CATS[cat];
@@ -2769,8 +2804,7 @@ const LIB_BUILD = {
     const str = (v, max) => typeof v === "string" && v.length <= max && !/[\u0000-\u001f\u007f]/.test(v);
     const words = v => v.replace(/_/g, " ").trim();
     const slug = v => v.toLowerCase().replace(/[^a-z0-9._-]+/g, "-").replace(/^[^a-z0-9]+|-+$/g, "").slice(0, 30);
-    (Array.isArray(d.rows) ? d.rows : []).forEach((r, i) => {
-      if (!Array.isArray(r)) return;
+    eachRow(d, (r, i) => {
       const [name, vendor, sh, fo, g, kev, cve, day, ransom] = r;
       if (!str(name, 80) || !name.trim() || !str(vendor, 60) || !str(sh, 200) || !str(fo, 200) || !str(g, 200) || !(sh || fo || g)) return;
       const key = "fp/" + (vendor + "/" + name).toLowerCase();
@@ -2800,15 +2834,15 @@ const LIB_BUILD = {
     const str = (v, max) => typeof v === "string" && v.length > 0 && v.length <= max && !/[\u0000-\u001f\u007f]/.test(v);
     const slug = v => v.toLowerCase().replace(/[^a-z0-9._-]+/g, "-").replace(/^[^a-z0-9]+|-+$/g, "").slice(0, 30);
     const FP = ["", "False positives are possible.", "Expect some false positives.", "Expect many false positives."];
-    (Array.isArray(d.rows) ? d.rows : []).forEach(r => {
-      if (!Array.isArray(r)) return;
+    eachRow(d, r => {
       const [id, tool, g, engine, k, q, note, fp, paid, also, src, when, , , pick] = r;
       const group = has(HUNT_GROUPS, groups[g]) ? HUNT_GROUPS[groups[g]] : null, kind = kinds[k], from = sources[src];
       if (!str(id, 12) || !/^[A-Za-z0-9-]+$/.test(id) || seen.has(id) || !str(tool, 40) || !group || !str(kind, 30) || !["sh", "shf", "cen", "fo"].includes(engine) || !str(q, 300)) return;
       seen.add(id);
       const link = Array.isArray(from) && str(from[0], 40) && str(from[1], 300) && /^https:\/\/[^\s"<>]+$/.test(from[1]);
-      const desc = [str(note, 200) ? note : "", FP[fp] || "", paid === 1 ? "Needs a paid plan on this engine." : ""].filter(Boolean).join(" ");
-      out.push({ key: "hunt/" + id, name: tool + " · " + kind, desc, tags: [...new Set([slug(tool), slug(kind), fp >= 2 ? "noisy" : "", paid === 1 ? "paid" : ""].filter(Boolean))],
+      const level = [1, 2, 3].includes(fp) ? fp : 0;
+      const desc = [str(note, 200) ? note : "", FP[level], paid === 1 ? "Needs a paid plan on this engine." : ""].filter(Boolean).join(" ");
+      out.push({ key: "hunt/" + id, name: tool + " · " + kind, desc, tags: [...new Set([slug(tool), slug(kind), level >= 2 ? "noisy" : "", paid === 1 ? "paid" : ""].filter(Boolean))],
                  engine, q, lib: "hunt", pick: pick === 1, scope: group[0],
                  src: link ? { label: from[0], url: from[1], year: /^20\d{4}$/.test(String(when)) ? String(when).slice(0, 4) : "", lists: Number.isInteger(also) && also > 0 ? also : 0 } : null,
                  hay: (tool + " " + kind + " " + groups[g] + " " + group[1] + " " + q + " " + (link ? from[0] : "") + " " + id).toLowerCase() });
@@ -2828,12 +2862,12 @@ function loadLib(L){
   const retry = L.state === "failed";
   L.state = "loading";
   const el = document.createElement("script");
-  // same origin, and the snapshot date in the URL: .js files are cached for a year
-  el.src = L.file + "?v=" + encodeURIComponent(L.meta.v) + (retry ? "&retry=" + Date.now() : "");
+  // same origin, and a hash of the file in the URL: .js files are cached for a year, so a changed file needs a changed address
+  el.src = L.file + "?v=" + encodeURIComponent(L.meta.h || L.meta.v) + (retry ? "&retry=" + Date.now() : "");
   const settle = () => {
     L.state = L.rows.length ? "ready" : "failed";
     el.remove();
-    if (state.cat === L.view){ syncControls(); render(); } else syncNav();
+    if (state.cat === L.view) render(); else syncNav();          // render() refreshes the menu; the search box is left alone — someone may be typing in it
   };
   el.onload = settle; el.onerror = settle;
   document.head.appendChild(el);
@@ -2903,6 +2937,7 @@ function saveFromLib(it){
  * Render — result groups, cards, empty state
  * ============================================================ */
 function render(){
+  if (iocFilter && (state.cat !== HUNT || !state.filter)) setIocFilter(false);      // the carried-over name is gone: searches are ordinary again
   const lib = libAt(state.cat);
   if (lib && lib.state === "idle") loadLib(lib);     // first visit to a library view: fetch its data file
   if (lib) fillScope(lib);                           // its menu follows the search box as well as the state
@@ -2954,7 +2989,7 @@ function renderResults(view){
     row.innerHTML = `${icon("radar")}Looking for its servers?`;
     const b = document.createElement("button"); b.type = "button"; b.className = "btn sm";
     b.textContent = `Search Hunt for “${view.ioc.value}”`;
-    b.onclick = () => { state.filter = view.ioc.value.slice(0, MAX_QUERY); state.scope.hunt = ""; selectCategory(HUNT); focusView(); };
+    b.onclick = () => { setIocFilter(true); state.filter = view.ioc.value.slice(0, MAX_QUERY); state.scope.hunt = ""; selectCategory(HUNT); focusView(); };
     row.appendChild(b);
     frag.appendChild(row);
   }
@@ -3432,8 +3467,9 @@ function runDork(x){
 function runNext(){
   if (state.cat === INVEST) return;                           // lookups are not ticked off: there is no "next"
   const done = doneFor(currentTarget());
-  const next = visibleItems().find(x => !done.has(x.it.key));
+  const items = visibleItems(), at = items.findIndex(x => !done.has(x.it.key)), next = items[at];
   if (!next){ toast("Nothing left to run in this view"); return; }
+  if (libAt(state.cat) && at >= pageShown){ pageShown = (Math.floor(at / PAGE) + 1) * PAGE; render(); }      // a paged list: draw as far as the row about to run
   const card = $$(".card[data-key]").find(c => c.dataset.key === next.it.key);
   runDork(next);
   if (card && card.isConnected){                             // show which one just ran
@@ -3698,13 +3734,17 @@ function dl(name, content, mime){
 function exportJson(){
   dl(`dorkops-${currentTarget()}-${fmtDate()}.json`, JSON.stringify(buildExportData(), null, 2), "application/json");
 }
+// Names and descriptions as Markdown that stays text — no emphasis, links, images or HTML out of a dork's name (a library's, or an imported one).
+const mdText = s => String(s || "").replace(/[\\`*_\[\]<>]/g, "\\$&");
+// A code span that survives backticks inside it: the fence is one backtick longer than the longest run in the text.
+const mdCode = s => { s = String(s || ""); const run = Math.max(0, ...(s.match(/`+/g) || []).map(r => r.length)); return run ? "`".repeat(run + 1) + " " + s + " " + "`".repeat(run + 1) : "`" + s + "`"; };
 function buildMd(){
   const data = buildExportData();
   let md = `# DorkOps — ${currentTarget()} — ${fmtDate()}\n\n`;
   data.forEach(c => {
     md += `## ${c.category}\n\n_${c.description}_\n\n`;
     c.items.forEach(i => {
-      md += `- [${i.done ? "x" : " "}] **${i.name}** \`[${i.sev}]\` — ${i.desc}\n  - engine: \`${i.engine}\`\n  - query: \`${i.query}\`\n  - url: <${i.url}>\n`;
+      md += `- [${i.done ? "x" : " "}] **${mdText(i.name)}** \`[${i.sev}]\` — ${mdText(i.desc)}\n  - engine: \`${i.engine}\`\n  - query: ${mdCode(i.query)}\n  - url: <${i.url}>\n`;
     });
     md += "\n";
   });
@@ -3939,20 +3979,18 @@ function setupDrawers(){
     // Same dorks as the current view, re-templated for every parsed target.
     const items = visibleItems().map(x => x.it).filter(it => !it.lookup);
     if (!items.length){ alert("The current view has no dorks to run."); return; }
-    const total = targets.length * items.length;
-    const cap = MAX_TABS;
-    const willOpen = Math.min(total, cap);
-    const msg = `Open ${willOpen} tabs (${targets.length} targets × ${items.length} dorks${total>cap ? `, capped at ${cap}` : ""})?`;
-    if (!confirm(msg)) return;
-    let n = 0;
-    outer: for (const t of targets){
-      for (const it of items){
-        if (n >= cap) break outer;
-        const url = buildUrl(it.engine, it.q, t);
-        setTimeout(() => window.open(url, "_blank", "noopener,noreferrer"), n*200);
-        n++;
-      }
+    // The engine each card leads with — in OPSEC mode a quiet one, exactly as Open all and Run next do.
+    // A query that does not name the target (the Hunt library) is the same for every target: it runs once.
+    const urls = [], once = new Set();
+    for (const t of targets) for (const it of items){
+      const l = leadLink(it);
+      if (!/\{t(_no_tld)?\}/.test(l.q)){ if (once.has(it.key)) continue; once.add(it.key); }
+      urls.push(buildUrl(l.engine, l.q, t));
     }
+    const cap = MAX_TABS, willOpen = Math.min(urls.length, cap);
+    const msg = `Open ${willOpen} tabs (${targets.length} targets × ${items.length} dorks${urls.length > cap ? `, capped at ${cap}` : ""})?`;
+    if (!confirm(msg)) return;
+    urls.slice(0, cap).forEach((url, n) => setTimeout(() => window.open(url, "_blank", "noopener,noreferrer"), n * 200));
   };
 
   // JS Recon
@@ -4178,7 +4216,7 @@ function wire(){
   // A link that names a view describes it completely: a search or recipe left over from the last
   // session must not leak into it. Without a view in the hash, the last session is restored as it was.
   readHash(new URLSearchParams(location.hash.slice(1)).has("cat"));
-  if (state.cat === ESS || state.cat === MY || libAt(state.cat)) state.recipe = null;     // same rule as selectCategory, for hash / stored state
+  if (state.cat === ESS || state.cat === MY || state.cat === INVEST || libAt(state.cat)) state.recipe = null;     // same rule as selectCategory, for hash / stored state
 
   buildNav();
   renderStats();

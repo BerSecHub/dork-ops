@@ -168,11 +168,11 @@ In a library view:
 
 With nothing typed, your target is the indicator. The view then asks five questions — *Is it already known? What has it done? Who is behind it? What else is connected? Where else does it turn up?* — and under each one shows the sources that answer it for that kind of indicator: reputation services and blocklists, threat-intelligence feeds, sandboxes, WHOIS and passive DNS, internet scanners, breach and infostealer data, actor profiles and vendor reporting.
 
-- Each button opens **that source's own page for the indicator**. Every address was checked against the service itself in November 2026; a source that has no page for a kind of indicator is simply not shown.
+- Each button opens **that source's own page for the indicator**. Every address was verified in November 2026 against the service's own pages, documentation or front-end code — or, where a bot wall stopped that, against its pages as a search engine had indexed them. A source that has no page for a kind of indicator is simply not shown.
 - These are look-ups, not dorks: nothing to tick, no *Run next*. **Open all** opens the first source of every card.
-- **OPSEC** takes the internet scanners out, as everywhere else.
+- **OPSEC** takes the internet scanners and urlscan out, as everywhere else.
 - For a name, a pointer at the bottom carries it to **Hunt**.
-- **The indicator is not saved.** It lives in the tab and in the address bar, never in storage.
+- **The indicator is not saved.** It lives in the tab and in the address bar, never in storage — and the same goes for a name you carry over to Hunt as a search.
 - **Left out on purpose:** people-search engines, data brokers, username, phone and address look-ups. Investigate is for infrastructure, malware and threat actors; the lint refuses a source of that kind.
 
 **Hunt** lists fingerprints of adversary infrastructure — C2 frameworks (Cobalt Strike, Sliver, Mythic, Havoc, Brute Ratel…), RATs, stealer and botnet panels, phishing kits — as queries for Shodan, Censys and FOFA.
@@ -288,7 +288,7 @@ node tools/update-libraries.mjs hunt           # just one: ghdb | fingerprints |
 ```
 
 - `ghdb.js` is built from the Exploit Database's `ghdb.xml`, `fingerprints.js` from ProjectDiscovery's `QUERIES.yaml` joined with CISA's KEV catalog, and `hunt.js` from [`tools/hunt-sources.json`](tools/hunt-sources.json), which is kept by hand.
-- The tool has no dependencies. It leaves a file alone when its source has nothing new, so a run only produces a change when the data changed.
+- The tool has no dependencies. It leaves a file alone when its source has nothing new, so a run only produces a change when the data changed. The page loads each file under an address that carries a hash of its content, so a changed file is never served from an old cache.
 - The lint then checks every row and re-runs the ranking: a data file that was edited by hand, or is out of order, fails.
 - A workflow ([`update-libraries.yml`](.github/workflows/update-libraries.yml)) runs the tool every Monday. When something changed and both test suites pass, it pushes the branch `auto/update-libraries` and opens a pull request — it never merges. Opening the pull request needs *Settings → Actions → General → Allow GitHub Actions to create and approve pull requests*; without it the branch is still pushed.
 

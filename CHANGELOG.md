@@ -27,14 +27,20 @@ Big third-party collections now live next to the page as data files and load the
 
 ### Threat intel
 
-- **Investigate.** Type an indicator — a domain, an IP address, a file hash, an e-mail address, or the name of a threat actor or malware family — and get five questions (*Is it already known? What has it done? Who is behind it? What else is connected? Where else does it turn up?*), each with the sources that answer it. 59 services; every address was checked against the service itself. Defanged indicators (`hxxp://evil[.]example`, `1.2.3[.]4`) are understood. With nothing typed, the target is the indicator.
+- **Investigate.** Type an indicator — a domain, an IP address, a file hash, an e-mail address, or the name of a threat actor or malware family — and get five questions (*Is it already known? What has it done? Who is behind it? What else is connected? Where else does it turn up?*), each with the sources that answer it. 59 services; every address was verified against the service's own pages, documentation or front-end code (or, behind a bot wall, its indexed pages). Defanged indicators (`hxxp://evil[.]example`, `1.2.3[.]4`) are understood. With nothing typed, the target is the indicator.
 - The indicator is kept in the tab and the address bar, never in storage. People-search engines, data brokers and username look-ups are left out on purpose, and the lint keeps them out.
 - **Hunt.** Published fingerprints of C2 frameworks, RATs, malware panels and phishing kits for Shodan, Censys and FOFA. Nothing was written here: each row is copied from a public source, links to it and says when it was published. Noisy fingerprints and ones behind a paid plan are labelled, and neither is among the top picks. They search the whole internet, not the target.
 
 ### Fixes
 
-- A CSV export defuses cells that a spreadsheet would run as a formula.
+- A CSV export defuses cells that a spreadsheet would run as a formula; a Markdown export keeps names as text and queries inside code spans, whatever they contain.
+- The scope importer's *Run on all* uses the engine each card leads with, so OPSEC mode holds there too; a query that does not name the target runs once, not once per target.
+- *Run next* in a long list draws as far as the row it ran.
 - The social preview image URL carries a version, so caches cannot serve an old image.
+
+### From an independent review of this release
+
+Fixed before it shipped: a name carried from Investigate to Hunt was written to storage; numbers and times were read as IP addresses (`8220`, `12:30:45`); a name cut through an emoji broke the view; typing while a library loaded could lose characters; one unreadable row emptied a whole library; a library file changed twice in a day kept its cached address (the address now carries a hash of the file); the update tool wrote a downloaded version string into the page unchecked; and 17 GHDB dorks were scoped badly (`site:ftp://…`, `site:.host`, a wildcard inside a named host).
 
 ### Licences
 

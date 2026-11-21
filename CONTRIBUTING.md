@@ -212,7 +212,7 @@ node tools/update-libraries.mjs ghdb            # one: ghdb | fingerprints | hun
 node tools/update-libraries.mjs --from some/dir # read ghdb.xml, QUERIES.yaml and kev.json from a folder instead of downloading
 ```
 
-- The tool writes the data file and its line in `LIB_META`, and leaves both alone when the source has nothing new.
+- The tool writes the data file and its line in `LIB_META` — size, date, and a hash of the file that the page puts in the file's address — and leaves both alone when the source has nothing new.
 - **"Best" is a rule, not a hand edit.** Each library has a `rank…()` function in the tool that puts the rows in order and marks the top picks. To change what counts as best, change the rule and rebuild; `tests/catalog.test.mjs` re-runs the ranking against the committed file and fails on any difference.
 - A data file is **untrusted input** to the page. Its builder in `LIB_BUILD` checks the type and size of every field and drops a row that does not fit; text reaches the page through `textContent` / `escHtml()` only. Keep that true for any new field.
 - A new library is: a builder in the tool (parse, rank, write), an entry in `LIBS` and `LIB_META`, a builder in `LIB_BUILD`, a block in the lint, and a note on where the data comes from and under what terms.

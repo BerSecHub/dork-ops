@@ -35,7 +35,8 @@ async function newPage(viewport = { width: 1440, height: 900 }, { hash = '', sto
   const page = await ctx.newPage();
   page.on('pageerror', e => errors.push(`PAGE ERROR: ${e.message}`));
   page.on('console', m => { if (m.type() === 'error' || m.type() === 'warning') errors.push(`CONSOLE ${m.type()}: ${m.text()}`); });
-  await page.route('**/*', r => { const u = r.request().url(); return (u.startsWith(ORIGIN) || u.startsWith('data:') || u.startsWith('blob:')) ? r.continue() : r.abort(); });
+  // for the whole context, not the page: a tab opened by a link must not reach the network either
+  await ctx.route('**/*', r => { const u = r.request().url(); return (u.startsWith(ORIGIN) || u.startsWith('data:') || u.startsWith('blob:')) ? r.continue() : r.abort(); });
   await page.addInitScript(s => { try { if (!sessionStorage.getItem('__seeded')) { for (const k in s) localStorage.setItem(k, s[k]); sessionStorage.setItem('__seeded', '1'); } } catch (e) {} }, storage);
   await page.goto(FILE + hash, { waitUntil: 'networkidle' });
   await page.waitForTimeout(150);
@@ -670,7 +671,7 @@ const settle = p => p.waitForTimeout(180);
     marks: document.querySelectorAll('.card.compact mark').length, focus: document.activeElement.id, scope: state.scope.ghdb, sel: document.getElementById('scope').value,
     picksOff: document.getElementById('scope').options[0].disabled, hash: location.hash, desc: document.getElementById('catDesc').textContent,
     beyondPicks: [...document.querySelectorAll('.card.compact')].some(r => !libAt(GHDB).cat.items.find(it => it.key === r.dataset.key).pick) }));
-  check('ghdb: the pointer carries the search over — one same-origin fetch, hits highlighted', fetched.length === 1 && fetched[0].startsWith(ORIGIN) && fetched[0].includes('ghdb.js?v=') && viaHint.cat && viaHint.filter === 'jenkins'
+  check('ghdb: the pointer carries the search over — one same-origin fetch, hits highlighted', fetched.length === 1 && fetched[0] === `${ORIGIN}/ghdb.js?v=${await p.evaluate(() => LIB_META.ghdb.h)}` && /^[0-9a-f]{8}$/.test(await p.evaluate(() => LIB_META.ghdb.h)) && viaHint.cat && viaHint.filter === 'jenkins'
     && viaHint.title === 'Search results' && viaHint.rows > 0 && viaHint.all && viaHint.marks >= viaHint.rows && /^\d+ results? in GHDB$/.test(viaHint.count) && viaHint.focus === 'catTitle', { fetched, viaHint });
   check('ghdb: a search goes through the whole library, not only the top picks — and the menu says so', viaHint.scope === '' && viaHint.sel === 'all' && viaHint.picksOff && !viaHint.hash.includes('scope=')
     && viaHint.beyondPicks && viaHint.desc.includes(`across all ${G} GHDB dorks`), viaHint);
@@ -713,9 +714,18 @@ const settle = p => p.waitForTimeout(180);
     ['inurl:"ibase site:de"', 'site:{t} inurl:"ibase site:de"'],
     ['intitle:"index of "phpunit.yml"', 'site:{t} intitle:"index of "phpunit.yml"'],
     ['"Powered by X" -site:x.com', 'site:{t} "Powered by X" -site:x.com'],
+    ['site:ftp://ftp.*.* ext:sql', 'site:ftp.{t} ext:sql'],
+    ['"boarding pass" site:http://tripadvisor.com', '"{t}" "boarding pass" site:tripadvisor.com'],
+    ['site:.execute-api.us-east-1.amazonaws.com', '"{t}" site:execute-api.us-east-1.amazonaws.com'],
+    ['site:."atlassian.net" "Log in to your account"', '"{t}" site:atlassian.net "Log in to your account"'],
+    ['site:vps-*.vps.ovh.net', '"{t}" site:vps-*.vps.ovh.net'],
+    ['site:..us inurl:"login.php"', 'site:{t} inurl:"login.php"'],
+    ['site: zoom+meeting+passcode', 'site:{t} zoom+meeting+passcode'],
+    ['site:gov.* intitle:"index of" *Dokuments"', 'site:{t} intitle:"index of" *Dokuments"'],
+    ['intext:"index of" downloads" site:*.*', 'site:{t} intext:"index of" downloads"'],
   ].map(([q, want]) => ({ q, want, got: ghdbScope(q) })).filter(x => x.got !== x.want));
   check('ghdb: scoping — TLD and wildcard scopes become the target, named third parties get it as a phrase, exclusions and quotes are left alone', scope.length === 0, scope);
-  check('ghdb: no dork leaves the database unscoped', await p.evaluate(() => libAt(GHDB).cat.items.every(it => it.q.includes('{t}') && !/\{t\}|\{t_no_tld\}|\{date\}/.test(it.ghdb.raw))));
+  check('ghdb: no dork leaves the database unscoped, or reduced to nothing but the target', await p.evaluate(() => libAt(GHDB).cat.items.every(it => it.q.includes('{t}') && it.q !== 'site:{t}' && !/\{t\}|\{t_no_tld\}|\{date\}/.test(it.ghdb.raw))));
 
   // the menu: everything, one category; then the row button, the cat: operator, is:pick
   await p.selectOption('#scope', 'all'); await settle(p);
@@ -749,6 +759,11 @@ const settle = p => p.waitForTimeout(180);
   const run = await p.evaluate(() => ({ opened: window.__opened.slice(), done: document.querySelector('.card.compact').classList.contains('done'), href: document.querySelector('.card.compact .eng-btn').href,
     nav: document.querySelector(`.nav-item[data-view="${GHDB}"] .ct`).textContent, prog: document.getElementById('progressText').textContent, stored: JSON.parse(localStorage.getItem('ndo_progress_v1'))['example.com'].done }));
   check('ghdb: Run next opens the best dork and ticks it; meter and sidebar follow', run.opened.length === 1 && run.opened[0] === run.href && run.done && run.nav === `1/${G}` && run.prog.startsWith(`1/${GP}`) && run.stored.length === 1 && /^ghdb\/\d+$/.test(run.stored[0]), run);
+  const far = await p.evaluate(() => { const L = libAt(GHDB), picks = L.cat.items.filter(it => it.pick); markDone(picks.slice(0, 60).map(it => it.key), true); window.__opened = [];
+    runNext(); const key = picks[60].key, card = [...document.querySelectorAll('.card[data-key]')].find(c => c.dataset.key === key);
+    const r = { rows: document.querySelectorAll('.card.compact').length, drawn: !!card, done: !!card && card.classList.contains('done'), opened: window.__opened.length };
+    markDone(picks.slice(1, 61).map(it => it.key), false); pageShown = PAGE; render(); return r; });
+  check('ghdb: Run next past the drawn page draws as far as the row it ran', far.rows === 120 && far.drawn && far.done && far.opened === 1, far);
   await p.focus('#showMore'); await p.keyboard.press('Enter'); await settle(p);
   const more = await p.evaluate(() => ({ rows: document.querySelectorAll('.card.compact').length, focusRow: [...document.querySelectorAll('.card[data-key] .done-btn')].indexOf(document.activeElement) }));
   check('ghdb: Show more adds a page and moves focus to its first row', more.rows === 120 && more.focusRow === 60, more);
@@ -826,6 +841,14 @@ const settle = p => p.waitForTimeout(180);
     && fsave.d.tags.includes('fingerprint') && fsave.d.tags.includes('kev') && fsave.d.desc.includes('ProjectDiscovery') && fsave.d.sev === 'high', fsave);
   const fa = await p.evaluate(a11y);
   check('fingerprints a11y: every control is named and at least 24×24', fa.unnamed.length === 0 && fa.small.length === 0, fa);
+  // the scope runner ("Run on all") uses the engine each card leads with — in OPSEC mode, never a scanner
+  p.on('dialog', d => d.accept());
+  await p.click('label[for="opsec"], #opsec', { force: true }); await settle(p);
+  const runAll = await p.evaluate(async () => { window.__opened = []; document.getElementById('scopeIn').value = 'acme.example\nbeta.example'; document.getElementById('scopeParse').click();
+    document.getElementById('scopeRunAll').click(); await new Promise(r => setTimeout(r, 10500)); return { opened: window.__opened.slice(), cards: document.querySelectorAll('.card[data-key]').length, opsec: state.opsec }; });
+  check('scope runner: in OPSEC mode a library row runs on the quiet engine its card shows, for each target', runAll.opsec && runAll.opened.length === 50 && runAll.opened.every(u => u.startsWith('https://www.google.com/search?q=site%3A'))
+    && runAll.opened.some(u => u.includes('acme.example')) && !runAll.opened.some(u => /shodan|fofa/.test(u)), { n: runAll.opened.length, first: runAll.opened[0] });
+  await p.click('label[for="opsec"], #opsec', { force: true }); await settle(p);
   await p.context().close();
 
   // progress is counted without loading a library; a deep link opens the view filtered
@@ -849,7 +872,7 @@ const settle = p => p.waitForTimeout(180);
   const hard = await h.evaluate(() => {
     window.DORKOPS_LIB('ghdb', { picks: 1, cats: ['Footholds', 'Not a category'], authors: ['<b>x</b>'], rows: [
       [1, 20240101, 0, 0, 'intitle:ok'], ['2', 20240101, 0, 0, 'string id'], [3, 20240101, 1, 0, 'unknown category'], [4, 20240101, 0, 0, ''], [5, 20240101, 0, 0, 'x'.repeat(401)],
-      [6, 'date', 0, 9, '<img src=x onerror=window.__xss=1> "q'], null, 'row', [7] ] });
+      [6, 'date', 0, 9, '<img src=x onerror=window.__xss=1> "q'], null, 'row', [7], [8, { toString: 1 }, 0, 0, 'a date that cannot be read'], [9, 20240101, { toString: 1 }, 0, 'a category that cannot be read'] ] });
     const G = libAt(GHDB); G.state = 'ready';
     state.cat = GHDB; state.filter = ''; state.scope.ghdb = 'all'; syncControls(); render();
     const row = [...document.querySelectorAll('.card.compact')].pop();
@@ -962,25 +985,36 @@ const settle = p => p.waitForTimeout(180);
   await p.click('label[for="opsec"], #opsec', { force: true }); await settle(p);
   const ho = await p.evaluate(() => ({ rows: document.querySelectorAll('.card[data-key]').length, btns: [...document.querySelectorAll('.empty-state .btn')].map(b => b.textContent) }));
   check('hunt: OPSEC mode leaves nothing — every engine here is a scanner — and offers the way back', ho.rows === 0 && ho.btns.includes('Turn off OPSEC mode') && !ho.btns.includes('Reset filters'), ho);
+  await p.click('label[for="opsec"], #opsec', { force: true }); await settle(p);
+  p.on('dialog', d => d.accept());
+  const once = await p.evaluate(async () => { window.__opened = []; document.getElementById('scopeIn').value = 'acme.example\nbeta.example\ngamma.example'; document.getElementById('scopeParse').click();
+    document.getElementById('scopeRunAll').click(); await new Promise(r => setTimeout(r, 7000)); return { opened: window.__opened.slice(), rows: document.querySelectorAll('.card[data-key]').length }; });
+  check('scope runner: a query that does not name the target runs once, not once per target', once.opened.length === once.rows && new Set(once.opened).size === once.rows && once.rows > 10, { n: once.opened.length, rows: once.rows });
   await p.context().close();
 
   const h = await newPage();
   const hard = await h.evaluate(() => {
-    window.DORKOPS_LIB('hunt', { groups: ['C2 framework', 'Nonsense'], kinds: ['TLS certificate', '<i>kind</i>'], sources: [['A list', 'https://example.org/list', 0], ['Bad', 'javascript:alert(1)', 0], 'x'], rows: [
+    window.DORKOPS_LIB('hunt', { groups: ['C2 framework', 'Nonsense'], kinds: ['TLS certificate', '<i>kind</i>'], sources: [['A list', 'https://example.org/list', 0], ['Bad', 'javascript:alert(1)', 0], 'x', ['<img src=x onerror=window.__xss=7>', 'https://example.org/y', 0]], rows: [
       ['S-001', 'Tool A', 0, 'sh', 0, 'ssl:"a"', 'A note.', 0, 0, 2, 0, 202501, 202609, 1, 1],
+      ['S-008', 'B [x](//e.org) ![i](//e.org/i)', 0, 'sh', 0, 'a `b` ``c``', '', 'constructor', 0, 0, 3, 0, 0, 0, 0],
+      ['S-009', { toString: 1 }, 0, 'sh', 0, 'x', '', 0, 0, 0, 0, 0, 0, 0, 0], ['S-010', 'Tool C', 0, 'sh', 0, 'y', '', 0, 0, 0, 0, { toString: 1 }, 0, 0, 0],
       ['S-002', '<img src=x onerror=window.__xss=4>', 0, 'fo', 1, 'title="<script>window.__xss=5</script>"', '', 3, 1, 0, 1, 0, 0, 0, 0],
       ['S-001', 'Twice', 0, 'sh', 0, 'x', '', 0, 0, 0, 0, 0, 0, 0, 0], ['S-003', 'Unknown group', 1, 'sh', 0, 'x', '', 0, 0, 0, 0, 0, 0, 0, 0], ['S-004', 'Unknown engine', 0, 'g', 0, 'x', '', 0, 0, 0, 0, 0, 0, 0, 0],
       ['S-005', 'No query', 0, 'sh', 0, '', '', 0, 0, 0, 0, 0, 0, 0, 0], ['bad id!', 'T', 0, 'sh', 0, 'x', '', 0, 0, 0, 0, 0, 0, 0, 0], ['S-006', 'Long', 0, 'sh', 0, 'x'.repeat(301), '', 0, 0, 0, 0, 0, 0, 0, 0], null, 'row', ['S-007'] ] });
     const L = libAt(HUNT); L.state = 'ready'; state.cat = HUNT; state.filter = ''; state.scope.hunt = 'all'; syncControls(); render();
-    const it = L.cat.items, last = [...document.querySelectorAll('.card[data-key]')].pop();
+    const it = L.cat.items, cards = [...document.querySelectorAll('.card[data-key]')], last = cards.find(c => c.dataset.key === 'hunt/S-002'), b = cards.find(c => c.dataset.key === 'hunt/S-008');
+    const md = buildMd();
     return { keys: it.map(i => i.key), names: it.map(i => i.name), picks: it.map(i => i.pick), descs: it.map(i => i.desc), tags: it.map(i => i.tags.join()), srcs: it.map(i => i.src && i.src.url), year: it[0].src.year, lists: it[0].src.lists,
       imgs: document.querySelectorAll('#grid img, #grid script, #grid i').length, xss: window.__xss, title: last.querySelector('.card-title').textContent, link: !!last.querySelector('.src-link'),
+      label: b.querySelector('.src-link').textContent, mdName: md.includes('**B \\[x\\](//e.org) !\\[i\\](//e.org/i) · TLS certificate**'), mdQuery: md.includes('  - query: ``` a `b` ``c`` ```\n'),
+      mdPlain: md.includes('  - query: `ssl:"a"`\n'),
       junk: [LIB_BUILD.hunt({}), LIB_BUILD.hunt({ rows: 7 })].every(a => Array.isArray(a) && !a.length) };
   });
-  check('hunt: malformed rows are dropped, a link that is not https is not a link, and hostile text stays text', JSON.stringify(hard.keys) === '["hunt/S-001","hunt/S-002"]' && JSON.stringify(hard.picks) === '[true,false]'
-    && hard.names[0] === 'Tool A · TLS certificate' && hard.descs[0] === 'A note.' && hard.descs[1] === 'Expect many false positives. Needs a paid plan on this engine.' && hard.tags[1].endsWith('noisy,paid')
-    && hard.srcs[0] === 'https://example.org/list' && hard.srcs[1] === null && hard.year === '2025' && hard.lists === 2 && hard.imgs === 0 && hard.xss === undefined
-    && hard.title === '<img src=x onerror=window.__xss=4> · <i>kind</i>' && !hard.link && hard.junk, hard);
+  check('hunt: malformed rows are dropped — each alone —, a link that is not https is not a link, and hostile text stays text', JSON.stringify(hard.keys) === '["hunt/S-001","hunt/S-008","hunt/S-002"]' && JSON.stringify(hard.picks) === '[true,false,false]'
+    && hard.names[0] === 'Tool A · TLS certificate' && hard.descs[0] === 'A note.' && hard.descs[1] === '' && hard.descs[2] === 'Expect many false positives. Needs a paid plan on this engine.' && hard.tags[2].endsWith('noisy,paid')
+    && hard.srcs[0] === 'https://example.org/list' && hard.srcs[2] === null && hard.year === '2025' && hard.lists === 2 && hard.imgs === 0 && hard.xss === undefined
+    && hard.title === '<img src=x onerror=window.__xss=4> · <i>kind</i>' && !hard.link && hard.label.startsWith('<img src=x onerror=window.__xss=7>') && hard.junk, hard);
+  check('export: Markdown keeps a row\'s name as text and its query inside a code span, whatever they contain', hard.mdName && hard.mdQuery && hard.mdPlain, { mdName: hard.mdName, mdQuery: hard.mdQuery, mdPlain: hard.mdPlain });
   await h.context().close();
 
   /* ----- Investigate ----- */
@@ -1009,7 +1043,11 @@ const settle = p => p.waitForTimeout(180);
     ['2001:db8::1', 'ip', '2001:db8::1'], ['999.1.1.1', 'name', '999.1.1.1'], ['275A021BBFB6489E54D471899F7DB9D1663FC695EC2FE2A2C4538AABF651FD0F', 'hash', '275a021bbfb6489e54d471899f7db9d1663fc695ec2fe2a2c4538aabf651fd0f', 'sha256'],
     ['44d88612fea8a8f36de82e1278abb02f', 'hash', '44d88612fea8a8f36de82e1278abb02f', 'md5'], ['3395856ce81f2b7382dee72602f798b642f14140', 'hash', '3395856ce81f2b7382dee72602f798b642f14140', 'sha1'],
     ['Someone@Example.ORG', 'email', 'someone@example.org'], ['user[@]evil[.]example', 'email', 'user@evil.example'], ['APT28', 'name', 'APT28'], ['  Cobalt   Strike ', 'name', 'Cobalt Strike'], ['lazarus', 'name', 'lazarus'],
-    ['localhost', 'name', 'localhost'], ['a', null], ['', null], ['   ', null], [null, null], [42, null], ['x'.repeat(500), 'name', 'x'.repeat(80)]
+    ['localhost', 'name', 'localhost'], ['a', null], ['', null], ['   ', null], [null, null], [42, null], ['x'.repeat(500), 'name', 'x'.repeat(80)],
+    // a number is a name, not an address in disguise; neither is a time or a MAC address
+    ['8220', 'name', '8220'], ['admin@338', 'name', 'admin@338'], ['1.2.3', 'name', '1.2.3'], ['0x7f.1', 'name', '0x7f.1'], ['12:30:45', 'name', '12:30:45'], ['aa:bb:cc:dd:ee:ff', 'name', 'aa:bb:cc:dd:ee:ff'],
+    ['[2001:db8::1]', 'ip', '2001:db8::1'], ['http://[2001:db8::1]:8080/x', 'ip', '2001:db8::1'], ['::ffff:1.2.3.4', 'ip', '::ffff:1.2.3.4'], ['mailto:user@example.com', 'email', 'user@example.com'],
+    ['ssh://git@code.example.org:22/repo.git', 'domain', 'code.example.org'], ['a'.repeat(79) + '\u{1F600}', 'name', 'a'.repeat(79)], ['\uD83D half', 'name', 'half']
   ].map(([raw, type, value, algo]) => { const r = readIoc(raw); return { raw, want: type ? `${type}|${value}|${algo || ''}` : 'null', got: r ? `${r.type}|${r.value}|${r.algo || ''}` : 'null' }; }).filter(x => x.got !== x.want));
   check('investigate: what was typed is recognised — domains, addresses, hashes, e-mail, names, defanged or not', kinds.length === 0, kinds);
   const urls = await v.evaluate(() => { const at = (k, raw) => lookupUrl(k, readIoc(raw)); const sha = '275a021bbfb6489e54d471899f7db9d1663fc695ec2fe2a2c4538aabf651fd0f', md5 = '44d88612fea8a8f36de82e1278abb02f'; return [
@@ -1019,21 +1057,25 @@ const settle = p => p.waitForTimeout(180);
     [at('mb', 'Cobalt Strike'), 'https://bazaar.abuse.ch/browse/tag/CobaltStrike/'], [at('attck', 'APT28'), 'https://www.google.com/search?q=site%3Aattack.mitre.org%20%22APT28%22'],
     [at('whk', 'example.co.uk'), 'https://www.whoxy.com/keyword/example'], [at('yf', md5), 'https://yaraify.abuse.ch/search/md5/' + md5 + '/'], [at('circl', sha), 'https://hashlookup.circl.lu/lookup/sha256/' + sha],
     [at('sthi', 'example.com'), 'https://securitytrails.com/domain/example.com/history/a'], [at('mp', 'a "b" <c>&d'), 'https://malpedia.caad.fkie.fraunhofer.de/library?search=a%20%22b%22%20%3Cc%3E%26d'],
-    [at('gsb', '8.8.8.8'), ''], [at('ha', '3395856ce81f2b7382dee72602f798b642f14140'), ''], [at('mb', md5), ''], [at('hibp', 'example.com'), '']
+    [at('gsb', '8.8.8.8'), ''], [at('ha', '3395856ce81f2b7382dee72602f798b642f14140'), ''], [at('mb', md5), ''], [at('hibp', 'example.com'), ''],
+    // a name goes into an engine query as it is: no replacement patterns, no second substitution
+    [at('attck', 'Pay$$Day $& {date} {t_no_tld}'), 'https://www.google.com/search?q=site%3Aattack.mitre.org%20%22Pay%24%24Day%20%24%26%20%7Bdate%7D%20%7Bt_no_tld%7D%22'],
+    [at('ghc', 'someone@example.org'), 'https://github.com/search?q=author-email%3Asomeone@example.org&type=Commits']
   ].filter(([got, want]) => got !== want); });
   check('investigate: each source gets the indicator the way it expects it (path, query, hex, Base64, per hash type) — or is left out', urls.length === 0, urls);
 
   await v.fill('#ioc', '8.8.8.8'); await settle(v);
   const ip = await v.evaluate(() => ({ kind: document.getElementById('iocKind').textContent, cards: [...document.querySelectorAll('.card.lookup .card-title')].map(c => c.textContent), hash: location.hash, who: document.getElementById('visibleTarget').textContent,
-    stored: Object.keys(localStorage).map(k => localStorage.getItem(k)).join('\n').includes('8.8.8.8'), exposed: [...[...document.querySelectorAll('.card.lookup')].find(c => c.querySelector('.card-title').textContent === 'Exposed services').querySelectorAll('.eng-btn')].map(a => a.textContent.replace(/\s*\(login required\)/, '').trim()),
+    stored: (saveState(), Object.keys(localStorage).map(k => localStorage.getItem(k)).join('\n').includes('8.8.8.8')), saved: localStorage.getItem('ndo_state_v1') !== null, exposed: [...[...document.querySelectorAll('.card.lookup')].find(c => c.querySelector('.card-title').textContent === 'Exposed services').querySelectorAll('.eng-btn')].map(a => a.textContent.replace(/\s*\(login required\)/, '').trim()),
     locks: document.querySelectorAll('.card.lookup .eng-btn .visually-hidden').length, target: document.getElementById('target').value }));
   check('investigate: an IP address gets its own questions; the indicator goes to the address bar and nowhere else', ip.kind === 'IP address' && ip.cards.includes('Network and hosting') && ip.cards.includes('Exposed services') && ip.cards.includes('Neighbours')
-    && !ip.cards.includes('Registration') && ip.hash.includes('ioc=8.8.8.8') && ip.who === ' · 8.8.8.8' && !ip.stored && ip.target === 'example.com' && ip.locks >= 3
+    && !ip.cards.includes('Registration') && ip.hash.includes('ioc=8.8.8.8') && ip.who === ' · 8.8.8.8' && ip.saved && !ip.stored && ip.target === 'example.com' && ip.locks >= 3
     && JSON.stringify(ip.exposed) === JSON.stringify(['Shodan', 'Shodan · InternetDB', 'Censys', 'FOFA', 'ZoomEye']), ip);
   await v.click('label[for="opsec"], #opsec', { force: true }); await settle(v);
-  const quiet = await v.evaluate(() => [...[...document.querySelectorAll('.card.lookup')].find(c => c.querySelector('.card-title').textContent === 'Exposed services').querySelectorAll('.eng-btn')].map(a => a.textContent.trim()));
+  const quiet = await v.evaluate(() => { const of = t => [...[...document.querySelectorAll('.card.lookup')].find(c => c.querySelector('.card-title').textContent === t).querySelectorAll('.eng-btn')].map(a => a.textContent.trim());
+    return { exposed: of('Exposed services'), scans: of('Sandboxes and scans') }; });
   await v.click('label[for="opsec"], #opsec', { force: true }); await settle(v);
-  check('investigate: OPSEC mode takes the internet scanners out of a card', JSON.stringify(quiet) === '["Shodan · InternetDB"]', quiet);
+  check('investigate: OPSEC mode takes the internet scanners and urlscan out of a card', JSON.stringify(quiet.exposed) === '["Shodan · InternetDB"]' && JSON.stringify(quiet.scans) === '["Hybrid Analysis"]', quiet);
 
   await v.evaluate(() => { window.__opened = []; window.open = u => { window.__opened.push(u); return null; }; });
   await v.click('#openCat'); await v.waitForTimeout(1900);
@@ -1047,12 +1089,22 @@ const settle = p => p.waitForTimeout(180);
   const th = await v.evaluate(() => ({ cat: state.cat === HUNT, filter: state.filter, titles: [...document.querySelectorAll('.card .card-title')].map(h => h.textContent), focus: document.activeElement.id, box: document.getElementById('iocWrap').hidden }));
   check('investigate: a name gets profiles, reporting and detection rules — and a way to the Hunt library', nm.kind === 'Name' && JSON.stringify(nm.cards) === JSON.stringify(['Who they are', 'Threat-intelligence feeds', 'Sandboxes and scans', 'Reporting', 'Leaks, stolen credentials and victims', 'Detection rules'])
     && nm.btn === 'Search Hunt for “Cobalt Strike”' && th.cat && th.filter === 'Cobalt Strike' && th.titles.filter(t => t.startsWith('Cobalt Strike · ')).length >= 10 && th.focus === 'catTitle' && th.box, { nm, th });
-  await v.keyboard.press('k'); await settle(v);
-  const back = await v.evaluate(() => ({ cat: state.cat === INVEST, box: document.getElementById('ioc').value, filter: state.filter }));
-  await v.keyboard.press('k'); await ready(v, 'fingerprints'); await settle(v);
-  check('keys: Investigate and Hunt sit after the libraries for j / k', back.cat && back.box === 'Cobalt Strike' && await v.evaluate(() => state.cat === FPRINT), back);
+  const kept = () => ({ stored: Object.keys(localStorage).map(k => localStorage.getItem(k)).join('\n').includes('Cobalt'), state: JSON.parse(localStorage.getItem('ndo_state_v1')), flag: sessionStorage.getItem('ndo_ioc_filter'), filter: state.filter, hash: location.hash });
+  const carried = await v.evaluate(kept);
+  await v.fill('#filter', 'Cobalt Strike beacon'); await settle(v); await v.click('label[for="opsec"], #opsec', { force: true }); await v.click('label[for="opsec"], #opsec', { force: true }); await settle(v);
+  const edited = await v.evaluate(kept);
+  await v.reload({ waitUntil: 'networkidle' }); await ready(v, 'hunt'); await settle(v);
+  await v.click('label[for="opsec"], #opsec', { force: true }); await v.click('label[for="opsec"], #opsec', { force: true }); await settle(v);
+  const reloaded = await v.evaluate(kept);
+  check('investigate: the name carried to Hunt is a search in the address bar — and, like the indicator, is not stored (not after an edit, not after a reload)', !carried.stored && carried.state.cat === -6 && carried.state.filter === '' && carried.flag === '1'
+    && carried.hash.includes('filter=Cobalt+Strike') && !edited.stored && edited.filter === 'Cobalt Strike beacon' && !reloaded.stored && reloaded.filter === 'Cobalt Strike beacon' && reloaded.flag === '1', { carried, edited, reloaded });
+  await v.evaluate(() => document.activeElement.blur()); await v.keyboard.press('k'); await settle(v);
+  const back = await v.evaluate(() => ({ cat: state.cat === INVEST, filter: state.filter, flag: sessionStorage.getItem('ndo_ioc_filter'), cards: document.querySelectorAll('.card.lookup').length, saved: JSON.parse(localStorage.getItem('ndo_state_v1')).filter }));
+  check('investigate: leaving Hunt drops the carried-over name, so the questions are all there again', back.cat && back.filter === '' && back.flag === null && back.cards > 3 && back.saved === '', back);
+  await v.fill('#ioc', 'Cobalt Strike'); await settle(v);
+  await v.evaluate(() => document.activeElement.blur()); await v.keyboard.press('k'); await ready(v, 'fingerprints'); await settle(v);
+  check('keys: Investigate and Hunt sit after the libraries for j / k', await v.evaluate(() => state.cat === FPRINT && document.getElementById('ioc').value === 'Cobalt Strike'));
   await v.keyboard.press('j'); await settle(v);
-  await v.click('#filterClear'); await settle(v);
 
   await v.fill('#ioc', '275a021bbfb6489e54d471899f7db9d1663fc695ec2fe2a2c4538aabf651fd0f'); await settle(v);
   const hsh = await v.evaluate(() => ({ kind: document.getElementById('iocKind').textContent, cards: [...document.querySelectorAll('.card.lookup .card-title')].map(c => c.textContent), over: document.documentElement.scrollWidth - document.documentElement.clientWidth }));
@@ -1098,6 +1150,24 @@ const settle = p => p.waitForTimeout(180);
   check('investigate: a deep link carries the indicator as it was written; leaving the view puts the usual controls back', deep.cat && deep.box === 'evil[.]example' && deep.kind === 'Domain' && JSON.stringify(deep.cards) === '["Verdicts and blocklists"]'
     && deep.href === 'https://www.virustotal.com/gui/domain/evil.example' && !deep.saved && left.box && left.kind && !left.sev && !left.run && !left.exp && !left.hash.includes('ioc='), { deep, left });
   await dl.context().close();
+
+  const rc = await newPage(undefined, { hash: '#cat=investigate&recipe=noLogin' });
+  await rc.click('.nav-item[data-view="-1"]'); await settle(rc);
+  check('investigate: a recipe in a link to it is not carried into the next view', await rc.evaluate(() => state.recipe === null && document.getElementById('recipe').value === ''));
+  await rc.context().close();
+
+  // 6. typing in the search box while a library is still loading must not lose characters
+  const slow = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+  const ty = await slow.newPage();
+  ty.on('pageerror', e => errors.push(`PAGE ERROR: ${e.message}`));
+  await slow.route('**/*', async r => { const u = r.request().url(); if (!u.startsWith(ORIGIN)) return r.abort(); if (/\/ghdb\.js/.test(u)) await new Promise(res => setTimeout(res, 700)); return r.continue(); });
+  await ty.addInitScript(() => { try { localStorage.setItem('ndo_disclaimer_v1', '1'); } catch (e) {} });
+  await ty.goto(FILE + '#cat=ghdb', { waitUntil: 'domcontentloaded' });
+  await ty.click('#filter'); await ty.keyboard.type('jenkins login portal', { delay: 45 });
+  await ty.waitForFunction(() => libAt(GHDB).state === 'ready', null, { timeout: 15000 }); await ty.waitForTimeout(400);
+  const typed = await ty.evaluate(() => ({ box: document.getElementById('filter').value, state: state.filter, rows: document.querySelectorAll('.card.compact').length }));
+  check('libraries: typing while a library loads keeps every character', typed.box === 'jenkins login portal' && typed.state === 'jenkins login portal', typed);
+  await slow.close();
 }
 
 /* ───────────── 5. persistence + first visit ───────────── */

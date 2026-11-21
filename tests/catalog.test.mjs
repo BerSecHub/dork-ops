@@ -106,7 +106,11 @@ function readLib(id, file, headerMust) {
   const rows = Array.isArray(d.rows) ? d.rows : [], meta = LIB_META[id];
   libRows[id] = rows.length; libPicks[id] = d.picks;
   if (d.count !== rows.length || meta.count !== rows.length) fail(`${file} has ${rows.length} rows, its header says ${d.count} and LIB_META.${id} in index.html says ${meta.count} — run tools/update-libraries.mjs`);
-  for (const k of Object.keys(meta)) if (k !== 'count' && d[k] !== meta[k]) fail(`LIB_META.${id}.${k} is ${JSON.stringify(meta[k])} but ${file} says ${JSON.stringify(d[k])}`);
+  for (const k of Object.keys(meta)) if (k !== 'count' && k !== 'h' && d[k] !== meta[k]) fail(`LIB_META.${id}.${k} is ${JSON.stringify(meta[k])} but ${file} says ${JSON.stringify(d[k])}`);
+  // LIB_META sits in the page's script and its hash goes into the file's address (the files are cached for a year).
+  for (const [k, v] of Object.entries(meta)) if (!(Number.isInteger(v) && v >= 0) && !(typeof v === 'string' && /^[0-9a-f.-]{1,40}$/.test(v))) fail(`LIB_META.${id}.${k}: unexpected value ${JSON.stringify(v)}`);
+  const hash = createHash('sha256').update(src).digest('hex').slice(0, 8);
+  if (meta.h !== hash) fail(`LIB_META.${id}.h is ${JSON.stringify(meta.h)} but ${file} hashes to "${hash}" — a changed file needs a changed address: run tools/update-libraries.mjs`);
   if (!Number.isInteger(d.picks) || d.picks < 1 || d.picks > rows.length) fail(`${file}: "picks" must be between 1 and the number of rows`);
   return d;
 }
@@ -133,6 +137,9 @@ if (g) {
     if (/\{t\}|\{t_no_tld\}|\{date\}/.test(q)) flag(`row ${id}: the query contains a literal placeholder`);
     const scoped = ghdbScope(q);
     if (!scoped.includes('{t}')) flag(`row ${id}: scoping lost the target — ${scoped}`);
+    if (scoped === 'site:{t}' || scoped === '"{t}"') flag(`row ${id}: nothing is left of the dork but the target — ${q}`);
+    const scopes = ((q.match(/"/g) || []).length % 2 ? scoped : scoped.replace(/"[^"]*"/g, '')).split(/\s+/).filter(t => /^\(*site:/i.test(t));      // scopes outside quotes
+    if (scoped.startsWith('site:{t} ') && scopes.length > 1) flag(`row ${id}: a second scope next to the target's — ${scoped}`);
     if (!/^https:\/\/www\.google\.com\/search\?q=/.test(ENGINES.g.url(fill(scoped)))) flag(`row ${id}: does not build a Google search link`);
     plain.push({ id, date: iso(day), cat: (g.cats || [])[c], q });
   }
