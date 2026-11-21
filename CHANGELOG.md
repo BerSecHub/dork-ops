@@ -2,6 +2,50 @@
 
 All notable changes to DorkOps. The app is a single file with no build step, so "a release" is simply what is on the default branch.
 
+## 0.7 — 2026-11-21
+
+A calmer interface, three libraries that load on demand, and a first step from recon into threat intelligence.
+
+### Interface
+
+- **One reading column.** The content sits in a single centred column with larger type and more air; the filter bar lines up with it. Cards show the title, the reason, the query and the buttons — in that order, with less chrome around them.
+- **Line icons instead of emoji**, a neutral palette in both themes (every text and control pair meets WCAG AA), and severity shown as a dot and a word rather than a coloured block.
+- Long words and long queries wrap instead of widening the page, down to 320 px.
+
+### Libraries
+
+Big third-party collections now live next to the page as data files and load the first time their view is opened. The page itself stays one small file.
+
+- **GHDB** — Exploit-DB's Google Hacking Database, 7,944 dorks. Each one is rewritten to stay on the target: a bare dork gets `site:{t}`; a top-level or wildcard scope (`site:.gov`, `site:*.edu.*`) becomes the target; a named third party keeps its `site:` and gets the target as a phrase; `site:login.*.*` becomes `site:login.{t}`.
+- **Fingerprints** — how 2,766 products show up on Shodan, FOFA and Google (ProjectDiscovery's awesome-search-queries), tied to the target by certificate, root domain or `site:`.
+- **Hunt** — 174 published fingerprints of adversary infrastructure (below).
+- **Best first, by rules you can read.** `tools/update-libraries.mjs` downloads the sources, ranks them and writes the files. GHDB opens on 500 top picks — a quota per GHDB category, scored on what a hit is worth, how recent the dork is and how widely it applies. Fingerprints opens on the products on CISA's Known Exploited Vulnerabilities list, ransomware first. The lint re-runs the ranking against the committed files.
+- One menu per library — *Top picks*, *Everything*, its own categories — and a search that always goes through the whole library. Rows are ticked, run and exported like any dork; **+** saves one to *My dorks*.
+- A catalog search ends with *Search the libraries too*, which carries the search over.
+- The data files are treated as untrusted: every row is type- and size-checked, and everything is rendered as text.
+- A scheduled workflow refreshes the libraries every Monday and offers the result as a pull request; it never merges.
+
+### Threat intel
+
+- **Investigate.** Type an indicator — a domain, an IP address, a file hash, an e-mail address, or the name of a threat actor or malware family — and get five questions (*Is it already known? What has it done? Who is behind it? What else is connected? Where else does it turn up?*), each with the sources that answer it. 59 services; every address was verified against the service's own pages, documentation or front-end code (or, behind a bot wall, its indexed pages). Defanged indicators (`hxxp://evil[.]example`, `1.2.3[.]4`) are understood. With nothing typed, the target is the indicator.
+- The indicator is kept in the tab and the address bar, never in storage. People-search engines, data brokers and username look-ups are left out on purpose, and the lint keeps them out.
+- **Hunt.** Published fingerprints of C2 frameworks, RATs, malware panels and phishing kits for Shodan, Censys and FOFA. Nothing was written here: each row is copied from a public source, links to it and says when it was published. Noisy fingerprints and ones behind a paid plan are labelled, and neither is among the top picks. They search the whole internet, not the target.
+
+### Fixes
+
+- A CSV export defuses cells that a spreadsheet would run as a formula; a Markdown export keeps names as text and queries inside code spans, whatever they contain.
+- The scope importer's *Run on all* uses the engine each card leads with, so OPSEC mode holds there too; a query that does not name the target runs once, not once per target.
+- *Run next* in a long list draws as far as the row it ran.
+- The social preview image URL carries a version, so caches cannot serve an old image.
+
+### From an independent review of this release
+
+Fixed before it shipped: a name carried from Investigate to Hunt was written to storage; numbers and times were read as IP addresses (`8220`, `12:30:45`); a name cut through an emoji broke the view; typing while a library loaded could lose characters; one unreadable row emptied a whole library; a library file changed twice in a day kept its cached address (the address now carries a hash of the file); the update tool wrote a downloaded version string into the page unchecked; and 17 GHDB dorks were scoped badly (`site:ftp://…`, `site:.host`, a wildcard inside a named host).
+
+### Licences
+
+- The app stays MIT. `ghdb.js` is GPL-2.0, as the repository it comes from (`ghdb.LICENSE.md`); `fingerprints.js` is MIT with the KEV catalog under CC0 (`fingerprints.LICENSE.md`); `hunt.js` reproduces published queries with attribution (`hunt.SOURCES.md`).
+
 ## 0.6 — 2026-11-15
 
 The catalog was reviewed against the engines' current documentation, every dork was scoped to the target, and the app learned to track a recon session.

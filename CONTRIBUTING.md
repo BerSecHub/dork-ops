@@ -11,6 +11,9 @@ Thanks for helping improve DorkOps! The whole tool is a single `index.html` file
 - [Severity guide](#severity-guide)
 - [Adding a search engine](#adding-a-search-engine)
 - [Essentials and recipes](#essentials-and-recipes)
+- [The libraries](#the-libraries)
+- [Adding a Hunt fingerprint](#adding-a-hunt-fingerprint)
+- [Adding an Investigate source](#adding-an-investigate-source)
 - [Touching the UI](#touching-the-ui)
 - [Testing your change](#testing-your-change)
 - [Style](#style)
@@ -42,12 +45,18 @@ Everything the app needs lives in `index.html`:
 | `web()` `svc()` `key()` `any()` | before `DATA` | Small helpers that build families of scanner and secret dorks |
 | `DATA` | script | The dork catalog — an array of categories, each with a `group` and its `items` |
 | `ESSENTIAL_STEPS`, `RECIPES` | after `DATA` | The first-pass playbook and the preset filters |
+| `LIB_META`, `LIBS`, `LIB_BUILD` | script | The libraries: what each data file holds, how its rows are checked and turned into dorks |
+| `SOURCES`, `INVESTIGATION` | script | The Investigate view: the look-up services and the questions that group them |
 | Personal data | script | Progress per target, pins and the user's own dorks (`localStorage` only) |
 | App logic | rest | Search parser, `viewGroups()` (what is on screen), rendering, routing, recon tools, wiring |
 
 To find a spot quickly, search the file for the banner comments (`/* ===== ... ===== */`); the comment at the top of the script lists them in order.
 
-Next to it: `tests/catalog.test.mjs` (a zero-dependency lint of the catalog) and `tests/ui.test.mjs` (the UI regression suite).
+Next to it:
+
+- `ghdb.js`, `fingerprints.js`, `hunt.js` — the library data files. **Generated; do not edit them by hand** (the lint notices).
+- `tools/update-libraries.mjs` — downloads, ranks and writes those files; `tools/hunt-sources.json` — the hand-kept source of `hunt.js`.
+- `tests/catalog.test.mjs` (a zero-dependency lint of the catalog, the libraries and the Investigate sources) and `tests/ui.test.mjs` (the UI regression suite).
 
 ## Adding a dork
 
@@ -193,6 +202,68 @@ Keep it short and opinionated — it is what a newcomer runs first. The lint fai
 
 **Recipes** (`RECIPES`) are preset filters over the whole catalog. `label` and `desc` feed the Recipe menu and the view header; the filter itself is any combination of `filterTags` (dork has any of these tags), `onlyCats`, `noAuth` (the dork's own engine needs no account), `maxPerCat` (cap per category) and `extraDrawers` (recon tools the recipe pairs with).
 
+## The libraries
+
+A library is a collection too big for the catalog: it lives in a data file next to the page and is fetched the first time its view opens. The page knows each file's size and date from `LIB_META`, so the sidebar can show a count without loading anything.
+
+```bash
+node tools/update-libraries.mjs                 # all three
+node tools/update-libraries.mjs ghdb            # one: ghdb | fingerprints | hunt
+node tools/update-libraries.mjs --from some/dir # read ghdb.xml, QUERIES.yaml and kev.json from a folder instead of downloading
+```
+
+- The tool writes the data file and its line in `LIB_META` — size, date, and a hash of the file that the page puts in the file's address — and leaves both alone when the source has nothing new.
+- **"Best" is a rule, not a hand edit.** Each library has a `rank…()` function in the tool that puts the rows in order and marks the top picks. To change what counts as best, change the rule and rebuild; `tests/catalog.test.mjs` re-runs the ranking against the committed file and fails on any difference.
+- A data file is **untrusted input** to the page. Its builder in `LIB_BUILD` checks the type and size of every field and drops a row that does not fit; text reaches the page through `textContent` / `escHtml()` only. Keep that true for any new field.
+- A new library is: a builder in the tool (parse, rank, write), an entry in `LIBS` and `LIB_META`, a builder in `LIB_BUILD`, a block in the lint, and a note on where the data comes from and under what terms.
+
+## Adding a Hunt fingerprint
+
+`hunt.js` is built from [`tools/hunt-sources.json`](tools/hunt-sources.json). **Every row is a query somebody published** — never one you wrote or tuned yourself — and names its source.
+
+1. Append a row:
+
+   ```json
+   {"id": "S-152", "tool": "Sliver", "group": "C2 framework", "engine": "sh", "kind": "TLS certificate",
+    "q": "ssl.cert.subject.cn:\"multiplayer\"", "src": "bushido", "date": "2026-09", "core": true}
+   ```
+
+   | Field | Meaning |
+   | --- | --- |
+   | `id` | Unique, `S-` Shodan, `CP-` Censys Platform, `F-` FOFA, then three digits |
+   | `tool`, `group` | The tool, and one of: C2 framework, RAT, Phishing kit, Open directory, Engine classification, Malware panel, Red-team tool |
+   | `engine` | `sh` Shodan, `shf` Shodan facets, `cen` Censys Platform, `fo` FOFA |
+   | `kind` | What it matches on: TLS certificate, response hash, favicon, product label, response headers, engine label, file listing, page title, banner, page content, JARM, port pattern |
+   | `q` | The query, exactly as published |
+   | `src` | A key of `sources` at the top of the file (add the source there if it is new: label, link, `vendor: true` for the engine's own publication); `url` overrides the link for this row |
+   | `date` | When the source published it, `yyyy-mm`; `seen` — the newest public list that still carries it, if later |
+   | `also` | How many other public lists carry the same query |
+   | `note` | One sentence on what it matches, if the query does not say |
+   | `fp` | Known false positives: 1 possible, 2 moderate, 3 heavy |
+   | `paid` | `true` when the filter needs a paid plan |
+   | `core` | `true` for a tool that belongs in the top picks |
+
+2. Run `node tools/update-libraries.mjs hunt`, then `node tests/catalog.test.mjs`.
+3. If the source is new, credit it in [`hunt.SOURCES.md`](hunt.SOURCES.md).
+
+Leave out queries in Censys's legacy syntax, generic strings that mostly match unrelated hosts, and tools that are not adversary infrastructure.
+
+## Adding an Investigate source
+
+A source is a service that has **a page of its own for an indicator** — not a search engine query (those are dorks).
+
+```js
+// SOURCES: key: [name, colour of its button, { kind of indicator: page }, flags]
+ipinf: ["IPinfo", "#06c", { ip:"https://ipinfo.io/{x}" }],
+```
+
+- **Kinds:** `domain`, `ip`, `email`, `name` (a threat actor or a malware family), `hash` — or `md5` / `sha1` / `sha256` when the service takes only that one.
+- **A page** is an `https://` address with a placeholder: `{x}` the indicator, URL-encoded; `{xc}` without spaces; `{xs}` without spaces and in lower case; `{hex}` hex-encoded; `{algo}`; `{org}` a domain's own label. Or `[engine, query]` to go through a registered engine with `{t}` as the indicator.
+- **Flags:** `"a"` when it asks for an account, `"o"` for an internet scanner (hidden in OPSEC mode).
+- Then list its key in a card of `INVESTIGATION`. A source that no card uses fails the lint.
+- **Check the address against the service itself** — its own pages, its documentation or its front-end code — with a harmless value (`example.com`, `8.8.8.8`, the EICAR hash). Do not add an address you have only seen in a blog post.
+- **No people-search engines, data brokers, username, phone or address look-ups.** Investigate is for infrastructure, malware and threat actors. The lint carries a list of such services and refuses them.
+
 ## Touching the UI
 
 - **Colours** come from the tokens at the top of `<style>`; both themes define the same set. Do not hard-code colours in rules — add or reuse a token so light and dark stay in step.
@@ -210,7 +281,7 @@ Keep it short and opinionated — it is what a newcomer runs first. The lint fai
 node tests/catalog.test.mjs
 ```
 
-needs only Node and checks every dork (fields, target scope, engine, https link, Google's word limit), that no engine is unused, that the playbook and recipes point at things that exist, and that the numbers quoted in the page head, the README and the social preview image are still true.
+needs only Node and checks every dork (fields, target scope, engine, https link, Google's word limit), that no engine is unused, that the playbook and recipes point at things that exist, every row of the three libraries and the order they are in, the Investigate sources, and that the numbers quoted in the page head, the README and the social preview image are still true.
 
 Then look at it:
 
@@ -244,4 +315,4 @@ CI runs both on every pull request.
 3. Describe **what the dork/engine finds** and **why it's still working** in the PR description — the template asks for both.
 4. One logical change per PR keeps review fast.
 
-Thanks for contributing! 🔍
+Thanks for contributing!
