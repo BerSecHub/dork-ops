@@ -182,6 +182,10 @@ input::placeholder,textarea::placeholder{color:var(--text-3); opacity:1}
   font-size:13px; font-weight:600; color:var(--text-3);
 }
 
+.field-ioc{flex:1 1 260px; max-width:460px; height:32px; border-radius:8px}       /* the Indicator box of the Investigate view, in the filter bar */
+.field-ioc input{font-family:var(--font-mono); font-size:13.5px}
+.ioc-kind{flex-shrink:0; font-size:13px; font-weight:550; color:var(--accent)}
+
 /* a compact native select */
 .select{position:relative; display:inline-flex; align-items:center; flex-shrink:0}
 .select select{
@@ -530,6 +534,9 @@ mark{padding:0 1px; border-radius:3px; background:var(--mark); color:inherit}
 .q-copy.fail,.q-copy.fail:hover,.card-foot .iconbtn.fail,.card-foot .iconbtn.fail:hover{color:var(--danger)}
 
 /* GHDB rows: the query is the row — no title of its own, one line of provenance under it */
+.card.lookup{gap:7px 16px; padding:15px 18px 16px}                                  /* Investigate: a question and its sources, nothing to tick */
+.card.lookup > .card-desc,.card.lookup > .card-engines{margin-left:0}
+.card.lookup > .card-engines{margin-top:5px}
 .card.compact{grid-template-columns:24px minmax(0,1fr); gap:8px 12px; padding:12px 16px 10px 14px}
 .card.compact > *{grid-column:2}
 .card.compact > .card-top{grid-column:1; grid-row:1; padding-top:9px}          /* the tick sits beside the query */
@@ -542,9 +549,10 @@ mark{padding:0 1px; border-radius:3px; background:var(--mark); color:inherit}
 }
 .ghdb-meta .gcat::before{content:""; width:7px; height:7px; flex-shrink:0; border-radius:50%; background:var(--sev)}
 .ghdb-meta .gcat:hover{text-decoration:underline}
-.ghdb-meta a{display:inline-flex; align-items:center; gap:3px; min-height:24px; color:var(--text-2); font-variant-numeric:tabular-nums}
-.ghdb-meta a .ic{width:12px; height:12px; color:var(--text-3)}
-.ghdb-meta a:hover{color:var(--accent); text-decoration:none}
+.ghdb-meta a,.src-link{display:inline-flex; align-items:center; gap:3px; min-height:24px; color:var(--text-2); font-variant-numeric:tabular-nums}
+.ghdb-meta a .ic,.src-link .ic{width:12px; height:12px; color:var(--text-3)}
+.ghdb-meta a:hover,.src-link:hover{color:var(--accent); text-decoration:none}
+.src-link{margin-right:6px; font-size:13px; white-space:nowrap}
 /* a quiet row under a list: "show more", "search the rest", "search the libraries too" */
 .more-row{
   display:flex; align-items:center; justify-content:center; flex-wrap:wrap; gap:6px 10px; width:100%; min-height:48px; margin-top:10px; padding:8px 16px;
@@ -811,6 +819,8 @@ body.tools-open .tools-panel{transform:translateX(0); visibility:visible; transi
   <symbol id="i-star" viewBox="0 0 24 24"><path d="m12 3.6 2.5 5.2 5.7.8-4.1 4 1 5.7-5.1-2.7-5.1 2.7 1-5.7-4.1-4 5.7-.8z"/></symbol>
   <symbol id="i-layers" viewBox="0 0 24 24"><path d="M12 3.5 3.5 8l8.5 4.5L20.5 8zM3.5 12l8.5 4.5 8.5-4.5M3.5 16l8.5 4.5 8.5-4.5"/></symbol>
   <symbol id="i-scan" viewBox="0 0 24 24"><path d="M4 8V6a2 2 0 0 1 2-2h2M16 4h2a2 2 0 0 1 2 2v2M20 16v2a2 2 0 0 1-2 2h-2M8 20H6a2 2 0 0 1-2-2v-2M7.5 12h9"/></symbol>
+  <symbol id="i-radar" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="m12 12 6-6M12 7.5a4.5 4.5 0 1 0 4.5 4.5M12 12h.01"/></symbol>
+  <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2.5 12s3.5-6.5 9.5-6.5 9.5 6.5 9.5 6.5-3.5 6.5-9.5 6.5S2.5 12 2.5 12z"/><circle cx="12" cy="12" r="2.8"/></symbol>
   <symbol id="i-database" viewBox="0 0 24 24"><ellipse cx="12" cy="6" rx="7.5" ry="3"/><path d="M4.5 6v6c0 1.7 3.4 3 7.5 3s7.5-1.3 7.5-3V6M4.5 12v6c0 1.7 3.4 3 7.5 3s7.5-1.3 7.5-3v-6"/></symbol>
   <symbol id="i-sliders" viewBox="0 0 24 24"><path d="M4 7h9M17 7h3M4 12h3M11 12h9M4 17h11M19 17h1"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="17" cy="17" r="2"/></symbol>
   <symbol id="i-folder" viewBox="0 0 24 24"><path d="M3.5 7.5a2 2 0 0 1 2-2h4l2 2.5h7a2 2 0 0 1 2 2v7.5a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2z"/></symbol>
@@ -909,7 +919,12 @@ body.tools-open .tools-panel{transform:translateX(0); visibility:visible; transi
         <button type="button" class="sev-pill on" data-sev="low" aria-pressed="true" title="Low — context and enrichment"><span class="dot"></span>Low</button>
         <button type="button" class="sev-pill on" data-sev="info" aria-pressed="true" title="Info — purely informational"><span class="dot"></span>Info</button>
       </div>
-      <span class="tb-sep" aria-hidden="true"></span>
+      <span class="tb-sep" id="sevSep" aria-hidden="true"></span>
+      <label class="field field-ioc" id="iocWrap" hidden>
+        <span class="field-label">Indicator</span>
+        <input id="ioc" type="text" inputmode="url" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" maxlength="200" aria-describedby="iocKind">
+      </label>
+      <span class="ioc-kind" id="iocKind" hidden></span>
       <label class="select" id="recipeWrap" title="Recon recipes — curated preset filters over the whole catalog">
         <span class="visually-hidden">Recon recipe</span>
         <select id="recipe">
@@ -1852,8 +1867,9 @@ const ESSENTIAL_STEPS = [
     ["files","Exposed .git/config (live)"], ["apps","Swagger / OpenAPI UI"], ["apps","Spring Boot Actuator"],
     ["devops","Source maps in prod"], ["apps","Staging, dev & test hosts"] ]}
 ];
-// state.cat: ESS = Essentials (the default), MY = My dorks, GHDB / FPRINT = a library, -1 = all dorks, 0…n = index of a category in DATA
-const ESS = -2, MY = -3, GHDB = -4, FPRINT = -5;
+// state.cat: ESS = Essentials (the default), MY = My dorks, GHDB / FPRINT / HUNT = a library, INVEST = Investigate, -1 = all dorks,
+// 0…n = index of a category in DATA
+const ESS = -2, MY = -3, GHDB = -4, FPRINT = -5, HUNT = -6, INVEST = -7;
 const ESSENTIALS = {
   id:"essentials", label:"Essentials", icon:"star",
   description:"Start here. Set your target above, then work through this first-pass playbook: the highest-signal dorks from the whole catalog, in the order you would run them.",
@@ -1877,10 +1893,12 @@ const MY_CAT = {
  * by tools/update-libraries.mjs and fetched the first time its view opens. Rows arrive best first, and the first
  * `picks` of them are the top picks the view opens on.
  *   ghdb.js          Exploit-DB's Google Hacking Database (GPL-2.0)   — Google dorks, each scoped to the target
- *   fingerprints.js  ProjectDiscovery's search queries (MIT)           — how to find a product on the target's hosts */
+ *   fingerprints.js  ProjectDiscovery's search queries (MIT)           — how to find a product on the target's hosts
+ *   hunt.js          published fingerprints of adversary infrastructure — C2 frameworks, RATs, malware panels; not tied to a target */
 const LIB_META = {
   ghdb: { v:"2026-11-15", count:7944, picks:500, newest:"2024-08-23" },
-  fingerprints: { v:"2026-11-15", count:2766, picks:175, kev:"2026.11.13" }
+  fingerprints: { v:"2026-11-15", count:2766, picks:175, kev:"2026.11.13" },
+  hunt: { v:"2026-11-21", count:174, picks:32 }
 };      // written by tools/update-libraries.mjs together with the data files — do not edit by hand
 // GHDB's own categories: [slug for search (cat:passwords), severity for the filter]
 const GHDB_CATS = {
@@ -1946,27 +1964,176 @@ function ghdbScope(q){
   return scoped ? rest : ((named ? '"{t}" ' : "site:{t} ") + rest).trim();
 }
 
-const GHDB_SLUGS = Object.values(GHDB_CATS).map(c => c[0]);
+// Hunt's groups, as hunt.js names them: [slug — for the menu and for cat:c2 —, label]
+const HUNT_GROUPS = { "C2 framework":["c2","C2 frameworks"], "RAT":["rat","RATs"], "Phishing kit":["phishing","Phishing kits"], "Open directory":["opendir","Open directories"],
+  "Engine classification":["labels","Engine classification"], "Malware panel":["malware","Malware panels"], "Red-team tool":["redteam","Red-team tools"] };
+// scopes: what a view can be narrowed to besides its top picks and everything — [slug, label].
+// about / source: the two lines under the view's title. plain: rows carry no severity. intel: listed under Threat intel.
 const LIBS = [
   { id:"ghdb", view:GHDB, nav:"GHDB", label:"Google Hacking Database", icon:"database", file:"ghdb.js", prefix:"ghdb/", unit:"GHDB dork",
-    tip:"Exploit-DB's Google Hacking Database — the best dorks first, every one scoped to your target", hint:"try jenkins or cat:passwords" },
+    tip:"Exploit-DB's Google Hacking Database — the best dorks first, every one scoped to your target", hint:"try jenkins or cat:passwords", op:"cat:passwords",
+    scopes: Object.entries(GHDB_CATS).map(([label, c]) => [c[0], label]).sort((a, b) => a[1] < b[1] ? -1 : 1),
+    about: (m, t) => `Exploit-DB's Google Hacking Database, every dork scoped to ${t}. Shown first: the ${fmt(m.picks)} best of ${fmt(m.count)}. Search covers them all.`,
+    source: m => `Snapshot ${m.v} · newest entry ${m.newest}` },
   { id:"fingerprints", view:FPRINT, nav:"Fingerprints", label:"Product Fingerprints", icon:"scan", file:"fingerprints.js", prefix:"fp/", unit:"fingerprint",
-    tip:"How to find a product on your target's hosts — the ones on CISA's Known Exploited Vulnerabilities list first", hint:"try grafana or tag:kev" }
+    tip:"How to find a product on your target's hosts — the ones on CISA's Known Exploited Vulnerabilities list first", hint:"try grafana or tag:kev", op:"tag:kev", scopes: [],
+    about: (m, t) => `How ${fmt(m.count)} products show up on Shodan, FOFA and Google, scoped to ${t}. Shown first: the ${fmt(m.picks)} on CISA's Known Exploited Vulnerabilities list. Search covers them all.`,
+    source: m => `ProjectDiscovery queries, snapshot ${m.v} · CISA KEV ${m.kev}` },
+  { id:"hunt", view:HUNT, nav:"Hunt", label:"Adversary Infrastructure", icon:"radar", file:"hunt.js", prefix:"hunt/", unit:"fingerprint", plain:true, intel:true,
+    tip:"Published fingerprints of C2 frameworks, RATs and malware panels on Shodan, Censys and FOFA — they search the whole internet, not your target",
+    hint:"try cobalt or cat:rat", op:"cat:c2", scopes: Object.values(HUNT_GROUPS),
+    about: m => `Published fingerprints of C2 frameworks, RATs and malware panels, for Shodan, Censys and FOFA. They search the whole internet: none is tied to your target. Shown first: the best one for each of ${fmt(m.picks)} well-known tools. Search covers all ${fmt(m.count)}.`,
+    source: m => `Snapshot ${m.v} · every fingerprint links to where it was published` }
 ];
 // what each library carries while the page runs: load state (idle → loading → ready | failed), its rows as
 // [{it, c}] best first, and a category object so the rest of the app can treat the view like any other
 LIBS.forEach(L => { L.meta = LIB_META[L.id]; L.state = "idle"; L.rows = []; L.cat = { id: L.id, label: L.label, icon: L.icon, description: L.tip, items: [] }; });
 const libAt = v => LIBS.find(L => L.view === v);
-// what a library view shows: "" = its top picks, "all" = everything, or (GHDB) one of its own categories
-const GHDB_LABEL = Object.fromEntries(Object.entries(GHDB_CATS).map(([label, c]) => [c[0], label]));
-// "" is the top picks — what you browse. Nobody searches only those, so a search without a category covers everything.
+// what a library view shows: "" = its top picks, "all" = everything, or one of its scopes
+const scopeLabel = (L, v) => (L.scopes.find(x => x[0] === v) || [])[1];
+// "" is the top picks — what you browse. Nobody searches only those, so a search without a scope covers everything.
 const libScope = (L, searching) => state.scope[L.id] || (searching ? "all" : "");
-const validScope = (L, v) => v === "all" || (L.id === "ghdb" && GHDB_SLUGS.includes(v)) ? v : "";
+const validScope = (L, v) => v === "all" || L.scopes.some(x => x[0] === v) ? v : "";
 
-// A view is Essentials (ESS), My dorks (MY), a library, every dork (-1) or one category (index into DATA).
-const catAt = i => i === ESS ? ESSENTIALS : i === MY ? MY_CAT : libAt(i) ? libAt(i).cat : DATA[i];
+/* Investigate — one indicator, the questions worth asking about it, and where each answer lives.
+ *
+ * SOURCES: name, colour of the button, the page that answers for each kind of indicator, flags.
+ *   A page is a URL — {x} the indicator, URL-encoded; {xc} without spaces; {xs} without spaces, lower case; {hex} hex-encoded;
+ *   {algo} md5 | sha1 | sha256; {org} a domain's own label — or [engine, query] to go through one of the engines above.
+ *   Kinds: domain, ip, email, name (a threat actor or a malware family), hash — or md5 / sha1 / sha256 for one algorithm only.
+ *   Flags: "a" asks for an account; "o" an internet scanner, hidden in OPSEC mode like the scanner engines.
+ * Every address was checked against the service itself — its pages, its documentation or its front-end code — in November 2026.
+ * Left out on purpose: people-search engines, data brokers, username look-ups, phone and address look-ups. */
+const SOURCES = {
+  // verdicts and blocklists
+  vt:    ["VirusTotal", "#3b61ff", { domain:"https://www.virustotal.com/gui/domain/{x}", ip:"https://www.virustotal.com/gui/ip-address/{x}", sha256:"https://www.virustotal.com/gui/file/{x}", hash:"https://www.virustotal.com/gui/search/{x}" }],
+  talos: ["Cisco Talos", "#00a3d9", { domain:"https://talosintelligence.com/reputation_center/lookup?search={x}", ip:"https://talosintelligence.com/reputation_center/lookup?search={x}" }],
+  spam:  ["Spamhaus", "#b3261e", { domain:"https://check.spamhaus.org/results?query={x}", ip:"https://check.spamhaus.org/results?query={x}" }],
+  gsb:   ["Google Safe Browsing", "#4285F4", { domain:"https://transparencyreport.google.com/safe-browsing/search?url={x}" }],
+  abip:  ["AbuseIPDB", "#2e9d5b", { ip:"https://www.abuseipdb.com/check/{x}" }],
+  gnv:   ["GreyNoise", "#2a2", { ip:"https://viz.greynoise.io/ips/{x}" }],
+  pd:    ["Pulsedive", "#e0563b", { domain:"https://pulsedive.com/ioc/{x}", ip:"https://pulsedive.com/ioc/{x}" }],
+  xf:    ["IBM X-Force", "#0f62fe", { domain:"https://exchange.xforce.ibmcloud.com/url/{x}", ip:"https://exchange.xforce.ibmcloud.com/ip/{x}", hash:"https://exchange.xforce.ibmcloud.com/malware/{x}" }],
+  // threat-intelligence feeds
+  otx:   ["OTX", "#06c", { domain:"https://otx.alienvault.com/indicator/domain/{x}", ip:"https://otx.alienvault.com/indicator/ip/{x}", sha256:"https://otx.alienvault.com/indicator/file/{x}",
+                           email:"https://otx.alienvault.com/indicator/email/{x}", name:"https://otx.alienvault.com/browse/global/pulses?q={x}" }],
+  tf:    ["ThreatFox", "#c0392b", { domain:"https://threatfox.abuse.ch/browse.php?search=ioc%3A{x}", hash:"https://threatfox.abuse.ch/browse.php?search=ioc%3A{x}", name:"https://threatfox.abuse.ch/browse.php?search=malware%3A{xc}" }],
+  tft:   ["ThreatFox · tag", "#c0392b", { name:"https://threatfox.abuse.ch/browse.php?search=tag%3A{xc}" }],
+  uh:    ["URLhaus", "#c0392b", { domain:"https://urlhaus.abuse.ch/host/{x}/", ip:"https://urlhaus.abuse.ch/host/{x}/", name:"https://urlhaus.abuse.ch/browse/tag/{xc}/" }],
+  mb:    ["MalwareBazaar", "#c0392b", { sha256:"https://bazaar.abuse.ch/sample/{x}/", name:"https://bazaar.abuse.ch/browse/tag/{xc}/" }],
+  yf:    ["YARAify", "#c0392b", { hash:"https://yaraify.abuse.ch/search/{algo}/{x}/" }],
+  circl: ["CIRCL hashlookup", "#369", { hash:"https://hashlookup.circl.lu/lookup/{algo}/{x}" }],
+  // sandboxes and scans
+  usc:   ["urlscan", "#26b", { domain:"https://urlscan.io/domain/{x}", ip:"https://urlscan.io/ip/{x}", sha256:"https://urlscan.io/search/#hash:{x}" }],
+  ha:    ["Hybrid Analysis", "#e8632b", { domain:"https://hybrid-analysis.com/search?q=dns_domain%3A{x}", ip:"https://hybrid-analysis.com/search?q=ip%3A{x}", sha256:"https://hybrid-analysis.com/sample/{x}", md5:"https://hybrid-analysis.com/search?q=md5%3A{x}" }],
+  tri:   ["Triage", "#5aa02c", { domain:"https://tria.ge/s?q=domain%3A{x}", sha256:"https://tria.ge/s?q={x}", name:"https://tria.ge/s?q=family%3A{xs}" }],
+  ar:    ["ANY.RUN", "#00a3e0", { name:"https://app.any.run/submissions#tag:{xs}" }],
+  // who they are, what has been written
+  mp:    ["Malpedia", "#369", { name:"https://malpedia.caad.fkie.fraunhofer.de/library?search={x}" }],
+  etda:  ["ETDA · groups", "#933", { name:"https://apt.etda.or.th/cgi-bin/listgroups.cgi?x={x}" }],
+  etdat: ["ETDA · tools", "#933", { name:"https://apt.etda.or.th/cgi-bin/listtools.cgi?x={x}" }],
+  attck: ["MITRE ATT&CK", "#c0392b", { name:["g", 'site:attack.mitre.org "{t}"'] }],
+  orkl:  ["ORKL", "#555", { name:"https://orkl.eu/api/v1/library/search?query={x}" }],
+  rep:   ["Vendor reports", "#4285F4", { name:["g", '"{t}" (site:cloud.google.com/blog OR site:securelist.com OR site:unit42.paloaltonetworks.com OR site:welivesecurity.com OR site:blog.talosintelligence.com OR site:research.checkpoint.com OR site:thedfirreport.com)'] }],
+  cisa:  ["CISA advisories", "#005288", { name:["g", 'site:cisa.gov "{t}"'] }],
+  xfs:   ["IBM X-Force", "#0f62fe", { name:"https://exchange.xforce.ibmcloud.com/search/{x}" }],
+  rules: ["YARA and Sigma rules", "#444", { name:["g", 'site:github.com "{t}" (yara OR sigma OR "detection rule")'] }],
+  // ownership
+  whoxy: ["Whoxy", "#555", { domain:"https://www.whoxy.com/whois/{x}" }],
+  whois: ["who.is", "#555", { domain:"https://who.is/whois/{x}" }],
+  whoh:  ["who.is · history", "#555", { domain:"https://who.is/history/{x}" }],
+  vdw:   ["ViewDNS · WHOIS", "#369", { domain:"https://viewdns.info/whois/?domain={x}" }],
+  radar: ["Cloudflare Radar", "#f6821f", { domain:"https://radar.cloudflare.com/domains/domain/{x}" }],
+  ipinf: ["IPinfo", "#06c", { ip:"https://ipinfo.io/{x}" }],
+  hebgp: ["HE BGP Toolkit", "#b30", { ip:"https://bgp.he.net/ip/{x}" }],
+  bgpt:  ["bgp.tools", "#333", { ip:"https://bgp.tools/prefix/{x}" }],
+  pgp:   ["keys.openpgp.org", "#2e9d5b", { email:"https://keys.openpgp.org/search?q={x}" }],
+  uks:   ["Ubuntu keyserver", "#e95420", { email:"https://keyserver.ubuntu.com/pks/lookup?search={x}&fingerprint=on&op=index" }],
+  ghc:   ["GitHub · commits", "#444", { email:"https://github.com/search?q=author-email%3A{x}&type=commits" }],
+  // connections
+  vdh:   ["ViewDNS · IP history", "#369", { domain:"https://viewdns.info/iphistory/?domain={x}" }],
+  sthi:  ["SecurityTrails · DNS history", "#06c", { domain:["sth", "{t}"] }, "a"],
+  mn:    ["mnemonic · passive DNS", "#444", { domain:"https://api.mnemonic.no/pdns/v3/{x}", ip:"https://api.mnemonic.no/pdns/v3/{x}" }],
+  dnl:   ["DNSlytics", "#2a6", { domain:"https://search.dnslytics.com/domain/{x}", ip:"https://search.dnslytics.com/ip/{x}" }],
+  crts:  ["crt.sh", "#36c", { domain:"https://crt.sh/?q={x}", email:"https://crt.sh/?q={x}" }],
+  shh:   ["Shodan", "#c00", { ip:"https://www.shodan.io/host/{x}" }, "o"],
+  idb:   ["Shodan · InternetDB", "#c00", { ip:"https://internetdb.shodan.io/{x}" }],
+  cenh:  ["Censys", "#3a3", { ip:"https://platform.censys.io/hosts/{x}" }, "ao"],
+  fofa:  ["FOFA", "#e44", { ip:["fo", 'ip="{t}"'] }, "ao"],
+  zoom:  ["ZoomEye", "#36c", { ip:["ze", 'ip="{t}"'] }, "ao"],
+  rdns:  ["RapidDNS", "#2a6", { ip:"https://rapiddns.io/sameip/{x}" }],
+  htr:   ["HackerTarget", "#555", { ip:"https://api.hackertarget.com/reverseiplookup/?q={x}" }],
+  vdr:   ["ViewDNS · reverse IP", "#369", { ip:"https://viewdns.info/reverseip/?host={x}&t=1" }],
+  vdrw:  ["ViewDNS · reverse WHOIS", "#369", { email:"https://viewdns.info/reversewhois/?q={x}" }],
+  // imitation, leaks, victims
+  dtw:   ["DNSTwister", "#8e44ad", { domain:"https://dnstwister.report/search?ed={hex}" }],
+  whk:   ["Whoxy · keyword", "#555", { domain:"https://www.whoxy.com/keyword/{org}" }],
+  hibp:  ["Have I Been Pwned", "#2a6379", { email:"https://haveibeenpwned.com/account/{x}" }],
+  hr:    ["Hudson Rock", "#d33", { domain:"https://www.hudsonrock.com/search/domain/{x}", email:"https://www.hudsonrock.com/search/email/{x}" }],
+  rlive: ["ransomware.live", "#b00", { domain:"https://www.ransomware.live/search?q={x}", name:"https://www.ransomware.live/search?q={x}" }],
+  intx:  ["IntelX", "#900", { domain:"https://intelx.io/?s={x}", email:"https://intelx.io/?s={x}" }, "a"]
+};
+// The questions, in the order you would ask them. A card: [what you are after, what the answer tells you, sources, kinds it is for (all, if absent)].
+// A card shows the sources that have a page for the indicator at hand; one with none left is skipped, and so is a step without cards.
+const INVESTIGATION = [
+  { title:"Is it already known?", cards:[
+    ["Verdicts and blocklists", "What scanners, blocklists and reputation services say about it right now.", ["vt", "talos", "spam", "gsb", "abip", "gnv", "pd", "xf"]],
+    ["Who they are", "Profiles of the group or the family: aliases, targets, tools, techniques.", ["mp", "etda", "etdat", "attck"]],
+    ["Threat-intelligence feeds", "Whether it is on record as an indicator of compromise, and in which campaigns.", ["otx", "tf", "tft", "uh", "mb", "yf", "circl"]] ]},
+  { title:"What has it done?", cards:[
+    ["Sandboxes and scans", "Recorded behaviour: pages it served, samples that talked to it, how a sample ran.", ["usc", "ha", "tri", "ar"]],
+    ["Reporting", "What researchers and agencies have published about it.", ["orkl", "rep", "cisa", "xfs"]] ]},
+  { title:"Who is behind it?", cards:[
+    ["Registration", "Who registered it, when and through whom — and how that changed over time.", ["whoxy", "whois", "whoh", "vdw", "radar"]],
+    ["Network and hosting", "The network it sits in, and who announces it.", ["ipinf", "hebgp", "bgpt"]],
+    ["Keys and commits", "Public keys and code commits that carry this address.", ["pgp", "uks", "ghc"]] ]},
+  { title:"What else is connected?", cards:[
+    ["DNS history and certificates", "Where it has pointed, and which certificates were issued for it.", ["vdh", "sthi", "mn", "dnl", "crts"], "domain"],
+    ["Exposed services", "What it serves, as the internet scanners saw it.", ["shh", "idb", "cenh", "fofa", "zoom"]],
+    ["Neighbours", "Other names that live on the same address.", ["rdns", "htr", "vdr", "dnl", "mn"], "ip"],
+    ["Domains and certificates in its name", "Domains registered with this address, and certificates issued to it.", ["vdrw", "crts"], "email"] ]},
+  { title:"Where else does it turn up?", cards:[
+    ["Lookalike domains", "Registered names that imitate it.", ["dtw", "whk"]],
+    ["Leaks, stolen credentials and victims", "Breach data, infostealer logs and ransomware leak sites.", ["hibp", "hr", "rlive", "intx"]],
+    ["Detection rules", "Rules others wrote to catch it.", ["rules"]] ]}
+];
+const IOC_KIND = { domain:"Domain", ip:"IP address", email:"E-mail address", hash:"File hash", name:"Name" };
+// What was typed or pasted: a domain, an IP address, a file hash, an e-mail address — anything else is taken as a name.
+// Indicators written the way analysts pass them around (hxxp://evil[.]example, 1.2.3[.]4) are read as meant.
+function readIoc(raw){
+  let v = (typeof raw === "string" ? raw : "").replace(/[\u0000-\u001f\u007f]+/g, " ").trim().slice(0, 200).replace(/^["'<]+|["'>]+$/g, "");
+  v = v.replace(/\[(\.|dot)\]|\((\.|dot)\)|\{(\.|dot)\}/gi, ".").replace(/\[(@|at)\]|\((@|at)\)/gi, "@").replace(/\[:\]/g, ":").replace(/^hxxp/i, "http");
+  const low = v.toLowerCase();
+  if (/^([a-f0-9]{32}|[a-f0-9]{40}|[a-f0-9]{64})$/.test(low)) return { type:"hash", value: low, algo: { 32:"md5", 40:"sha1", 64:"sha256" }[low.length] };
+  if (/^[^\s@\/:]+@[a-z0-9-]+(\.[a-z0-9-]+)+$/.test(low)) return { type:"email", value: low };
+  const v4 = x => /^\d{1,3}(\.\d{1,3}){3}$/.test(x) && x.split(".").every(n => +n < 256);
+  if (v4(low)) return { type:"ip", value: low };
+  if (/^[0-9a-f:]+$/.test(low) && (low.match(/:/g) || []).length >= 2) return { type:"ip", value: low };              // IPv6
+  if (v && !/\s/.test(v)){
+    const host = normHost(v);
+    if (v4(host)) return { type:"ip", value: host };
+    if (/^[a-z0-9-]+(\.[a-z0-9-]+)*\.[a-z][a-z0-9-]+$/.test(host)) return { type:"domain", value: host };
+  }
+  const name = v.replace(/\s+/g, " ").slice(0, 80);
+  return name.length >= 2 ? { type:"name", value: name } : null;
+}
+// The address of one lookup — "" when the source has no page for this kind of indicator.
+function lookupUrl(key, ioc){
+  const pages = SOURCES[key][2], page = (ioc.algo && pages[ioc.algo]) || pages[ioc.type];
+  if (!page) return "";
+  if (Array.isArray(page)) return buildUrl(page[0], page[1], ioc.value).replace(/^#$/, "");
+  const v = ioc.value, e = x => enc(x).replace(/%40/g, "@"), tight = v.replace(/\s+/g, "");
+  const u = page.replaceAll("{x}", e(v)).replaceAll("{xc}", e(tight)).replaceAll("{xs}", e(tight.toLowerCase())).replaceAll("{algo}", ioc.algo || "")
+    .replaceAll("{org}", e(hostOrg(v))).replaceAll("{hex}", [...v].map(c => c.charCodeAt(0).toString(16).padStart(2, "0")).join(""));
+  return /^https:\/\//.test(u) ? u : "";
+}
+const INV_CAT = { id:"investigate", label:"Investigate", icon:"eye", items:[],
+  description:"Paste a domain, an IP address, a file hash or an e-mail address — or name a threat actor or a malware family — and work through the questions. Each button opens that source's own page for it." };
+
+// A view is Essentials (ESS), My dorks (MY), a library, Investigate, every dork (-1) or one category (index into DATA).
+const catAt = i => i === ESS ? ESSENTIALS : i === MY ? MY_CAT : i === INVEST ? INV_CAT : libAt(i) ? libAt(i).cat : DATA[i];
 const viewOf = c => c === MY_CAT ? MY : (LIBS.find(L => L.cat === c) || {}).view ?? DATA.indexOf(c);      // the view that shows category c
-const VIEW_ORDER = [ESS, MY, -1, ...LIBS.map(L => L.view), ...DATA.map((_, i) => i)];     // sidebar order, also used by j / k
+const VIEW_ORDER = [ESS, MY, -1, ...LIBS.filter(L => !L.intel).map(L => L.view), INVEST, ...LIBS.filter(L => L.intel).map(L => L.view), ...DATA.map((_, i) => i)];     // sidebar order, also used by j / k
 // Every dork has a stable key, "<category id>/<name>": progress and pins are stored under it.
 DATA.forEach(c => c.items.forEach(it => { it.key = c.id + "/" + it.name; }));
 const BY_KEY = new Map(DATA.flatMap(c => c.items.map(it => [it.key, {it, c}])));
@@ -2149,6 +2316,7 @@ function readHash(fromNav){
   if (cat === "all") state.cat = -1;
   else if (cat === ESSENTIALS.id) state.cat = ESS;
   else if (cat === MY_CAT.id) state.cat = MY;
+  else if (cat === INV_CAT.id) state.cat = INVEST;
   else if (LIBS.some(L => L.id === cat)) state.cat = LIBS.find(L => L.id === cat).view;
   else if (cat){
     const idx = DATA.findIndex(c => c.id === (has(CAT_ALIAS, cat) ? CAT_ALIAS[cat] : cat));
@@ -2169,6 +2337,7 @@ function readHash(fromNav){
   } else if (fromNav) state.recipe = null;
   const L = libAt(state.cat);
   if (L && (params.has("scope") || fromNav)) state.scope[L.id] = validScope(L, params.get("scope"));
+  if (state.cat === INVEST && (params.has("ioc") || fromNav)) iocRaw = (params.get("ioc") || "").slice(0, 200);
 }
 // Bring the standing DOM controls (search box, severity pills, recipe, OPSEC) in line
 // with `state`. Called on load and after every navigation or preset change.
@@ -2183,9 +2352,13 @@ function syncControls(){
   const rec = $("#recipe"), L = libAt(state.cat);
   if (rec){ rec.value = state.recipe || ""; $("#recipeWrap").classList.toggle("active", !!state.recipe); }
   // a library has "top picks / everything / its own categories" where the catalog has recipes
-  $("#recipeWrap").hidden = !!L; $("#scopeWrap").hidden = !L;
+  const inv = state.cat === INVEST;
+  $("#recipeWrap").hidden = !!L || inv; $("#scopeWrap").hidden = !L;
+  const plain = inv || !!(L && L.plain);             // rows without a severity: nothing for the pills to filter
+  $("#sevToggle").hidden = plain; $("#sevSep").hidden = plain;
   if (L) fillScope(L);
-  $filter.placeholder = L ? `Search ${fmt(L.meta.count)} ${L.unit}s…  ${L.hint}`
+  syncIoc();
+  $filter.placeholder = inv ? "Filter these sources…  try whois" : L ? `Search ${fmt(L.meta.count)} ${L.unit}s…  ${L.hint}`
     : `Search ${totalCounts().dorks} dorks…  try tag:aws or sev:crit`;
   const op = $("#opsec");
   if (op){ op.checked = !!state.opsec; document.body.classList.toggle("opsec-on", !!state.opsec); }
@@ -2198,6 +2371,7 @@ function writeHash(){
   if (state.recipe) params.set("recipe", state.recipe);
   const L = libAt(state.cat);
   if (L && state.scope[L.id]) params.set("scope", state.scope[L.id]);
+  if (state.cat === INVEST && iocRaw.trim()) params.set("ioc", iocRaw.trim());
   // Safari allows about 100 history updates per 30 s and then throws — a stale hash is harmless, a dead UI is not.
   try { history.replaceState(null, "", "#" + params.toString()); } catch(e){}
 }
@@ -2223,7 +2397,7 @@ function renderStats(){
 // Switch view (Essentials / all dorks / one category) and start it from the top.
 function selectCategory(i){
   state.cat = i;
-  if (i === ESS || i === MY || libAt(i)) state.recipe = null;      // each is its own lens; a recipe would hide most of it
+  if (i === ESS || i === MY || i === INVEST || libAt(i)) state.recipe = null;      // each is its own lens; a recipe would hide most of it
   saveState(); writeHash();
   const fromDrawer = closeNav();
   syncControls();
@@ -2245,9 +2419,12 @@ function buildNav(){
   $catNav.appendChild(mk(ESS, ESSENTIALS.icon, ESSENTIALS.label, ESSENTIALS.items.length, "The curated first-pass playbook"));
   $catNav.appendChild(mk(MY, MY_CAT.icon, MY_CAT.label, 0, "Your own dorks and the ones you pinned"));
   $catNav.appendChild(mk(-1, "layers", "All dorks", totalCounts().dorks, "Every dork in the catalog, by category"));
-  const lh = document.createElement("div"); lh.className = "side-h"; lh.textContent = "Libraries";
-  $catNav.appendChild(lh);
-  LIBS.forEach(L => $catNav.appendChild(mk(L.view, L.icon, L.nav, fmt(L.meta.count), L.tip)));
+  const heading = text => { const h = document.createElement("div"); h.className = "side-h"; h.textContent = text; $catNav.appendChild(h); };
+  heading("Libraries");
+  LIBS.filter(L => !L.intel).forEach(L => $catNav.appendChild(mk(L.view, L.icon, L.nav, fmt(L.meta.count), L.tip)));
+  heading("Threat intel");
+  $catNav.appendChild(mk(INVEST, INV_CAT.icon, INV_CAT.label, Object.keys(SOURCES).length, "Look an indicator up — a domain, an IP address, a file hash, an e-mail address, a threat actor"));
+  LIBS.filter(L => L.intel).forEach(L => $catNav.appendChild(mk(L.view, L.icon, L.nav, fmt(L.meta.count), L.tip)));
   let group = null;                                 // categories come in sections: a heading wherever the group changes
   DATA.forEach((cat, i) => {
     if (cat.group !== group){
@@ -2267,7 +2444,7 @@ function syncNav(){
     b.classList.toggle("active", on);
     if (on) b.setAttribute("aria-current", "page"); else b.removeAttribute("aria-current");
     // a library is counted without loading it: its size is known, and its ticks are the keys with its prefix
-    const L = libAt(v), keys = L ? null : viewKeys(v), n = L ? L.meta.count : keys.length;
+    const L = libAt(v), keys = L ? null : viewKeys(v), n = L ? L.meta.count : v === INVEST ? Object.keys(SOURCES).length : keys.length;
     const d = !done.size ? 0 : L ? [...done].filter(k => k.startsWith(L.prefix)).length : keys.filter(k => done.has(k)).length;
     const ct = $(".ct", b), text = d ? `${fmt(d)}/${fmt(n)}` : fmt(n);
     if (ct.textContent !== text) ct.textContent = text;
@@ -2279,18 +2456,19 @@ function syncNav(){
 function renderContentHead(view){
   const tEl = $("#catTitle"), dEl = $("#catDesc");
   if (!tEl) return;
-  if (view.lib){
-    const L = view.lib, m = L.meta, t = currentTarget(), ghdb = L.id === "ghdb", scope = libScope(L, view.searching);
-    const within = scope === "all" ? `across all ${fmt(m.count)} ${L.unit}s` : `within ${GHDB_LABEL[scope]}`;
+  if (view.invest){
+    tEl.innerHTML = `${icon(INV_CAT.icon)}${INV_CAT.label}`;
+    const note = document.createElement("small"); note.className = "ch-src";
+    note.textContent = "The indicator stays in this tab — it is not saved. People-search sites and data brokers are left out on purpose.";
+    dEl.replaceChildren(INV_CAT.description, note);
+  } else if (view.lib){
+    const L = view.lib, m = L.meta, scope = libScope(L, view.searching);
+    const within = scope === "all" ? `across all ${fmt(m.count)} ${L.unit}s` : `within ${scopeLabel(L, scope)}`;
     tEl.innerHTML = `${icon(view.searching ? "search" : L.icon)}${view.searching ? "Search results" : L.label}`;
-    const src = document.createElement("small"); src.className = "ch-src";
-    src.textContent = ghdb ? `Snapshot ${m.v} · newest entry ${m.newest}` : `ProjectDiscovery queries, snapshot ${m.v} · CISA KEV ${m.kev}`;
+    const src = document.createElement("small"); src.className = "ch-src"; src.textContent = L.source(m);
     dEl.replaceChildren(view.searching
-      ? `Best first, ${within}. Combine words with ${ghdb ? "cat:passwords" : "tag:kev"}, sev:, is:todo, "a phrase" or -exclude.`
-      : ghdb
-        ? `Exploit-DB's Google Hacking Database, every dork scoped to ${t}. Shown first: the ${fmt(m.picks)} best of ${fmt(m.count)}. Search covers them all.`
-        : `How ${fmt(m.count)} products show up on Shodan, FOFA and Google, scoped to ${t}. Shown first: the ${fmt(m.picks)} on CISA's Known Exploited Vulnerabilities list. Search covers them all.`,
-      ...(view.searching ? [] : [src]));
+      ? `Best first, ${within}. Combine words with ${L.op}, ${L.plain ? "" : "sev:, "}is:todo, "a phrase" or -exclude.`
+      : L.about(m, currentTarget()), ...(view.searching ? [] : [src]));
   } else if (view.searching){
     tEl.innerHTML = `${icon("search")}Search results`;
     dEl.textContent = view.global
@@ -2482,6 +2660,7 @@ const searchPool = () => state.cat === MY ? [...ownItems(), ...pinnedItems()] : 
 function viewGroups(){
   const parsed = getParsed((state.filter || "").trim());
   const searching = parsed.hasText || parsed.hasOps;
+  if (state.cat === INVEST) return investView(parsed, searching);
   if (libAt(state.cat)) return libView(libAt(state.cat), parsed, searching);
   const home = state.cat === ESS, mine = state.cat === MY;
   const global = state.cat === -1 || home;      // Essentials doubles as "home": searching from it is global
@@ -2524,7 +2703,46 @@ function viewGroups(){
 const visibleItems = () => viewGroups().groups.flatMap(g => g.items);     // [{it, c}, …] in display order
 
 /* ============================================================
- * Libraries — rows from ghdb.js / fingerprints.js, loaded the first time a library view is opened
+ * Investigate — the cards for the indicator in the box
+ * ============================================================ */
+let iocRaw = "";                 // what is in the Indicator box. Kept in memory and in the address bar only — never in storage.
+const currentIoc = () => readIoc(iocRaw.trim() ? iocRaw : currentTarget());      // nothing typed: the target is the indicator
+function investView(parsed, searching){
+  const ioc = currentIoc();
+  const base = { parsed, searching, home: false, mine: false, global: false, invest: true, ioc, groups: [], total: 0, of: 0, done: 0, sources: 0 };
+  if (!ioc) return base;
+  const words = [...parsed.terms, ...parsed.phrases], groups = [];
+  INVESTIGATION.forEach(step => {
+    const items = [];
+    step.cards.forEach(([name, desc, via, kinds]) => {
+      if (kinds && !kinds.split(" ").includes(ioc.type)) return;
+      const links = via.map(k => { const [label, color, , flags = ""] = SOURCES[k];
+        return { name: label, color, auth: flags.includes("a"), url: state.opsec && flags.includes("o") ? "" : lookupUrl(k, ioc) }; }).filter(l => l.url);
+      const hay = (name + " " + desc + " " + links.map(l => l.name).join(" ")).toLowerCase();
+      if (!links.length || !words.every(w => hay.includes(w)) || parsed.excludes.some(w => hay.includes(w))) return;
+      items.push({ it: { key: "inv/" + name, name, desc, lookup: true, links }, c: INV_CAT });
+    });
+    if (items.length) groups.push({ step: groups.length + 1, title: step.title, items });
+  });
+  const all = groups.flatMap(g => g.items);
+  return { ...base, groups, total: all.length, sources: all.reduce((n, x) => n + x.it.links.length, 0) };
+}
+function setIoc(v){
+  iocRaw = String(v || "").slice(0, 200);
+  writeHash(); syncIoc(); render();
+}
+// The Indicator box and the label beside it that says what the app took the indicator for.
+function syncIoc(){
+  const box = $("#ioc"), ioc = currentIoc(), on = state.cat === INVEST;
+  $("#iocWrap").hidden = !on; $("#iocKind").hidden = !on;
+  if (!on) return;
+  if (box.value !== iocRaw) box.value = iocRaw;
+  box.placeholder = `${currentTarget()} — or an IP, a hash, an e-mail, a threat actor`;
+  $("#iocKind").textContent = !ioc ? "Not an indicator yet" : IOC_KIND[ioc.type] + (ioc.algo ? " · " + { md5:"MD5", sha1:"SHA-1", sha256:"SHA-256" }[ioc.algo] : "");
+}
+
+/* ============================================================
+ * Libraries — rows from ghdb.js / fingerprints.js / hunt.js, loaded the first time a library view is opened
  * ============================================================ */
 // The data files are data, and still checked row by row: only values of the expected type and size get in,
 // and everything is rendered as text.
@@ -2540,7 +2758,7 @@ const LIB_BUILD = {
       const [slug, sev] = GHDB_CATS[cat];
       const date = /^\d{8}$/.test(String(r[1])) ? String(r[1]).replace(/^(\d{4})(\d\d)(\d\d)$/, "$1-$2-$3") : "";
       const author = typeof authors[r[3]] === "string" ? authors[r[3]].slice(0, 60) : "";
-      out.push({ key: "ghdb/" + id, name: "GHDB-" + id, desc: "", sev, tags: ["ghdb", slug], engine: "g", q: ghdbScope(q), lib: "ghdb", pick: i < picks,
+      out.push({ key: "ghdb/" + id, name: "GHDB-" + id, desc: "", sev, tags: ["ghdb", slug], engine: "g", q: ghdbScope(q), lib: "ghdb", pick: i < picks, scope: slug,
                  hay: (q + " " + cat + " " + slug + " " + author + " ghdb-" + id).toLowerCase(), ghdb: { id, date, cat, slug, author, raw: q } });
     });
     return out;
@@ -2572,6 +2790,28 @@ const LIB_BUILD = {
       out.push({ key, name: title, desc, sev: n ? "high" : "low", tags: [...new Set([slug(by), n ? "kev" : "", hot ? "ransomware" : ""].filter(Boolean))],
                  engine: links[0].engine, q: links[0].q, links: links.slice(1), lib: "fingerprints", pick: i < picks,
                  hay: (title + " " + name + " " + vendor + (n ? " kev " + last : "") + " " + sh + " " + fo + " " + g).toLowerCase() });
+    });
+    return out;
+  },
+  // hunt.js rows: [id, tool, group, engine, kind, query, note, false positives 0–3, 1 = paid plan, other lists, source, published yyyymm, last seen yyyymm, 1 = core tool, 1 = top pick]
+  hunt(d){
+    const groups = Array.isArray(d.groups) ? d.groups : [], kinds = Array.isArray(d.kinds) ? d.kinds : [], sources = Array.isArray(d.sources) ? d.sources : [];
+    const out = [], seen = new Set();
+    const str = (v, max) => typeof v === "string" && v.length > 0 && v.length <= max && !/[\u0000-\u001f\u007f]/.test(v);
+    const slug = v => v.toLowerCase().replace(/[^a-z0-9._-]+/g, "-").replace(/^[^a-z0-9]+|-+$/g, "").slice(0, 30);
+    const FP = ["", "False positives are possible.", "Expect some false positives.", "Expect many false positives."];
+    (Array.isArray(d.rows) ? d.rows : []).forEach(r => {
+      if (!Array.isArray(r)) return;
+      const [id, tool, g, engine, k, q, note, fp, paid, also, src, when, , , pick] = r;
+      const group = has(HUNT_GROUPS, groups[g]) ? HUNT_GROUPS[groups[g]] : null, kind = kinds[k], from = sources[src];
+      if (!str(id, 12) || !/^[A-Za-z0-9-]+$/.test(id) || seen.has(id) || !str(tool, 40) || !group || !str(kind, 30) || !["sh", "shf", "cen", "fo"].includes(engine) || !str(q, 300)) return;
+      seen.add(id);
+      const link = Array.isArray(from) && str(from[0], 40) && str(from[1], 300) && /^https:\/\/[^\s"<>]+$/.test(from[1]);
+      const desc = [str(note, 200) ? note : "", FP[fp] || "", paid === 1 ? "Needs a paid plan on this engine." : ""].filter(Boolean).join(" ");
+      out.push({ key: "hunt/" + id, name: tool + " · " + kind, desc, tags: [...new Set([slug(tool), slug(kind), fp >= 2 ? "noisy" : "", paid === 1 ? "paid" : ""].filter(Boolean))],
+                 engine, q, lib: "hunt", pick: pick === 1, scope: group[0],
+                 src: link ? { label: from[0], url: from[1], year: /^20\d{4}$/.test(String(when)) ? String(when).slice(0, 4) : "", lists: Number.isInteger(also) && also > 0 ? also : 0 } : null,
+                 hay: (tool + " " + kind + " " + groups[g] + " " + group[1] + " " + q + " " + (link ? from[0] : "") + " " + id).toLowerCase() });
     });
     return out;
   }
@@ -2606,8 +2846,8 @@ const leadLink = it => it.lib ? libLinks(it)[0] || it : it;
 function libMatch(it, p, done){
   if (!p.hasText && !p.hasOps) return true;
   if (!p.terms.every(w => it.hay.includes(w)) || !p.phrases.every(w => it.hay.includes(w)) || p.excludes.some(w => it.hay.includes(w))) return false;
-  const eng = engineNamesFor(it);
-  const op = (f, v) => f === "cats" ? !!it.ghdb && (it.ghdb.slug.includes(v) || it.ghdb.cat.toLowerCase().includes(v))
+  const eng = engineNamesFor(it), L = LIBS.find(x => x.id === it.lib);
+  const op = (f, v) => f === "cats" ? !!it.scope && (it.scope.includes(v) || (scopeLabel(L, it.scope) || "").toLowerCase().includes(v))
     : f === "is" ? (v === "done" || v === "todo" ? done.has(it.key) === (v === "done") : v === "pick" && it.pick)      // is:pinned / is:mine — nothing in a library is either
     : opMatches(f, v, it, null, eng);
   const any = f => !p[f] || [...p[f]].some(v => op(f, v)), all = f => !p[f] || [...p[f]].every(v => op(f, v));
@@ -2617,8 +2857,8 @@ function libView(L, parsed, searching){
   const base = { parsed, searching, home: false, mine: false, global: false, lib: L };
   if (L.state !== "ready") return { ...base, loading: L.state !== "failed", failed: L.state === "failed", groups: [], total: 0, of: 0, done: 0 };
   const done = doneFor(currentTarget()), scope = libScope(L, searching);
-  const pass = x => itemMatchesSev(x.it) && libLinks(x.it).length && libMatch(x.it, parsed, done);
-  const matched = L.rows.filter(x => (scope === "all" || (scope ? x.it.ghdb && x.it.ghdb.slug === scope : x.it.pick)) && pass(x));
+  const pass = x => (L.plain || itemMatchesSev(x.it)) && libLinks(x.it).length && libMatch(x.it, parsed, done);
+  const matched = L.rows.filter(x => (scope === "all" || (scope ? x.it.scope === scope : x.it.pick)) && pass(x));
   const doneCount = done.size ? matched.filter(x => done.has(x.it.key)).length : 0;
   const shown = state.hideDone && doneCount ? matched.filter(x => !done.has(x.it.key)) : matched;
   return { ...base, groups: shown.length ? [{ paged: true, items: shown }] : [], total: shown.length, of: matched.length, done: doneCount };
@@ -2628,14 +2868,12 @@ function setScope(v){
   state.scope[L.id] = validScope(L, v);
   saveState(); writeHash(); syncControls(); render();
 }
-// The scope menu of a library view: its top picks, everything, and (GHDB) its own categories.
+// The scope menu of a library view: its top picks, everything, and its own categories or groups.
 function fillScope(L){
   const p = getParsed((state.filter || "").trim()), searching = p.hasText || p.hasOps;
   const sel = $("#scope"), m = L.meta, opts = [["", `Top picks (${fmt(m.picks)})`], ["all", `Everything (${fmt(m.count)})`]];
-  if (L.id === "ghdb"){
-    const n = {}; L.cat.items.forEach(it => { n[it.ghdb.slug] = (n[it.ghdb.slug] || 0) + 1; });
-    Object.entries(GHDB_CATS).sort((a, b) => a[0] < b[0] ? -1 : 1).forEach(([label, c]) => opts.push([c[0], L.state === "ready" ? `${label} (${fmt(n[c[0]] || 0)})` : label]));
-  }
+  const n = {}; L.cat.items.forEach(it => { n[it.scope] = (n[it.scope] || 0) + 1; });
+  L.scopes.forEach(([v, label]) => opts.push([v, L.state === "ready" ? `${label} (${fmt(n[v] || 0)})` : label]));
   const sig = L.id + "|" + opts.map(o => o[1]).join("|");
   if (sel.dataset.sig !== sig){ sel.replaceChildren(...opts.map(([v, text]) => new Option(text, v))); sel.dataset.sig = sig; }
   sel.options[0].disabled = searching;               // the top picks are for browsing; a search goes through everything
@@ -2651,6 +2889,9 @@ function saveFromLib(it){
   const d = cleanDork(g
     ? { name: `${it.name} · ${g.cat}`, q: lead.q, engine: lead.engine, sev: it.sev, tags: it.tags,
         desc: `From the Google Hacking Database (${it.name}${g.author && g.author !== "anonymous" ? ", by " + g.author : ""}), scoped to the target.` }
+    : it.lib === "hunt"
+    ? { name: it.name, q: lead.q, engine: lead.engine, sev: "info", tags: ["hunt", ...it.tags],
+        desc: (it.desc ? it.desc + " " : "") + `Published by ${it.src ? it.src.label : "a public source"}; it searches the whole internet, not the target.` }
     : { name: it.name, q: lead.q, engine: lead.engine, sev: it.sev, tags: ["fingerprint", ...it.tags],
         desc: (it.desc ? it.desc + " " : "") + "Fingerprint from ProjectDiscovery's query set, scoped to the target." });
   if (!d) return;
@@ -2665,6 +2906,7 @@ function render(){
   const lib = libAt(state.cat);
   if (lib && lib.state === "idle") loadLib(lib);     // first visit to a library view: fetch its data file
   if (lib) fillScope(lib);                           // its menu follows the search box as well as the state
+  if (state.cat === INVEST) syncIoc();               // with nothing typed the target is the indicator: follow the target box
   const view = viewGroups();
   syncNav();
   renderContentHead(view);
@@ -2707,6 +2949,15 @@ function renderResults(view){
     frag.appendChild(sec);
   });
   if (!view.total) frag.appendChild(emptyState(view));
+  if (view.invest && view.ioc && view.ioc.type === "name" && view.total && !view.searching){       // a name: its servers may be in the Hunt library
+    const row = document.createElement("div"); row.className = "more-row"; row.id = "toHunt";
+    row.innerHTML = `${icon("radar")}Looking for its servers?`;
+    const b = document.createElement("button"); b.type = "button"; b.className = "btn sm";
+    b.textContent = `Search Hunt for “${view.ioc.value}”`;
+    b.onclick = () => { state.filter = view.ioc.value.slice(0, MAX_QUERY); state.scope.hunt = ""; selectCategory(HUNT); focusView(); };
+    row.appendChild(b);
+    frag.appendChild(row);
+  }
   if (view.searching && view.global && view.parsed.hasText){       // a text search of the catalog can carry on in the libraries
     const row = document.createElement("div"); row.className = "more-row"; row.id = "toLibs";
     row.innerHTML = `${icon("database")}Search the libraries too`;
@@ -2728,11 +2979,12 @@ function renderResults(view){
   if (vc){
     const inView = view.lib ? view.lib.meta.count : viewKeys(state.cat).length;        // before filters
     const unit = view.lib && view.lib.id !== "ghdb" ? view.lib.unit : "dork";
-    const text = view.loading || view.failed ? `${fmt(inView)} ${unit}s`
+    const text = view.invest ? (view.ioc ? `${view.sources} source${view.sources === 1 ? "" : "s"}` : "No indicator")
+      : view.loading || view.failed ? `${fmt(inView)} ${unit}s`
       : view.searching ? `${fmt(view.total)} result${view.total === 1 ? "" : "s"}` + (view.global ? "" : ` in ${view.lib ? view.lib.nav : catAt(state.cat).label}`)
       : view.total === inView ? `${fmt(inView)} ${unit}${inView === 1 ? "" : "s"}` : `${fmt(view.total)} of ${fmt(inView)} ${unit}s`;
     if (vc.textContent !== text) vc.textContent = text;
-    $("#visibleTarget").textContent = ` · ${t}`;
+    $("#visibleTarget").textContent = view.invest ? (view.ioc ? ` · ${view.ioc.value}` : "") : ` · ${t}`;
   }
   const oc = $("#openCount"); if (oc) oc.textContent = fmt(view.total);
   const ob = $("#openCat"); if (ob) ob.disabled = !view.total;
@@ -2787,6 +3039,7 @@ function renderProgress(view){
   }
   $("#hideDone").setAttribute("aria-checked", String(!!state.hideDone));
   const rn = $("#runNext");
+  rn.hidden = !!view.invest; $("#exportMenu").hidden = !!view.invest;      // lookups: nothing to tick off, nothing to export
   rn.disabled = !left;
   $("#runNextLabel").textContent = view.of && !left ? "All done" : "Run next";
 }
@@ -2804,8 +3057,20 @@ function emptyState(view){
   const el = document.createElement("div"); el.className = "empty-state";
   const actions = [];                       // [label, extra class, handler]
   let text, title = "No dorks match", glyph = "search";
-  if (view.loading){
-    title = `Loading ${view.lib.id === "ghdb" ? "the Google Hacking Database" : "the product fingerprints"}…`; glyph = view.lib.icon;
+  if (view.invest){
+    glyph = INV_CAT.icon;
+    if (!view.ioc){
+      title = "Nothing to look up yet";
+      text = "Type a domain, an IP address, a file hash, an e-mail address — or a name of two characters or more.";
+      actions.push(["Use the target", "primary", () => { setIoc(""); $("#ioc").focus(); }, true]);
+    } else {
+      title = "No source matches";
+      text = state.filter ? "None of the sources for this indicator matches the search." : "OPSEC mode hides the only sources there are for this indicator.";
+      if (state.filter) actions.push(["Clear search", "primary", () => { setFilter(""); $filter.focus(); }, true]);
+      if (state.opsec) actions.push(["Turn off OPSEC mode", "", () => setOpsec(false)]);
+    }
+  } else if (view.loading){
+    title = `Loading ${view.lib.label}…`; glyph = view.lib.icon;
     text = `${fmt(view.lib.meta.count)} rows, fetched once from this site — nothing is sent to anyone else.`;
   } else if (view.failed){
     title = "This library did not load"; glyph = view.lib.icon;
@@ -2814,10 +3079,10 @@ function emptyState(view){
     actions.push(["Try again", "primary", () => { loadLib(view.lib); render(); }, true]);
   } else if (view.lib && !view.of){
     const scope = state.scope[view.lib.id], narrow = scope && scope !== "all";
-    text = narrow ? `Nothing in ${GHDB_LABEL[scope]} matches this search and these filters.` : "Nothing in this library matches this search and these filters.";
+    text = narrow ? `Nothing in ${scopeLabel(view.lib, scope)} matches this search and these filters.` : "Nothing in this library matches this search and these filters.";
     if (state.filter) actions.push(["Clear search", "primary", () => { setFilter(""); $filter.focus(); }, true]);
     if (narrow) actions.push([state.filter ? "Search the whole library" : "Back to the top picks", "", () => setScope("")]);
-    if (state.sevs.size < 5) actions.push(["Reset filters", "", resetFilters]);
+    if (state.sevs.size < 5 && !view.lib.plain) actions.push(["Reset filters", "", resetFilters]);
     if (state.opsec) actions.push(["Turn off OPSEC mode", "", () => setOpsec(false)]);
   } else if (view.of){                      // something matches, but "Hide done" has taken all of it off screen
     title = "All done"; glyph = "check";
@@ -2996,8 +3261,28 @@ function renderGhdbRow(it, t, opts){
   return card;
 }
 
+// A lookup (Investigate): what you are after, and one button for every place that has the answer. Nothing to tick or copy.
+function renderLookup(it, opts){
+  const hl = txt => opts.parsed ? highlightHTML(txt, opts.parsed) : escHtml(txt);
+  const card = document.createElement("article"); card.className = "card lookup"; card.dataset.key = it.key;
+  const title = document.createElement(opts.heading || "h3"); title.className = "card-title"; title.innerHTML = hl(it.name);
+  const desc = document.createElement("p"); desc.className = "card-desc"; desc.innerHTML = hl(it.desc);
+  const row = document.createElement("div"); row.className = "card-engines";
+  it.links.forEach(l => {
+    const a = document.createElement("a"); a.className = "eng-btn"; a.href = l.url;
+    a.target = "_blank"; a.rel = "noopener noreferrer"; a.referrerPolicy = "no-referrer";
+    a.title = `Look it up on ${l.name}` + (l.auth ? " (login required)" : "");
+    a.innerHTML = `<span class="swatch" style="background:${l.color}"></span>${hl(l.name)}`
+      + (l.auth ? `${icon("lock")}<span class="visually-hidden"> (login required)</span>` : "") + icon("external", "arr");
+    row.appendChild(a);
+  });
+  card.append(title, desc, row);
+  return card;
+}
+
 function renderCard(it, t, opts){
   opts = opts || {};
+  if (it.lookup) return renderLookup(it, opts);
   if (it.ghdb) return renderGhdbRow(it, t, opts);
   const parsed = opts.parsed;
   const hl = txt => parsed ? highlightHTML(txt, parsed) : escHtml(txt);
@@ -3016,14 +3301,16 @@ function renderCard(it, t, opts){
   const top = document.createElement("div"); top.className = "card-top";
   const title = document.createElement(opts.heading || "h3"); title.className = "card-title"; title.innerHTML = hl(it.name);
   top.append(tickButton(it, card), title);
-  if (!/\{t(_no_tld)?\}/.test(it.q)){               // nothing ties this query to the target: say so
+  if (!/\{t(_no_tld)?\}/.test(it.q) && it.lib !== "hunt"){     // nothing ties this query to the target: say so (the Hunt view says it once, for all its rows)
     const chip = document.createElement("span"); chip.className = "scope-chip"; chip.textContent = "global";
     chip.title = "Not tied to your target — this query searches the whole index";
     top.appendChild(chip);
   }
-  const badge = document.createElement("span"); badge.className = "sev-badge";
-  badge.textContent = SEV_LABEL[sev] || "INFO"; badge.title = `Severity: ${SEV_NAME[sev] || sev}`;
-  top.appendChild(badge);
+  if (it.sev || !it.lib){
+    const badge = document.createElement("span"); badge.className = "sev-badge";
+    badge.textContent = SEV_LABEL[sev] || "INFO"; badge.title = `Severity: ${SEV_NAME[sev] || sev}`;
+    top.appendChild(badge);
+  }
   card.appendChild(top);
   paintDone(card, !!opts.done);
 
@@ -3055,6 +3342,13 @@ function renderCard(it, t, opts){
     });
     meta.appendChild(tags);
   }
+  if (it.src){                                      // a row copied from a public source: say which, and link to it
+    const a = document.createElement("a"); a.className = "src-link"; a.href = it.src.url;
+    a.target = "_blank"; a.rel = "noopener noreferrer"; a.referrerPolicy = "no-referrer";
+    a.title = "Where this was published" + (it.src.lists ? ` — also in ${it.src.lists} other public list${it.src.lists === 1 ? "" : "s"}` : "");
+    a.innerHTML = `${escHtml(it.src.label)}${it.src.year ? " · " + it.src.year : ""}${icon("external")}`;
+    meta.appendChild(a);
+  }
   const iconBtn = (cls, ic, label, fn) => meta.appendChild(metaButton(cls, ic, label, fn));
   iconBtn("", "link", "Copy search URL", b => flashCopy(b, buildUrl(lead.engine, lead.q, t), "link"));
   if (it.lib){                                      // a library row: keeping it means saving it as one of your own
@@ -3085,8 +3379,11 @@ function openInTabs(items){
   }
   const t = currentTarget();
   const batch = items.slice(0, n);
-  batch.forEach((x, i) => setTimeout(() => { const l = leadLink(x.it); window.open(buildUrl(l.engine, l.q, t), "_blank", "noopener,noreferrer"); }, i * 250));
-  markDone(batch.map(x => x.it.key), true);
+  // a lookup card (Investigate) opens its first source and has nothing to tick
+  const urlOf = it => { if (it.lookup) return it.links[0].url; const l = leadLink(it); return buildUrl(l.engine, l.q, t); };
+  batch.forEach((x, i) => setTimeout(() => window.open(urlOf(x.it), "_blank", "noopener,noreferrer"), i * 250));
+  const keys = batch.filter(x => !x.it.lookup).map(x => x.it.key);
+  if (keys.length) markDone(keys, true);
 }
 
 /* ============================================================
@@ -3133,6 +3430,7 @@ function runDork(x){
 }
 // The playbook, one step per key press: open the next dork that is not done yet for this target.
 function runNext(){
+  if (state.cat === INVEST) return;                           // lookups are not ticked off: there is no "next"
   const done = doneFor(currentTarget());
   const next = visibleItems().find(x => !done.has(x.it.key));
   if (!next){ toast("Nothing left to run in this view"); return; }
@@ -3331,6 +3629,8 @@ function openHelp(){
         ${row("Progress", "The meter in the filter bar: hide what is done, mark the view as done, or reset the target")}
         ${row("Pin", "Keeps a dork in <b>My dorks</b>, next to the ones you add yourself")}
         ${row("Libraries", "<b>GHDB</b> (Exploit-DB's Google Hacking Database) and <b>Fingerprints</b> (how to find a product on the target's hosts). Each opens on its top picks, and a search goes through all of it. Every row arrives scoped to your target, and <b>+</b> saves it to My dorks")}
+        ${row("Investigate", "Type an indicator — a domain, an IP address, a file hash, an e-mail address, the name of a threat actor or a malware family — and get the questions worth asking, each with the sources that answer it. Defanged indicators (<kbd>evil[.]example</kbd>) are understood. Nothing you type there is saved")}
+        ${row("Hunt", "Published fingerprints of adversary infrastructure — C2 frameworks, RATs, malware panels — for Shodan, Censys and FOFA. They search the whole internet, not your target, and each one links to where it was published")}
       </table>
       <p class="note">Progress, pins and your own dorks stay in this browser — nothing is sent anywhere. Export My dorks to back them up or share a pack.</p>
       <h3>Keyboard</h3>
@@ -3368,19 +3668,22 @@ function buildExportData(){
   const byCat = new Map();
   visibleItems().forEach(({it, c}) => { if (!byCat.has(c)) byCat.set(c, []); byCat.get(c).push(it); });
   const done = doneFor(t);
-  return allCats().filter(c => byCat.has(c)).map(c => ({
+  return [...allCats(), ...LIBS.map(L => L.cat)].filter(c => byCat.has(c)).map(c => ({
     category: c.label,
     description: c.description,
-    items: byCat.get(c).map(i => ({
-      name: i.name,
-      desc: applyTemplate(i.desc, t),
-      sev: i.sev,
-      tags: i.tags||[],
-      engine: i.engine,
-      query: applyTemplate(i.q, t),
-      url: buildUrl(i.engine, i.q, t),
-      done: done.has(i.key)               // ticked off for this target
-    }))
+    items: byCat.get(c).map(i => {
+      const l = leadLink(i);              // a library row: the engine it leads with right now
+      return {
+        name: i.name,
+        desc: applyTemplate(i.desc, t),
+        sev: i.sev || "info",
+        tags: i.tags||[],
+        engine: l.engine,
+        query: applyTemplate(l.q, t),
+        url: buildUrl(l.engine, l.q, t),
+        done: done.has(i.key)             // ticked off for this target
+      };
+    })
   }));
 }
 function dl(name, content, mime){
@@ -3418,7 +3721,8 @@ function copyMdToClipboard(){
 function exportCsv(){
   const data = buildExportData();
   let csv = "category,name,severity,tags,engine,query,url,done\n";
-  const esc = s => `"${String(s||"").replaceAll('"','""')}"`;
+  // a cell that starts like a formula gets an apostrophe in front: library rows are other people's text, and a spreadsheet would run it
+  const esc = s => { s = String(s||""); return `"${(/^[=+\-@\t\r]/.test(s) ? "'" : "") + s.replaceAll('"','""')}"`; };
   data.forEach(c => c.items.forEach(i => {
     csv += [c.category, i.name, i.sev, (i.tags||[]).join("|"), i.engine, i.query, i.url, i.done ? "yes" : "no"].map(esc).join(",") + "\n";
   }));
@@ -3633,7 +3937,7 @@ function setupDrawers(){
     const targets = [...$$("#scopeChips .chip")].map(c => c.textContent.trim()).filter(Boolean);
     if (!targets.length){ alert("No parsed targets. Click 'Parse' first."); return; }
     // Same dorks as the current view, re-templated for every parsed target.
-    const items = visibleItems().map(x => x.it);
+    const items = visibleItems().map(x => x.it).filter(it => !it.lookup);
     if (!items.length){ alert("The current view has no dorks to run."); return; }
     const total = targets.length * items.length;
     const cap = MAX_TABS;
@@ -3910,6 +4214,7 @@ function wire(){
   Object.entries(RECIPES).forEach(([key, r]) => { const o = new Option(r.label, key); o.title = r.desc; $rec.add(o); });
   $rec.onchange = e => e.target.value ? applyRecipe(e.target.value) : clearRecipe();
   $("#scope").onchange = e => setScope(e.target.value);
+  $("#ioc").addEventListener("input", e => setIoc(e.target.value));
   $("#opsec").onchange = e => setOpsec(e.target.checked);
   $("#opsecWrap").title = "OPSEC mode — hides the engines that tie your queries to an account: "
     + [...new Set(Object.values(ENGINES).filter(e => e.opsec === false).map(e => e.name.split(" · ")[0]))].join(", ");
@@ -3983,7 +4288,7 @@ function wire(){
   // Back / forward and hand-edited hashes
   window.addEventListener("hashchange", () => {
     readHash(true);
-    if (state.cat === ESS || state.cat === MY || libAt(state.cat)) state.recipe = null;
+    if (state.cat === ESS || state.cat === MY || state.cat === INVEST || libAt(state.cat)) state.recipe = null;
     saveState(); syncControls(); render();
   });
 

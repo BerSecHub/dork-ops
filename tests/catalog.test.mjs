@@ -9,7 +9,7 @@
 // preview image are still true.
 import { readFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
-import { rankGhdb, rankFingerprints } from '../tools/update-libraries.mjs';
+import { rankGhdb, rankFingerprints, rankHunt, buildHunt, HUNT_KINDS } from '../tools/update-libraries.mjs';
 
 const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
 const from = html.indexOf('const ENGINES = {');
@@ -19,8 +19,9 @@ if (from < 0 || to < 0) { console.error('Could not find the catalog in index.htm
 // The slice only defines data and a few functions that touch the browser when called; evaluating it needs
 // just the two encoders and the CommonCrawl id that the page defines above it.
 const enc = encodeURIComponent, b64 = s => Buffer.from(s, 'utf8').toString('base64');
-const { ENGINES, DATA, ESSENTIAL_STEPS, RECIPES, ENGINE_SERVICES, LIB_META, GHDB_CATS, ghdbScope } =
-  new Function('enc', 'b64', 'CC_LATEST', html.slice(from, to) + '\nreturn { ENGINES, DATA, ESSENTIAL_STEPS, RECIPES, ENGINE_SERVICES, LIB_META, GHDB_CATS, ghdbScope };')(enc, b64, 'CC-MAIN-2026-43');
+const { ENGINES, DATA, ESSENTIAL_STEPS, RECIPES, ENGINE_SERVICES, LIB_META, GHDB_CATS, ghdbScope, HUNT_GROUPS, SOURCES, INVESTIGATION } =
+  new Function('enc', 'b64', 'CC_LATEST', html.slice(from, to)
+    + '\nreturn { ENGINES, DATA, ESSENTIAL_STEPS, RECIPES, ENGINE_SERVICES, LIB_META, GHDB_CATS, ghdbScope, HUNT_GROUPS, SOURCES, INVESTIGATION };')(enc, b64, 'CC-MAIN-2026-43');
 
 const errors = [];
 const fail = msg => errors.push(msg);
@@ -89,7 +90,7 @@ for (const c of DATA) if (c.icon && !html.includes(`<symbol id="i-${c.icon}"`)) 
 // ---- The libraries (ghdb.js, fingerprints.js). They are data, but the page loads them as scripts: each must be
 // one call carrying JSON and nothing else, every row must be something the app is prepared to show, and the
 // order must be exactly what tools/update-libraries.mjs produces — "best first" is a rule, not a hand edit.
-const libRows = { ghdb: 0, fingerprints: 0 }, libPicks = { ghdb: 0, fingerprints: 0 };
+const libRows = { ghdb: 0, fingerprints: 0, hunt: 0 }, libPicks = { ghdb: 0, fingerprints: 0, hunt: 0 };
 const printable = (v, max) => typeof v === 'string' && v.length <= max && !/[\u0000-\u001f\u007f]/.test(v) && v === v.trim();
 const dayOk = d => Number.isInteger(d) && d >= 20030101 && d <= Number(new Date().toISOString().slice(0, 10).replace(/-/g, '')) && /^\d{4}(0[1-9]|1[0-2])(0[1-9]|[12]\d|3[01])$/.test(String(d));
 const iso = d => String(d).replace(/^(\d{4})(\d\d)(\d\d)$/, '$1-$2-$3');
@@ -174,6 +175,81 @@ if (fp) {
   if (!/MIT License/.test(lic) || !/Copyright \(c\) 2023 ProjectDiscovery/.test(lic) || !/Creative Commons 0 1\.0/.test(lic)) fail('fingerprints.LICENSE.md must carry the MIT licence of the query set and the CC0 note of the KEV catalog');
 }
 
+// ---- hunt.js: built from tools/hunt-sources.json, which is kept by hand. The data file must be exactly what the
+// tool makes of that source, every query must build a link on its engine, and every row must say where it was published.
+const hunt = readLib('hunt', 'hunt.js', [/tools\/hunt-sources\.json/, /hunt\.SOURCES\.md/]);
+if (hunt) {
+  const flag = few('hunt.js'), kinds = Object.keys(HUNT_KINDS), seen = new Set(), plain = [];
+  if (JSON.stringify(hunt.kinds) !== JSON.stringify(kinds)) fail('hunt.js: "kinds" is not the list in tools/update-libraries.mjs');
+  for (const g of hunt.groups || []) if (!Object.hasOwn(HUNT_GROUPS, g)) fail(`hunt.js: group "${g}" has no slug and label in HUNT_GROUPS`);
+  if (new Set(Object.values(HUNT_GROUPS).map(g => g[0])).size !== Object.keys(HUNT_GROUPS).length) fail('HUNT_GROUPS: slugs must be unique');
+  (hunt.sources || []).forEach((src, i) => {
+    if (!Array.isArray(src) || !printable(src[0], 40) || !src[0] || !/^https:\/\/[^\s"<>]+$/.test(src[1]) || src[1].length > 300 || ![0, 1].includes(src[2])) fail(`hunt.js: source ${i} is not [label, https link, 0 | 1]`);
+  });
+  const ym = d => d === 0 || (Number.isInteger(d) && /^20\d\d(0[1-9]|1[0-2])$/.test(String(d)) && d <= Number(new Date().toISOString().slice(0, 7).replace('-', '')));
+  for (const r of hunt.rows) {
+    if (!Array.isArray(r) || r.length !== 15) { flag(`not a 15-field row: ${JSON.stringify(r).slice(0, 80)}`); continue; }
+    const [id, tool, g, engine, k, q, note, fp, paid, also, src, date, lastSeen, core, pick] = r;
+    if (!/^[A-Z]{1,3}-\d{3}$/.test(id) || seen.has(id)) flag(`row ${id}: the id must look like S-001 and be unique`);
+    seen.add(id);
+    if (!printable(tool, 40) || !tool || !(hunt.groups || [])[g] || !kinds[k]) flag(`row ${id}: bad tool, group or kind`);
+    if (!printable(q, 300) || !q || /\{t\}|\{t_no_tld\}|\{date\}/.test(q)) { flag(`row ${id}: the query must be 1–300 printable characters without placeholders`); continue; }
+    if (!['sh', 'shf', 'cen', 'fo'].includes(engine) || !/^https:\/\//.test(ENGINES[engine].url(q))) flag(`row ${id}: does not build a link on "${engine}"`);
+    if (typeof note !== 'string' || !printable(note, 200)) flag(`row ${id}: bad note`);
+    if (![0, 1, 2, 3].includes(fp) || ![0, 1].includes(paid) || ![0, 1].includes(core) || ![0, 1].includes(pick) || !Number.isInteger(also) || also < 0) flag(`row ${id}: bad flags`);
+    if (!(hunt.sources || [])[src]) flag(`row ${id}: no source — every fingerprint names where it was published`);
+    if (!ym(date) || !ym(lastSeen) || (lastSeen && lastSeen <= date)) flag(`row ${id}: bad dates`);
+    if (pick && (paid || fp >= 2 || !core)) flag(`row ${id}: a top pick runs without a paid plan, is not known to be noisy and belongs to a core tool`);
+    const d6 = d => (d ? String(d).replace(/^(\d{4})(\d\d)$/, '$1-$2') : '');
+    plain.push({ id, tool, group: hunt.groups[g], engine, kind: kinds[k], q, note, fp, paid: paid === 1, also, label: (hunt.sources[src] || [])[0], url: (hunt.sources[src] || [])[1],
+                 vendor: (hunt.sources[src] || [])[2] === 1, date: d6(date), seen: d6(lastSeen), core: core === 1, pick: pick === 1 });
+  }
+  if (plain.length === hunt.rows.length) {
+    const key = r => JSON.stringify([r.id, r.tool, r.group, r.engine, r.kind, r.q, r.note, r.fp, r.paid, r.also, r.label, r.url, r.vendor, r.date, r.seen, r.core, r.pick]);
+    const again = rankHunt(plain.map(({ pick, ...r }) => r));
+    if (again.picks !== hunt.picks || again.rows.some((r, i) => key(r) !== key(plain[i]))) fail('hunt.js is not in the order (or with the top picks) the ranking gives — rebuild it with: node tools/update-libraries.mjs hunt');
+    let built = null;
+    try { built = buildHunt(JSON.parse(readFileSync(new URL('../tools/hunt-sources.json', import.meta.url), 'utf8'))); } catch (e) { fail(`tools/hunt-sources.json: ${e.message}`); }
+    if (built && (built.rows.length !== plain.length || built.rows.some((r, i) => key(r) !== key(plain[i])))) fail('hunt.js is not what tools/hunt-sources.json builds — run: node tools/update-libraries.mjs hunt');
+  }
+  let note = '';
+  try { note = readFileSync(new URL('../hunt.SOURCES.md', import.meta.url), 'utf8'); } catch (e) { /* reported below */ }
+  for (const label of new Set((hunt.sources || []).map(x => x[0]))) if (!note.includes(label)) fail(`hunt.SOURCES.md must credit every source — "${label}" is missing`);
+}
+
+// ---- Investigate: the sources and the questions. Every source is used, every page is an https address with the
+// indicator in it (or a query for a registered engine), and nothing that looks people up gets in.
+const KINDS = ['domain', 'ip', 'email', 'name', 'hash', 'md5', 'sha1', 'sha256'];
+const NOT_HERE = /whatsmyname|epieos|pipl\.|spokeo|beenverified|peoplesearch|peekyou|whitepages|intelius|radaris|thatsthem|socialcatfish|namechk|instantusername|truecaller|dehashed|snusbase|leakcheck|pimeyes|facecheck/i;
+const cardsFor = {};
+for (const [key, src] of Object.entries(SOURCES)) {
+  const [name, color, pages, flags = ''] = Array.isArray(src) ? src : [];
+  if (!printable(name || '', 40) || !name || !/^#[0-9a-f]{3,6}$/i.test(color || '') || !pages || typeof pages !== 'object' || !/^[ao]{0,2}$/.test(flags)) { fail(`SOURCES.${key}: expected [name, colour, pages, flags]`); continue; }
+  for (const [kind, page] of Object.entries(pages)) {
+    if (!KINDS.includes(kind)) fail(`SOURCES.${key}: unknown kind of indicator "${kind}"`);
+    if (Array.isArray(page)) {
+      if (!Object.hasOwn(ENGINES, page[0]) || typeof page[1] !== 'string' || !page[1].includes('{t}') || leftover(page[1])) fail(`SOURCES.${key}.${kind}: expected [engine, query with {t}]`);
+      else if (WEB_ENGINES.includes(page[0]) && fill(page[1]).split(/\s+/).length > 30) fail(`SOURCES.${key}.${kind}: too long for a web search engine`);
+    } else if (typeof page !== 'string' || !/^https:\/\/[a-z0-9.-]+\//.test(page) || !/\{(x|xc|xs|hex|org)\}/.test(page) || /\{(?!x\}|xc\}|xs\}|hex\}|org\}|algo\})/.test(page)) fail(`SOURCES.${key}.${kind}: expected an https address with the indicator in it`);
+    if (NOT_HERE.test(JSON.stringify(page))) fail(`SOURCES.${key}.${kind}: people-search sites, data brokers and username look-ups are left out of Investigate on purpose`);
+  }
+}
+const usedSources = new Set();
+for (const step of INVESTIGATION) {
+  if (!step.title || !Array.isArray(step.cards) || !step.cards.length) fail(`INVESTIGATION: a step needs a title and cards (${step.title || '?'})`);
+  for (const [name, desc, via, kinds] of step.cards || []) {
+    if (!name || !desc || !Array.isArray(via) || !via.length) { fail(`INVESTIGATION: card "${name || '?'}" needs a name, a description and sources`); continue; }
+    if (kinds !== undefined && kinds.split(' ').some(k => !['domain', 'ip', 'email', 'name', 'hash'].includes(k))) fail(`INVESTIGATION: card "${name}" is limited to an unknown kind`);
+    for (const k of via) { if (!Object.hasOwn(SOURCES, k)) fail(`INVESTIGATION: card "${name}" names an unknown source "${k}"`); usedSources.add(k); }
+    for (const kind of ['domain', 'ip', 'email', 'name', 'hash']) {
+      if (kinds && !kinds.split(' ').includes(kind)) continue;
+      if (via.some(k => SOURCES[k] && Object.keys(SOURCES[k][2]).some(p => p === kind || (kind === 'hash' && ['md5', 'sha1', 'sha256'].includes(p))))) cardsFor[kind] = (cardsFor[kind] || 0) + 1;
+    }
+  }
+}
+for (const k of Object.keys(SOURCES)) if (!usedSources.has(k)) fail(`SOURCES.${k} is not used by any card`);
+for (const kind of ['domain', 'ip', 'email', 'name', 'hash']) if ((cardsFor[kind] || 0) < 3) fail(`Investigate has only ${cardsFor[kind] || 0} cards for a ${kind}`);
+
 // The page head and the no-JavaScript fallback quote round numbers: keep them true.
 const quoted = [...html.matchAll(/(\d+)\+ (?:modern |curated )?(?:OSINT )?dorks/g)].map(m => +m[1]);
 const quotedEngines = [...html.matchAll(/across (\d+)\+ engines/g)].map(m => +m[1]);
@@ -218,8 +294,10 @@ for (const [re, actual, what] of [
 for (const [re, actual, what] of [
   [/([\d,]+)\+ GHDB dorks/g, libRows.ghdb, 'GHDB dorks in ghdb.js'],
   [/([\d,]+)\+ product fingerprints/g, libRows.fingerprints, 'products in fingerprints.js'],
+  [/([\d,]+)\+ published fingerprints/g, libRows.hunt, 'fingerprints in hunt.js'],
+  [/([\d,]+)\+ threat-intelligence sources/g, Object.keys(SOURCES).length, 'sources in Investigate'],
 ]) for (const m of readme.matchAll(re)) if (+m[1].replace(/,/g, '') > actual) fail(`README.md says "${m[0]}" but there are ${actual} ${what}`);
 
-console.log(`${dorks} dorks (+${links} links to further engines) · libraries: GHDB ${libRows.ghdb} (${libPicks.ghdb} picks), fingerprints ${libRows.fingerprints} (${libPicks.fingerprints} picks) · ${DATA.length} categories in ${groups.length} groups · ${ENGINE_SERVICES} engines (${Object.keys(ENGINES).length} endpoints) · ${ESSENTIAL_STEPS.reduce((n, s) => n + s.refs.length, 0)} in Essentials · ${Object.keys(RECIPES).length} recipes`);
+console.log(`${dorks} dorks (+${links} links to further engines) · libraries: GHDB ${libRows.ghdb} (${libPicks.ghdb} picks), fingerprints ${libRows.fingerprints} (${libPicks.fingerprints} picks), hunt ${libRows.hunt} (${libPicks.hunt} picks) · Investigate ${Object.keys(SOURCES).length} sources · ${DATA.length} categories in ${groups.length} groups · ${ENGINE_SERVICES} engines (${Object.keys(ENGINES).length} endpoints) · ${ESSENTIAL_STEPS.reduce((n, s) => n + s.refs.length, 0)} in Essentials · ${Object.keys(RECIPES).length} recipes`);
 if (errors.length) { console.error(`\n${errors.length} problem${errors.length === 1 ? '' : 's'}:\n` + errors.map(e => '  ✗ ' + e).join('\n')); process.exit(1); }
 console.log('catalog OK');

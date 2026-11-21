@@ -157,7 +157,7 @@ const settle = p => p.waitForTimeout(180);
   const ESS_N = await p.evaluate(() => ESSENTIALS.items.length), ALL_N = await p.evaluate(() => DATA.reduce((n, c) => n + c.items.length, 0)), CAT_N = await p.evaluate(() => DATA.length);
   check('home: the playbook in 4 numbered steps, each card with its category', home.cards === ESS_N && home.groups === 4 && home.steps === 4 && home.pills === ESS_N, home);
   check('home: counter + Open-all agree', home.count.startsWith(`${ESS_N} dorks`) && home.open === String(ESS_N), home);
-  check('home: nav has Essentials + My dorks + All + the two libraries + every category', home.nav === 5 + (await p.evaluate(() => DATA.length)), home.nav);
+  check('home: nav has Essentials + My dorks + All + the libraries + Investigate + every category', home.nav === 4 + (await p.evaluate(() => LIBS.length + DATA.length)), home.nav);
   check('home: exactly one h1, live placeholder count', home.h1 === 1 && home.placeholder.includes(String(ALL_N)), home);
 
   // search from Essentials is global
@@ -654,15 +654,15 @@ const settle = p => p.waitForTimeout(180);
   // sizes come from the page, never from this file: refreshing a library must not need a change here
   const { G, GP } = await p.evaluate(() => ({ G: fmt(LIB_META.ghdb.count), GP: fmt(LIB_META.ghdb.picks) }));
   const fetched = [];
-  p.on('request', r => { if (/\/(ghdb|fingerprints)\.js/.test(r.url())) fetched.push(r.url()); });
+  p.on('request', r => { if (/\/(ghdb|fingerprints|hunt)\.js/.test(r.url())) fetched.push(r.url()); });
   await p.click('.nav-item[data-view="-1"]'); await settle(p);
   await p.fill('#filter', 'jenkins'); await settle(p);
   const hint = await p.evaluate(() => ({
     btns: [...document.querySelectorAll('#toLibs button[data-lib]')].map(b => `${b.dataset.lib}:${b.querySelector('.count').textContent}`),
     nav: LIBS.map(L => document.querySelector(`.nav-item[data-view="${L.view}"] .ct`).textContent), want: LIBS.map(L => L.meta.count.toLocaleString('en-US')), states: LIBS.map(L => L.state),
     heads: [...document.querySelectorAll('#categoryNav .side-h')].map(e => e.textContent) }));
-  check('libraries: nothing is fetched until one is opened; the sidebar already knows their sizes; a catalog search points to both', fetched.length === 0 && hint.states.every(s => s === 'idle')
-    && JSON.stringify(hint.nav) === JSON.stringify(hint.want) && JSON.stringify(hint.btns) === JSON.stringify([`ghdb:${hint.want[0]}`, `fingerprints:${hint.want[1]}`]) && hint.heads[0] === 'Libraries', { fetched: fetched.slice(), hint });
+  check('libraries: nothing is fetched until one is opened; the sidebar already knows their sizes; a catalog search points to each', fetched.length === 0 && hint.states.every(s => s === 'idle')
+    && JSON.stringify(hint.nav) === JSON.stringify(hint.want) && JSON.stringify(hint.btns) === JSON.stringify([`ghdb:${hint.want[0]}`, `fingerprints:${hint.want[1]}`, `hunt:${hint.want[2]}`]) && hint.heads[0] === 'Libraries', { fetched: fetched.slice(), hint });
 
   await p.click('#toLibs button[data-lib="ghdb"]'); await ready(p, 'ghdb'); await settle(p);
   const viaHint = await p.evaluate(() => ({ cat: state.cat === GHDB, filter: document.getElementById('filter').value, title: document.getElementById('catTitle').textContent.trim(),
@@ -740,7 +740,7 @@ const settle = p => p.waitForTimeout(180);
   check('ghdb: is:pick finds the top picks from anywhere', await p.evaluate(() => document.getElementById('visibleCount').textContent) === `${GP} results in GHDB`);
   await p.click('#filterClear'); await settle(p);
   await p.click('.card.compact .gcat'); await settle(p);
-  check('ghdb: a row\'s category is a one-click filter', await p.evaluate(() => GHDB_SLUGS.includes(state.scope.ghdb) && document.getElementById('scope').value === state.scope.ghdb && document.activeElement.id === 'catTitle'));
+  check('ghdb: a row\'s category is a one-click filter', await p.evaluate(() => libAt(GHDB).scopes.some(x => x[0] === state.scope.ghdb) && document.getElementById('scope').value === state.scope.ghdb && document.activeElement.id === 'catTitle'));
   await p.selectOption('#scope', ''); await settle(p);
 
   // working it: Run next, sidebar progress, Show more, Save
@@ -894,6 +894,212 @@ const settle = p => p.waitForTimeout(180);
   await ctx.close();
 }
 
+/* ───────────── 4f. Threat intel: the Hunt library and the Investigate view ───────────── */
+{
+  const ready = (pg, id) => pg.waitForFunction(i => LIBS.find(L => L.id === i).state === 'ready', id, { timeout: 15000 });
+  /* ----- Hunt ----- */
+  const p = await newPage(undefined, { hash: '#cat=hunt', storage: { ndo_disclaimer_v1: '1', ndo_state_v1: JSON.stringify({ sevs: ['crit'] }) } });
+  await ready(p, 'hunt'); await settle(p);
+  const { N, NP } = await p.evaluate(() => ({ N: fmt(LIB_META.hunt.count), NP: fmt(LIB_META.hunt.picks) }));
+  const hv = await p.evaluate(() => {
+    const L = libAt(HUNT), cards = [...document.querySelectorAll('.card[data-key]')], sel = document.getElementById('scope'), items = L.cat.items;
+    const links = it => [{ engine: it.engine, q: it.q }, ...(it.links || [])];
+    const bad = items.filter(it => !it.key.startsWith('hunt/') || links(it).some(l => !['sh', 'shf', 'cen', 'fo'].includes(l.engine) || !/^https:\/\//.test(buildUrl(l.engine, l.q, 'example.com')))
+      || /\{t\}|\{t_no_tld\}/.test(it.q) || !it.src || !/^https:\/\//.test(it.src.url) || it.sev !== undefined || !it.tags.every(t => /^[a-z0-9][a-z0-9._-]*$/.test(t))
+      || !L.scopes.some(x => x[0] === it.scope)).map(it => it.key);
+    const tools = items.map(it => it.name.split(' · ')[0]);
+    const split = tools.filter((t, i) => i && tools[i - 1] !== t && tools.slice(0, i).includes(t));        // a tool whose rows are not next to each other
+    const picks = items.filter(it => it.pick);
+    return { title: document.getElementById('catTitle').textContent.trim(), desc: document.getElementById('catDesc').textContent, total: items.length, meta: L.meta, bad, split,
+      rows: cards.length, count: document.getElementById('visibleCount').textContent, more: !!document.getElementById('showMore'),
+      sevHidden: document.getElementById('sevToggle').hidden && document.getElementById('sevSep').hidden, recipe: document.getElementById('recipeWrap').hidden,
+      options: [...sel.options].map(o => o.textContent), ph: document.getElementById('filter').placeholder,
+      badges: document.querySelectorAll('.card .sev-badge, .card .scope-chip').length, targets: cards.filter(c => c.querySelector('code').textContent.includes('example.com')).length,
+      srcs: cards.every(c => { const a = c.querySelector('.src-link'); return a && /^https:\/\//.test(a.href) && a.target === '_blank' && a.rel === 'noopener noreferrer'; }),
+      engines: [...new Set(cards.flatMap(c => [...c.querySelectorAll('.eng-btn')].map(a => a.textContent.replace(/\s*\(login required\)/, '').trim())))].sort(),
+      onePerTool: new Set(picks.map(it => it.name.split(' · ')[0])).size === picks.length, clean: picks.every(it => !it.tags.includes('paid') && !it.tags.includes('noisy')),
+      shownArePicks: cards.every(c => items.find(it => it.key === c.dataset.key).pick), nav: document.querySelector(`.nav-item[data-view="${HUNT}"] .ct`).textContent,
+      heads: [...document.querySelectorAll('#categoryNav .side-h')].map(e => e.textContent).slice(0, 2) };
+  });
+  check('hunt: every fingerprint builds a link on its engine, names where it was published and is tied to no target', hv.total === hv.meta.count && hv.total > 100 && hv.bad.length === 0, { total: hv.total, bad: hv.bad.slice(0, 5) });
+  check('hunt: it opens on one fingerprint per well-known tool — none behind a paid plan, none known to be noisy', hv.title === 'Adversary Infrastructure' && hv.rows === hv.meta.picks && !hv.more && hv.shownArePicks && hv.onePerTool && hv.clean
+    && hv.count === `${NP} of ${N} fingerprints` && hv.nav === N && JSON.stringify(hv.heads) === '["Libraries","Threat intel"]', hv);
+  check('hunt: a tool\'s fingerprints are listed together', hv.split.length === 0, hv.split);
+  check('hunt: rows carry no severity, so the severity filter steps aside — and does not hide them', hv.sevHidden && hv.badges === 0 && hv.rows > 0 && hv.recipe, hv);
+  check('hunt: a card says once, in the header, that nothing is tied to the target; each row links to its source', hv.desc.includes('none is tied to your target') && hv.targets === 0 && hv.srcs
+    && hv.engines.every(e => ['Censys', 'FOFA', 'Shodan', 'Shodan · facets'].includes(e)), hv);
+  check('hunt: its menu — top picks, everything, its groups with their sizes', hv.options[0] === `Top picks (${NP})` && hv.options[1] === `Everything (${N})` && hv.options.length === 9
+    && hv.options.slice(2).every(o => /\(\d+\)$/.test(o)) && hv.options.some(o => o.startsWith('C2 frameworks (')) && hv.ph.includes(`${N} fingerprints`), hv.options);
+  await p.selectOption('#scope', 'rat'); await settle(p);
+  const hs = await p.evaluate(() => ({ only: [...document.querySelectorAll('.card[data-key]')].every(c => libAt(HUNT).cat.items.find(it => it.key === c.dataset.key).scope === 'rat'),
+    n: document.querySelectorAll('.card[data-key]').length, hash: location.hash }));
+  await p.selectOption('#scope', ''); await p.fill('#filter', 'cobalt'); await settle(p);
+  const hq = await p.evaluate(() => ({ titles: [...document.querySelectorAll('.card .card-title')].map(h => h.textContent), count: document.getElementById('visibleCount').textContent, sel: document.getElementById('scope').value }));
+  await p.fill('#filter', 'cat:c2 tag:jarm'); await settle(p);
+  const hop = await p.evaluate(() => [...document.querySelectorAll('.card .card-title')].map(h => h.textContent));
+  check('hunt: a group, a search across everything, and operators (cat:, tag:)', hs.only && hs.n > 5 && hs.hash.includes('scope=rat') && hq.titles.filter(t => t.startsWith('Cobalt Strike · ')).length >= 10 && hq.titles.length < 25
+    && /^\d+ results in Hunt$/.test(hq.count) && hq.sel === 'all' && hop.length > 0 && hop.every(t => t.endsWith(' · JARM')), { hs, hq, hop });
+  const noisy = await p.evaluate(() => [...document.querySelectorAll('.card .card-desc')].map(d => d.textContent));
+  check('hunt: a noisy fingerprint says so on its card', noisy.length > 0 && noisy.every(d => d.includes('Expect many false positives.')), noisy);
+  await p.click('#filterClear'); await settle(p);
+  await p.evaluate(() => { window.__opened = []; window.open = u => { window.__opened.push(u); return null; }; });
+  await p.click('#runNext'); await settle(p);
+  await p.click('.card .card-meta .iconbtn[aria-label="Save to My dorks"]'); await settle(p);
+  const hw = await p.evaluate(() => ({ opened: window.__opened.slice(), href: document.querySelector('.card.done .eng-btn').href, nav: document.querySelector(`.nav-item[data-view="${HUNT}"] .ct`).textContent,
+    stored: JSON.parse(localStorage.getItem('ndo_progress_v1'))['example.com'].done, d: MY_CAT.items[0], first: libAt(HUNT).cat.items.find(it => it.pick) }));
+  check('hunt: Run next and + work as in any library', hw.opened.length === 1 && hw.opened[0] === hw.href && /^hunt\/[A-Z]+-\d+$/.test(hw.stored[0]) && hw.nav.startsWith('1/') && hw.d.name === hw.first.name && hw.d.q === hw.first.q
+    && hw.d.engine === hw.first.engine && hw.d.tags.includes('hunt') && hw.d.sev === 'info' && hw.d.desc.includes('Published by') && !hw.d.q.includes('{t}'), hw);
+  const ex = await p.evaluate(() => { const d = buildExportData(); let csv = ''; const o = window.dl; window.dl = (n, c) => { csv = c; }; exportCsv(); window.dl = o;
+    const lines = csv.trim().split('\n'); return { cats: d.map(c => c.category), items: d.reduce((n, c) => n + c.items.length, 0), rows: document.querySelectorAll('.card[data-key]').length,
+      urls: d.flatMap(c => c.items).every(i => /^https:\/\//.test(i.url) && i.sev === 'info'), lines: lines.length, formula: lines.slice(1).filter(l => /(^|,)"[=+\-@]/.test(l)).length,
+      guarded: (csv.match(/,"'[+\-=@]/g) || []).length }; });
+  await p.selectOption('#scope', 'all'); await settle(p);
+  const exAll = await p.evaluate(() => { let csv = ''; const o = window.dl; window.dl = (n, c) => { csv = c; }; exportCsv(); window.dl = o;
+    return { lines: csv.trim().split('\n').length, formula: csv.split('\n').slice(1).filter(l => /(^|,)"[=+\-@]/.test(l)).length, guarded: (csv.match(/,"'[+\-=@]/g) || []).length, n: libAt(HUNT).cat.items.length }; });
+  check('export: a library view exports its rows', JSON.stringify(ex.cats) === '["Adversary Infrastructure"]' && ex.items === ex.rows && ex.items > 0 && ex.urls && ex.lines === ex.rows + 1, ex);
+  check('export: a cell that starts like a spreadsheet formula is defused', exAll.lines === exAll.n + 1 && exAll.formula === 0 && exAll.guarded >= 1, exAll);
+  await p.selectOption('#scope', '');
+  await p.click('label[for="opsec"], #opsec', { force: true }); await settle(p);
+  const ho = await p.evaluate(() => ({ rows: document.querySelectorAll('.card[data-key]').length, btns: [...document.querySelectorAll('.empty-state .btn')].map(b => b.textContent) }));
+  check('hunt: OPSEC mode leaves nothing — every engine here is a scanner — and offers the way back', ho.rows === 0 && ho.btns.includes('Turn off OPSEC mode') && !ho.btns.includes('Reset filters'), ho);
+  await p.context().close();
+
+  const h = await newPage();
+  const hard = await h.evaluate(() => {
+    window.DORKOPS_LIB('hunt', { groups: ['C2 framework', 'Nonsense'], kinds: ['TLS certificate', '<i>kind</i>'], sources: [['A list', 'https://example.org/list', 0], ['Bad', 'javascript:alert(1)', 0], 'x'], rows: [
+      ['S-001', 'Tool A', 0, 'sh', 0, 'ssl:"a"', 'A note.', 0, 0, 2, 0, 202501, 202609, 1, 1],
+      ['S-002', '<img src=x onerror=window.__xss=4>', 0, 'fo', 1, 'title="<script>window.__xss=5</script>"', '', 3, 1, 0, 1, 0, 0, 0, 0],
+      ['S-001', 'Twice', 0, 'sh', 0, 'x', '', 0, 0, 0, 0, 0, 0, 0, 0], ['S-003', 'Unknown group', 1, 'sh', 0, 'x', '', 0, 0, 0, 0, 0, 0, 0, 0], ['S-004', 'Unknown engine', 0, 'g', 0, 'x', '', 0, 0, 0, 0, 0, 0, 0, 0],
+      ['S-005', 'No query', 0, 'sh', 0, '', '', 0, 0, 0, 0, 0, 0, 0, 0], ['bad id!', 'T', 0, 'sh', 0, 'x', '', 0, 0, 0, 0, 0, 0, 0, 0], ['S-006', 'Long', 0, 'sh', 0, 'x'.repeat(301), '', 0, 0, 0, 0, 0, 0, 0, 0], null, 'row', ['S-007'] ] });
+    const L = libAt(HUNT); L.state = 'ready'; state.cat = HUNT; state.filter = ''; state.scope.hunt = 'all'; syncControls(); render();
+    const it = L.cat.items, last = [...document.querySelectorAll('.card[data-key]')].pop();
+    return { keys: it.map(i => i.key), names: it.map(i => i.name), picks: it.map(i => i.pick), descs: it.map(i => i.desc), tags: it.map(i => i.tags.join()), srcs: it.map(i => i.src && i.src.url), year: it[0].src.year, lists: it[0].src.lists,
+      imgs: document.querySelectorAll('#grid img, #grid script, #grid i').length, xss: window.__xss, title: last.querySelector('.card-title').textContent, link: !!last.querySelector('.src-link'),
+      junk: [LIB_BUILD.hunt({}), LIB_BUILD.hunt({ rows: 7 })].every(a => Array.isArray(a) && !a.length) };
+  });
+  check('hunt: malformed rows are dropped, a link that is not https is not a link, and hostile text stays text', JSON.stringify(hard.keys) === '["hunt/S-001","hunt/S-002"]' && JSON.stringify(hard.picks) === '[true,false]'
+    && hard.names[0] === 'Tool A · TLS certificate' && hard.descs[0] === 'A note.' && hard.descs[1] === 'Expect many false positives. Needs a paid plan on this engine.' && hard.tags[1].endsWith('noisy,paid')
+    && hard.srcs[0] === 'https://example.org/list' && hard.srcs[1] === null && hard.year === '2025' && hard.lists === 2 && hard.imgs === 0 && hard.xss === undefined
+    && hard.title === '<img src=x onerror=window.__xss=4> · <i>kind</i>' && !hard.link && hard.junk, hard);
+  await h.context().close();
+
+  /* ----- Investigate ----- */
+  const v = await newPage(undefined, { hash: '#cat=investigate' });
+  const dialogs = []; v.on('dialog', d => { dialogs.push(d.message()); d.accept(); });
+  const iv = await v.evaluate(() => {
+    const cards = [...document.querySelectorAll('.card.lookup')], links = [...document.querySelectorAll('.card.lookup a.eng-btn')];
+    return { title: document.getElementById('catTitle').textContent.trim(), note: document.querySelector('#catDesc .ch-src').textContent, kind: document.getElementById('iocKind').textContent, box: document.getElementById('ioc').value,
+      boxShown: !document.getElementById('iocWrap').hidden, ph: document.getElementById('ioc').placeholder, cards: cards.map(c => c.querySelector('.card-title').textContent), steps: [...document.querySelectorAll('.group-head h2')].map(h => h.textContent),
+      count: document.getElementById('visibleCount').textContent, who: document.getElementById('visibleTarget').textContent, n: links.length,
+      safe: links.every(a => /^https:\/\//.test(a.href) && a.target === '_blank' && a.rel === 'noopener noreferrer' && a.referrerPolicy === 'no-referrer'), about: links.filter(a => !/example|6578616d706c65/i.test(a.href)).map(a => a.href),
+      run: document.getElementById('runNext').hidden, exp: document.getElementById('exportMenu').hidden, sev: document.getElementById('sevToggle').hidden, recipe: document.getElementById('recipeWrap').hidden, scope: document.getElementById('scopeWrap').hidden,
+      ticks: document.querySelectorAll('.card .done-btn, .card .q-copy, .card .card-query').length, open: document.getElementById('openCount').textContent, nav: document.querySelector(`.nav-item[data-view="${INVEST}"] .ct`).textContent,
+      sources: Object.keys(SOURCES).length, filterPh: document.getElementById('filter').placeholder, label: document.getElementById('ioc').labels.length };
+  });
+  check('investigate: with nothing typed, the target is the indicator — a domain gets its questions', iv.title === 'Investigate' && iv.boxShown && iv.box === '' && iv.ph.startsWith('example.com') && iv.kind === 'Domain'
+    && JSON.stringify(iv.cards) === JSON.stringify(['Verdicts and blocklists', 'Threat-intelligence feeds', 'Sandboxes and scans', 'Registration', 'DNS history and certificates', 'Lookalike domains', 'Leaks, stolen credentials and victims'])
+    && JSON.stringify(iv.steps) === JSON.stringify(['Step 1: Is it already known?', 'Step 2: What has it done?', 'Step 3: Who is behind it?', 'Step 4: What else is connected?', 'Step 5: Where else does it turn up?']), iv);
+  check('investigate: every source is a button to an https page about the indicator, opened without a referrer', iv.n > 20 && iv.safe && iv.about.length === 0 && iv.count === `${iv.n} sources` && iv.who === ' · example.com' && iv.open === '7', iv);
+  check('investigate: lookups are not dorks — no ticks, no Run next, no export, no severity or recipe', iv.run && iv.exp && iv.sev && iv.recipe && iv.scope && iv.ticks === 0 && iv.nav === String(iv.sources) && iv.filterPh.includes('sources') && iv.label === 1, iv);
+  check('investigate: it says what it leaves out', iv.note.includes('not saved') && iv.note.includes('People-search'), iv.note);
+
+  const kinds = await v.evaluate(() => [
+    ['example.com', 'domain', 'example.com'], ['https://Sub.Example.com/path?x=1#y', 'domain', 'sub.example.com'], ['hxxp://evil[.]example/a.php', 'domain', 'evil.example'], ['evil(dot)example', 'domain', 'evil.example'],
+    ['*.example.com', 'domain', 'example.com'], ['"example.com"', 'domain', 'example.com'], ['8.8.8.8', 'ip', '8.8.8.8'], ['1.2.3[.]4', 'ip', '1.2.3.4'], ['http://10.0.0.1:8080/x', 'ip', '10.0.0.1'],
+    ['2001:db8::1', 'ip', '2001:db8::1'], ['999.1.1.1', 'name', '999.1.1.1'], ['275A021BBFB6489E54D471899F7DB9D1663FC695EC2FE2A2C4538AABF651FD0F', 'hash', '275a021bbfb6489e54d471899f7db9d1663fc695ec2fe2a2c4538aabf651fd0f', 'sha256'],
+    ['44d88612fea8a8f36de82e1278abb02f', 'hash', '44d88612fea8a8f36de82e1278abb02f', 'md5'], ['3395856ce81f2b7382dee72602f798b642f14140', 'hash', '3395856ce81f2b7382dee72602f798b642f14140', 'sha1'],
+    ['Someone@Example.ORG', 'email', 'someone@example.org'], ['user[@]evil[.]example', 'email', 'user@evil.example'], ['APT28', 'name', 'APT28'], ['  Cobalt   Strike ', 'name', 'Cobalt Strike'], ['lazarus', 'name', 'lazarus'],
+    ['localhost', 'name', 'localhost'], ['a', null], ['', null], ['   ', null], [null, null], [42, null], ['x'.repeat(500), 'name', 'x'.repeat(80)]
+  ].map(([raw, type, value, algo]) => { const r = readIoc(raw); return { raw, want: type ? `${type}|${value}|${algo || ''}` : 'null', got: r ? `${r.type}|${r.value}|${r.algo || ''}` : 'null' }; }).filter(x => x.got !== x.want));
+  check('investigate: what was typed is recognised — domains, addresses, hashes, e-mail, names, defanged or not', kinds.length === 0, kinds);
+  const urls = await v.evaluate(() => { const at = (k, raw) => lookupUrl(k, readIoc(raw)); const sha = '275a021bbfb6489e54d471899f7db9d1663fc695ec2fe2a2c4538aabf651fd0f', md5 = '44d88612fea8a8f36de82e1278abb02f'; return [
+    [at('vt', 'example.com'), 'https://www.virustotal.com/gui/domain/example.com'], [at('vt', sha), 'https://www.virustotal.com/gui/file/' + sha], [at('vt', md5), 'https://www.virustotal.com/gui/search/' + md5],
+    [at('dtw', 'example.com'), 'https://dnstwister.report/search?ed=6578616d706c652e636f6d'], [at('fofa', '8.8.8.8'), 'https://en.fofa.info/result?qbase64=aXA9IjguOC44Ljgi'],
+    [at('hibp', 'someone@example.org'), 'https://haveibeenpwned.com/account/someone@example.org'], [at('tri', 'Cobalt Strike'), 'https://tria.ge/s?q=family%3Acobaltstrike'],
+    [at('mb', 'Cobalt Strike'), 'https://bazaar.abuse.ch/browse/tag/CobaltStrike/'], [at('attck', 'APT28'), 'https://www.google.com/search?q=site%3Aattack.mitre.org%20%22APT28%22'],
+    [at('whk', 'example.co.uk'), 'https://www.whoxy.com/keyword/example'], [at('yf', md5), 'https://yaraify.abuse.ch/search/md5/' + md5 + '/'], [at('circl', sha), 'https://hashlookup.circl.lu/lookup/sha256/' + sha],
+    [at('sthi', 'example.com'), 'https://securitytrails.com/domain/example.com/history/a'], [at('mp', 'a "b" <c>&d'), 'https://malpedia.caad.fkie.fraunhofer.de/library?search=a%20%22b%22%20%3Cc%3E%26d'],
+    [at('gsb', '8.8.8.8'), ''], [at('ha', '3395856ce81f2b7382dee72602f798b642f14140'), ''], [at('mb', md5), ''], [at('hibp', 'example.com'), '']
+  ].filter(([got, want]) => got !== want); });
+  check('investigate: each source gets the indicator the way it expects it (path, query, hex, Base64, per hash type) — or is left out', urls.length === 0, urls);
+
+  await v.fill('#ioc', '8.8.8.8'); await settle(v);
+  const ip = await v.evaluate(() => ({ kind: document.getElementById('iocKind').textContent, cards: [...document.querySelectorAll('.card.lookup .card-title')].map(c => c.textContent), hash: location.hash, who: document.getElementById('visibleTarget').textContent,
+    stored: Object.keys(localStorage).map(k => localStorage.getItem(k)).join('\n').includes('8.8.8.8'), exposed: [...[...document.querySelectorAll('.card.lookup')].find(c => c.querySelector('.card-title').textContent === 'Exposed services').querySelectorAll('.eng-btn')].map(a => a.textContent.replace(/\s*\(login required\)/, '').trim()),
+    locks: document.querySelectorAll('.card.lookup .eng-btn .visually-hidden').length, target: document.getElementById('target').value }));
+  check('investigate: an IP address gets its own questions; the indicator goes to the address bar and nowhere else', ip.kind === 'IP address' && ip.cards.includes('Network and hosting') && ip.cards.includes('Exposed services') && ip.cards.includes('Neighbours')
+    && !ip.cards.includes('Registration') && ip.hash.includes('ioc=8.8.8.8') && ip.who === ' · 8.8.8.8' && !ip.stored && ip.target === 'example.com' && ip.locks >= 3
+    && JSON.stringify(ip.exposed) === JSON.stringify(['Shodan', 'Shodan · InternetDB', 'Censys', 'FOFA', 'ZoomEye']), ip);
+  await v.click('label[for="opsec"], #opsec', { force: true }); await settle(v);
+  const quiet = await v.evaluate(() => [...[...document.querySelectorAll('.card.lookup')].find(c => c.querySelector('.card-title').textContent === 'Exposed services').querySelectorAll('.eng-btn')].map(a => a.textContent.trim()));
+  await v.click('label[for="opsec"], #opsec', { force: true }); await settle(v);
+  check('investigate: OPSEC mode takes the internet scanners out of a card', JSON.stringify(quiet) === '["Shodan · InternetDB"]', quiet);
+
+  await v.evaluate(() => { window.__opened = []; window.open = u => { window.__opened.push(u); return null; }; });
+  await v.click('#openCat'); await v.waitForTimeout(1900);
+  await v.keyboard.press('n'); await settle(v);
+  const oa = await v.evaluate(() => ({ opened: window.__opened.slice(), firsts: [...document.querySelectorAll('.card.lookup')].map(c => c.querySelector('.eng-btn').href), progress: localStorage.getItem('ndo_progress_v1') }));
+  check('investigate: Open all opens the first source of every card (after asking), ticks nothing — and "n" has nothing to run', dialogs.length === 1 && /^Open 6 tabs/.test(dialogs[0]) && JSON.stringify(oa.opened) === JSON.stringify(oa.firsts) && oa.progress === null, { dialogs, oa });
+
+  await v.fill('#ioc', 'Cobalt Strike'); await settle(v);
+  const nm = await v.evaluate(() => ({ kind: document.getElementById('iocKind').textContent, cards: [...document.querySelectorAll('.card.lookup .card-title')].map(c => c.textContent), btn: (document.querySelector('#toHunt button') || {}).textContent }));
+  await v.click('#toHunt button'); await ready(v, 'hunt'); await settle(v);
+  const th = await v.evaluate(() => ({ cat: state.cat === HUNT, filter: state.filter, titles: [...document.querySelectorAll('.card .card-title')].map(h => h.textContent), focus: document.activeElement.id, box: document.getElementById('iocWrap').hidden }));
+  check('investigate: a name gets profiles, reporting and detection rules — and a way to the Hunt library', nm.kind === 'Name' && JSON.stringify(nm.cards) === JSON.stringify(['Who they are', 'Threat-intelligence feeds', 'Sandboxes and scans', 'Reporting', 'Leaks, stolen credentials and victims', 'Detection rules'])
+    && nm.btn === 'Search Hunt for “Cobalt Strike”' && th.cat && th.filter === 'Cobalt Strike' && th.titles.filter(t => t.startsWith('Cobalt Strike · ')).length >= 10 && th.focus === 'catTitle' && th.box, { nm, th });
+  await v.keyboard.press('k'); await settle(v);
+  const back = await v.evaluate(() => ({ cat: state.cat === INVEST, box: document.getElementById('ioc').value, filter: state.filter }));
+  await v.keyboard.press('k'); await ready(v, 'fingerprints'); await settle(v);
+  check('keys: Investigate and Hunt sit after the libraries for j / k', back.cat && back.box === 'Cobalt Strike' && await v.evaluate(() => state.cat === FPRINT), back);
+  await v.keyboard.press('j'); await settle(v);
+  await v.click('#filterClear'); await settle(v);
+
+  await v.fill('#ioc', '275a021bbfb6489e54d471899f7db9d1663fc695ec2fe2a2c4538aabf651fd0f'); await settle(v);
+  const hsh = await v.evaluate(() => ({ kind: document.getElementById('iocKind').textContent, cards: [...document.querySelectorAll('.card.lookup .card-title')].map(c => c.textContent), over: document.documentElement.scrollWidth - document.documentElement.clientWidth }));
+  await v.fill('#ioc', 'Someone@Example.org'); await settle(v);
+  const em = await v.evaluate(() => ({ kind: document.getElementById('iocKind').textContent, cards: [...document.querySelectorAll('.card.lookup .card-title')].map(c => c.textContent), hibp: [...document.querySelectorAll('.card.lookup a.eng-btn')].find(a => a.textContent.includes('Have I Been Pwned')).href }));
+  check('investigate: a file hash and an e-mail address', hsh.kind === 'File hash · SHA-256' && JSON.stringify(hsh.cards) === JSON.stringify(['Verdicts and blocklists', 'Threat-intelligence feeds', 'Sandboxes and scans']) && hsh.over <= 0
+    && em.kind === 'E-mail address' && JSON.stringify(em.cards) === JSON.stringify(['Threat-intelligence feeds', 'Keys and commits', 'Domains and certificates in its name', 'Leaks, stolen credentials and victims'])
+    && em.hibp === 'https://haveibeenpwned.com/account/someone@example.org', { hsh, em });
+
+  await v.fill('#ioc', 'a'); await settle(v);
+  const none = await v.evaluate(() => ({ h: (document.querySelector('.empty-state h2') || {}).textContent, kind: document.getElementById('iocKind').textContent, btn: (document.querySelector('.empty-state .btn') || {}).textContent, open: document.getElementById('openCat').disabled, count: document.getElementById('visibleCount').textContent }));
+  await v.click('.empty-state .btn'); await settle(v);
+  const again = await v.evaluate(() => ({ box: document.getElementById('ioc').value, kind: document.getElementById('iocKind').textContent, cards: document.querySelectorAll('.card.lookup').length, focus: document.activeElement.id, hash: location.hash }));
+  check('investigate: too little to go on — it says so and offers the target', none.h === 'Nothing to look up yet' && none.kind === 'Not an indicator yet' && none.btn === 'Use the target' && none.open && none.count === 'No indicator'
+    && again.box === '' && again.kind === 'Domain' && again.cards === 7 && again.focus === 'ioc' && !again.hash.includes('ioc='), { none, again });
+
+  await v.fill('#filter', 'whois'); await settle(v);
+  const fl = await v.evaluate(() => ({ cards: [...document.querySelectorAll('.card.lookup .card-title')].map(c => c.textContent), marks: document.querySelectorAll('.card.lookup mark').length, title: document.getElementById('catTitle').textContent.trim() }));
+  await v.fill('#filter', 'zzzqqq'); await settle(v);
+  const fe = await v.evaluate(() => ({ h: (document.querySelector('.empty-state h2') || {}).textContent, btns: [...document.querySelectorAll('.empty-state .btn')].map(b => b.textContent) }));
+  await v.click('.empty-state .btn'); await settle(v);
+  check('investigate: the search box filters the cards by what they are and by source', JSON.stringify(fl.cards) === '["Registration"]' && fl.marks >= 1 && fl.title === 'Investigate' && fe.h === 'No source matches' && JSON.stringify(fe.btns) === '["Clear search"]'
+    && await v.evaluate(() => document.querySelectorAll('.card.lookup').length === 7), { fl, fe });
+
+  await v.fill('#ioc', '"><img src=x onerror=window.__xss=6>'); await settle(v);
+  const xs = await v.evaluate(() => ({ imgs: document.querySelectorAll('.content img').length, xss: window.__xss, kind: document.getElementById('iocKind').textContent, who: document.getElementById('visibleTarget').textContent,
+    safe: [...document.querySelectorAll('.card.lookup a.eng-btn')].every(a => /^https:\/\//.test(a.href) && !/[<>"]/.test(a.getAttribute('href'))), n: document.querySelectorAll('.card.lookup a.eng-btn').length }));
+  check('investigate: a hostile "indicator" is text on the page and percent-encoded in every link', xs.imgs === 0 && xs.xss === undefined && xs.kind === 'Name' && xs.who.includes('<img src=x') && xs.safe && xs.n > 5, xs);
+  const a11y = await v.evaluate(() => {
+    const name = el => (el.getAttribute('aria-label') || el.textContent || el.title || '').trim();
+    const unnamed = [...document.querySelectorAll('.content button, .content a[href], .content select, .content input')].filter(el => /SELECT|INPUT/.test(el.tagName) ? !(el.labels && el.labels.length) : !name(el)).map(el => el.outerHTML.slice(0, 80));
+    const small = [...document.querySelectorAll('.content button, .content a.eng-btn, .content select, .content input')].filter(el => { const r = el.getBoundingClientRect(); return r.width > 0 && (r.height < 24 || r.width < 24); }).map(el => `${el.id || el.className}:${Math.round(el.getBoundingClientRect().width)}x${Math.round(el.getBoundingClientRect().height)}`);
+    return { unnamed, small: [...new Set(small)], described: document.getElementById('ioc').getAttribute('aria-describedby') === 'iocKind' };
+  });
+  check('investigate a11y: every control is named and at least 24×24; the box is tied to what it was taken for', a11y.unnamed.length === 0 && a11y.small.length === 0 && a11y.described, a11y);
+  await v.context().close();
+
+  const dl = await newPage(undefined, { hash: '#cat=investigate&ioc=evil%5B.%5Dexample&filter=virus' });
+  const deep = await dl.evaluate(() => ({ cat: state.cat === INVEST, box: document.getElementById('ioc').value, kind: document.getElementById('iocKind').textContent, cards: [...document.querySelectorAll('.card.lookup .card-title')].map(c => c.textContent),
+    href: document.querySelector('.card.lookup a.eng-btn').href, saved: (localStorage.getItem('ndo_state_v1') || '').includes('evil') }));
+  await dl.click('.nav-item[data-view="-2"]'); await settle(dl);
+  const left = await dl.evaluate(() => ({ box: document.getElementById('iocWrap').hidden, kind: document.getElementById('iocKind').hidden, sev: document.getElementById('sevToggle').hidden, run: document.getElementById('runNext').hidden, exp: document.getElementById('exportMenu').hidden, hash: location.hash }));
+  check('investigate: a deep link carries the indicator as it was written; leaving the view puts the usual controls back', deep.cat && deep.box === 'evil[.]example' && deep.kind === 'Domain' && JSON.stringify(deep.cards) === '["Verdicts and blocklists"]'
+    && deep.href === 'https://www.virustotal.com/gui/domain/evil.example' && !deep.saved && left.box && left.kind && !left.sev && !left.run && !left.exp && !left.hash.includes('ioc='), { deep, left });
+  await dl.context().close();
+}
+
 /* ───────────── 5. persistence + first visit ───────────── */
 {
   const p = await newPage(undefined, { storage: { ndo_state_v1: JSON.stringify({ cat: 999, sevs: ['crit'], history: ['acme.io', 'old.example'] }) } });
@@ -923,9 +1129,10 @@ const settle = p => p.waitForTimeout(180);
 for (const [w, hgt] of [[390, 844], [360, 740], [320, 640], [768, 1024], [1024, 768], [1920, 1080]]) {
   const p = await newPage({ width: w, height: hgt });
   const over = [];
-  for (const hash of ['#cat=essentials', '#cat=all', '#cat=wayback', '#cat=ghdb', '#cat=fingerprints', '#cat=essentials&filter=token']) {       // ends on Essentials: the drawer checks below start there
+  for (const hash of ['#cat=essentials', '#cat=all', '#cat=wayback', '#cat=ghdb', '#cat=fingerprints', '#cat=hunt&scope=all', '#cat=investigate', '#cat=investigate&ioc=275a021bbfb6489e54d471899f7db9d1663fc695ec2fe2a2c4538aabf651fd0f',
+    '#cat=essentials&filter=token']) {       // ends on Essentials: the drawer checks below start there
     await p.evaluate(h => { location.hash = h; }, hash); await settle(p);
-    if (/ghdb|fingerprints/.test(hash)) { await p.waitForFunction(() => libAt(state.cat).state === 'ready', null, { timeout: 15000 }); await settle(p); }
+    if (/ghdb|fingerprints|hunt/.test(hash)) { await p.waitForFunction(() => libAt(state.cat).state === 'ready', null, { timeout: 15000 }); await settle(p); }
     const o = await p.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
     if (o > 0) over.push(`${hash}: +${o}px`);
   }

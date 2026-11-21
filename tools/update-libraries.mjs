@@ -1,19 +1,21 @@
 // Fetches the libraries DorkOps keeps outside index.html and ranks them, best first.
 // Zero dependencies, Node 18+.
 //
-//   node tools/update-libraries.mjs                    every library, from its official source
-//   node tools/update-libraries.mjs ghdb               just one (ghdb | fingerprints)
+//   node tools/update-libraries.mjs                    every library, from its source
+//   node tools/update-libraries.mjs ghdb               just one (ghdb | fingerprints | hunt)
 //   node tools/update-libraries.mjs --from some/dir    read ghdb.xml, QUERIES.yaml and kev.json from a folder instead of downloading
 //
 //   ghdb.js          Exploit-DB's Google Hacking Database — ghdb.xml, GNU GPL v2.0 (ghdb.LICENSE.md)
 //   fingerprints.js  ProjectDiscovery's awesome-search-queries — QUERIES.yaml, MIT (fingerprints.LICENSE.md),
 //                    ranked with CISA's Known Exploited Vulnerabilities catalog (CC0 1.0)
+//   hunt.js          published fingerprints of adversary infrastructure — tools/hunt-sources.json, kept by hand in
+//                    this repository, every row with the public source it was copied from (hunt.SOURCES.md)
 //
-// Both files are data only. The rest of this project is MIT.
+// All three files are data only. The rest of this project is MIT.
 //
-// "Best" is not an opinion buried in the data: it is the handful of rules in rankGhdb() and rankFingerprints()
-// below, and tests/catalog.test.mjs re-runs them against the files in the repository. Each file lists its rows
-// best first; the first `picks` of them are the top picks a view opens on.
+// "Best" is not an opinion buried in the data: it is the handful of rules in rankGhdb(), rankFingerprints() and
+// rankHunt() below, and tests/catalog.test.mjs re-runs them against the files in the repository. Each file lists
+// its rows best first; a view opens on the top picks.
 import { readFile, writeFile } from 'node:fs/promises';
 import { pathToFileURL } from 'node:url';
 
@@ -296,6 +298,98 @@ ${rows.map(r => JSON.stringify([r.name, r.vendor, r.sh, r.fo, r.g, r.kev, r.cve,
 }
 
 /* ============================================================
+ * Hunt — published fingerprints of adversary infrastructure
+ * ============================================================ */
+// The source is tools/hunt-sources.json: one row per published query, with where it was published. Nothing is
+// downloaded; the tool checks the rows, ranks them and writes hunt.js.
+export const HUNT_GROUPS = ['C2 framework', 'RAT', 'Phishing kit', 'Open directory', 'Engine classification', 'Malware panel', 'Red-team tool'];   // the order they are listed in
+// ---- What makes a fingerprint one of the best?
+// 1. what it matches on: something the operator has to change on purpose beats a string anyone can have      0–30
+export const HUNT_KINDS = { 'TLS certificate': 30, 'response hash': 28, 'favicon': 26, 'product label': 24, 'response headers': 22, 'engine label': 20,
+  'file listing': 20, 'page title': 18, 'banner': 14, 'page content': 10, 'JARM': 2, 'port pattern': 2 };
+const HUNT_ENGINES = { sh: 5, shf: 5, cen: 3, fo: 0 };          // 4. the account most people have
+// rows: [{ id, tool, group, engine, kind, fp, paid, also, vendor, date, seen, core }] → { rows (in listing order, each with .score and .pick), picks }
+export function rankHunt(rows) {
+  const scored = rows.map(r => {
+    let s = HUNT_KINDS[r.kind] || 0;
+    s += r.vendor ? 20 : Math.min(15, 5 * (r.also || 0));                                  // 2. who stands behind it: the engine itself, or how many public lists carry it   0–20
+    s += Math.max(0, Math.min(10, ((+String(r.seen || r.date || '').slice(0, 4) || 0) - 2021) * 2));   // 3. how recently a public list still carried it: 2026 → 10, 2021 or undated → 0
+    s += HUNT_ENGINES[r.engine] || 0;
+    s -= [0, 10, 15, 40][r.fp || 0];                                                       // known false positives: possible, moderate, heavy
+    if (r.paid) s -= 30;                                                                   // a filter behind a paid plan is no use to most people
+    return { ...r, score: Math.max(0, Math.min(100, s)), pick: false };
+  });
+  const byScore = (a, b) => b.score - a.score || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0);
+  // A tool's fingerprints stay together, best first; tools come group by group, the one with the strongest fingerprint first.
+  const tools = new Map();
+  for (const r of [...scored].sort(byScore)) { if (!tools.has(r.tool)) tools.set(r.tool, []); tools.get(r.tool).push(r); }
+  const order = [...tools.values()].sort((a, b) => HUNT_GROUPS.indexOf(a[0].group) - HUNT_GROUPS.indexOf(b[0].group) || byScore(a[0], b[0]));
+  // The top picks: for every core tool, its best fingerprint that runs without a paid plan and is not known to be noisy.
+  for (const list of order) { const best = list.find(r => r.core && !r.paid && (r.fp || 0) < 2); if (best) best.pick = true; }
+  const out = order.flat();
+  return { rows: out, picks: out.filter(r => r.pick).length };
+}
+// tools/hunt-sources.json → rows fit for ranking. Anything malformed stops the build: this file is edited by hand.
+export function buildHunt(src) {
+  const sources = src && src.sources || {}, seen = new Set(), rows = [];
+  const text = (v, max) => typeof v === 'string' && v.length > 0 && v.length <= max && v === clean(v, max);
+  for (const r of (src && src.rows) || []) {
+    const where = `hunt-sources.json, row ${r && r.id}`;
+    const bad = m => { throw new Error(`${where}: ${m}`); };
+    if (!r || !/^[A-Z]{1,3}-\d{3}$/.test(r.id) || seen.has(r.id)) bad('the id must look like S-001 and be unique');
+    seen.add(r.id);
+    if (!text(r.tool, 40)) bad('bad tool name');
+    if (!HUNT_GROUPS.includes(r.group)) bad(`unknown group "${r.group}"`);
+    if (!Object.hasOwn(HUNT_ENGINES, r.engine)) bad(`unknown engine "${r.engine}"`);
+    if (!Object.hasOwn(HUNT_KINDS, r.kind)) bad(`unknown kind "${r.kind}"`);
+    if (!text(r.q, 300)) bad('the query must be 1–300 printable characters, without stray whitespace');
+    if (r.note !== undefined && !text(r.note, 200)) bad('bad note');
+    if (![undefined, 1, 2, 3].includes(r.fp)) bad('fp is 1, 2 or 3');
+    const s = sources[r.src];
+    if (!s || !text(s.label, 40)) bad(`unknown source "${r.src}"`);
+    const url = r.url || s.url;
+    if (!/^https:\/\/[^\s"<>]+$/.test(url || '') || url.length > 300) bad('the source needs an https link');
+    for (const k of ['date', 'seen']) if (r[k] !== undefined && !/^20\d\d-(0[1-9]|1[0-2])$/.test(r[k])) bad(`${k} is yyyy-mm`);
+    if (r.seen !== undefined && !(r.seen > (r.date || ''))) bad('"seen" is only for a public list newer than the source itself');
+    if (r.also !== undefined && !(Number.isInteger(r.also) && r.also > 0 && r.also < 20)) bad('"also" counts the other public lists that carry the query');
+    rows.push({ id: r.id, tool: r.tool, group: r.group, engine: r.engine, kind: r.kind, q: r.q, note: r.note || '', fp: r.fp || 0, paid: r.paid === true,
+                also: r.also || 0, label: s.label, url, vendor: s.vendor === true, date: r.date || '', seen: r.seen || '', core: r.core === true });
+  }
+  if (rows.length < 50) throw new Error(`only ${rows.length} rows in hunt-sources.json`);
+  return rankHunt(rows);
+}
+function huntFile(ranked, today) {
+  const { rows, picks } = ranked;
+  const kinds = Object.keys(HUNT_KINDS), srcKey = r => r.label + '\n' + r.url, si = new Map(), ym = d => (d ? Number(d.replace('-', '')) : 0);
+  for (const r of rows) if (!si.has(srcKey(r))) si.set(srcKey(r), [si.size, r.label, r.url, r.vendor ? 1 : 0]);
+  const meta = { v: today, count: rows.length, picks };
+  const js = `/* Hunt — published fingerprints of adversary infrastructure, a snapshot for the Hunt view of DorkOps.
+ * Data only; generated, do not edit: the source is tools/hunt-sources.json.
+ *
+ * Every query here was published by someone else; each row names where (sources). They are reproduced for
+ * reference, with attribution — see hunt.SOURCES.md. Ranked by tools/update-libraries.mjs on ${today}.
+ *
+ * rows: [id, tool, index into groups, engine (sh, shf, cen, fo), index into kinds, query, note, known false positives
+ *        (0 none, 1 possible, 2 moderate, 3 heavy), 1 = needs a paid plan, other public lists that carry it,
+ *        index into sources, published (yyyymm, 0 = undated), newest list that still carries it (yyyymm, 0 = none newer),
+ *        1 = core tool, 1 = top pick]
+ * sources: [label, link, 1 = the engine's own publication] */
+(window.DORKOPS_LIB || function(){})("hunt", {
+"v":${JSON.stringify(meta.v)},"count":${meta.count},"picks":${meta.picks},
+"groups":${JSON.stringify(HUNT_GROUPS)},
+"kinds":${JSON.stringify(kinds)},
+"sources":[
+${[...si.values()].map(v => JSON.stringify(v.slice(1))).join(',\n')}
+],
+"rows":[
+${rows.map(r => JSON.stringify([r.id, r.tool, HUNT_GROUPS.indexOf(r.group), r.engine, kinds.indexOf(r.kind), r.q, r.note, r.fp, r.paid ? 1 : 0, r.also,
+  si.get(srcKey(r))[0], ym(r.date), ym(r.seen), r.core ? 1 : 0, r.pick ? 1 : 0])).join(',\n')}
+]});
+`;
+  return { js, meta };
+}
+
+/* ============================================================
  * Command line
  * ============================================================ */
 async function get(urls, label) {
@@ -333,7 +427,7 @@ async function main(argv) {
   const from = argv.includes('--from') ? argv[argv.indexOf('--from') + 1] : null;
   const only = argv.filter((a, i) => !a.startsWith('--') && argv[i - 1] !== '--from');
   const wanted = id => !only.length || only.includes(id);
-  for (const id of only) if (!['ghdb', 'fingerprints'].includes(id)) throw new Error(`unknown library "${id}" — use ghdb or fingerprints`);
+  for (const id of only) if (!['ghdb', 'fingerprints', 'hunt'].includes(id)) throw new Error(`unknown library "${id}" — use ghdb, fingerprints or hunt`);
   const src = (file, urls, label) => from ? readFile(`${from.replace(/\/$/, '')}/${file}`, 'utf8') : get(urls, label);
   const today = new Date().toISOString().slice(0, 10);
 
@@ -357,6 +451,15 @@ async function main(argv) {
     const n = k => ranked.rows.filter(r => r[k]).length;
     console.log(`fingerprints.js: ${meta.count} products · ${meta.picks} on the KEV list (catalog ${meta.kev}) · ${(js.length / 1024).toFixed(0)} KB${changed ? '' : ' — nothing new, file left as it was'}`);
     console.log(`  Shodan ${n('sh')} · FOFA ${n('fo')} · Google ${n('g')} · used in ransomware ${ranked.rows.filter(r => r.pick && r.ransom).length}`);
+  }
+  if (wanted('hunt')) {
+    const ranked = buildHunt(JSON.parse(await readFile(new URL('tools/hunt-sources.json', ROOT), 'utf8')));
+    const { js, meta } = huntFile(ranked, today);
+    const changed = await save('hunt.js', js);
+    if (changed) await writeMeta('hunt', meta);
+    const per = g => ranked.rows.filter(r => r.group === g).length;
+    console.log(`hunt.js: ${meta.count} fingerprints of ${new Set(ranked.rows.map(r => r.tool)).size} tools · ${meta.picks} top picks · ${(js.length / 1024).toFixed(0)} KB${changed ? '' : ' — nothing new, file left as it was'}`);
+    console.log('  ' + HUNT_GROUPS.map(g => `${g} ${per(g)}`).join(' · '));
   }
   console.log('Now run  node tests/catalog.test.mjs  — it re-checks every row and the order.');
 }
